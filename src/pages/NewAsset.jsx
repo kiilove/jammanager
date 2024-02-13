@@ -33,6 +33,7 @@ import {
   initDepreciationType,
 } from "../InitValues";
 import { useEnterKeyToNextField } from "../hooks/useEnterKey";
+import AssetDescription from "../components/AssetDescription";
 
 const NewAsset = () => {
   const formRef = useRef();
@@ -101,7 +102,7 @@ const NewAsset = () => {
           <Input
             key={code.assetCode.toUpperCase()} // 고유한 key 추가
             defaultValue={code.assetCode.toUpperCase()}
-            style={{ width: "90%" }}
+            style={{ width: "100%" }}
             onChange={(e) => {
               const newAssetCodes = [...assetCodes];
 
@@ -340,7 +341,7 @@ const NewAsset = () => {
 
   return (
     <div
-      className="flex w-full h-full flex-col rounded-lg p-4"
+      className="flex w-full h-full flex-col rounded-lg p-0 lg:p-4"
       style={{
         backgroundColor: "#fff",
         minHeight: "100%",
@@ -452,7 +453,7 @@ const NewAsset = () => {
                 ]}
               >
                 <Input
-                  style={{ width: "90%" }}
+                  style={{ width: "100%" }}
                   onChange={(e) => setAssetVendor(e.target.value)}
                 />
               </Form.Item>
@@ -467,7 +468,7 @@ const NewAsset = () => {
                 ]}
               >
                 <Input
-                  style={{ width: "90%" }}
+                  style={{ width: "100%" }}
                   onChange={(e) => setAssetModel(e.target.value)}
                 />
               </Form.Item>
@@ -482,7 +483,7 @@ const NewAsset = () => {
                 ]}
               >
                 <Input
-                  style={{ width: "90%" }}
+                  style={{ width: "100%" }}
                   onFocus={() =>
                     handleAssetName(
                       formRef?.current.getFieldsValue()?.assetVendor,
@@ -503,8 +504,9 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                <Input style={{ width: "90%" }} />
-              </Form.Item>{" "}
+                <Input style={{ width: "100%" }} />
+              </Form.Item>
+
               <Form.Item
                 name="assetOwnerCompany"
                 label="자산소유사"
@@ -515,10 +517,10 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                {/* <Input style={{ width: "90%" }} /> */}
+                {/* <Input style={{ width: "100%" }} /> */}
                 <Select
                   options={[...companyList]}
-                  style={{ width: "90%" }}
+                  style={{ width: "100%" }}
                   defaultValue={memberSettings?.companyName}
                 />
               </Form.Item>
@@ -640,9 +642,10 @@ const NewAsset = () => {
         </div>
         <div className="flex w-full lg:w-1/2 justify-center items-center px-5 ">
           <div
-            className="flex border w-full h-full rounded-lg p-5 "
+            className="flex border w-full h-full rounded-lg p-5 flex-col gap-y-2"
             style={{ minHeight: "150px" }}
           >
+            <AssetDescription propProductLine={currentProductLine} />
             <Card title="자산코드" className="w-full">
               <div className="flex w-full justify-start items-center flex-col gap-y-2">
                 {assetInputs.length > 0 &&

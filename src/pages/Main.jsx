@@ -145,10 +145,9 @@ const Main = ({ children }) => {
             </Header>
             <Content
               style={{
-                margin: "24px 16px",
                 minHeight: 280,
               }}
-              className=" rounded-lg"
+              className="mt-5 lg:rounded-lg lg:m-5"
             >
               {children}
             </Content>
