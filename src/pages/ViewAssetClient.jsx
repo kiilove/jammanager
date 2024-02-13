@@ -132,7 +132,10 @@ const ViewAssetClient = () => {
                 className="flex w-auto justify-center flex-col gap-y-2"
               >
                 <div className="flex w-full justify-center">
-                  <QRCode value={data.id} bgColor="#fff" />
+                  <QRCode
+                    value={`https://jncore-asset.web.app/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/${data.id}`}
+                    bgColor="#fff"
+                  />
                 </div>
                 <div className="flex justify-center ">
                   <Button
