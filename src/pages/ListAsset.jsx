@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useFirestoreQuery } from "../hooks/useFirestore";
-import { Empty, Table } from "antd";
+import { ConfigProvider, Empty, Table } from "antd";
+import { useNavigate } from "react-router-dom";
 
 const ListAsset = () => {
   const [assetList, setAssetList] = useState([]);
   const assetQuery = useFirestoreQuery();
+  const navigate = useNavigate();
 
   const tableColumns = [
     {
@@ -94,10 +96,27 @@ const ListAsset = () => {
     try {
       await assetQuery.getDocuments("assets", (data) => {
         setAssetList(() => formatDatesInArray(data));
+        //console.log(formatDatesInArray(data));
       });
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleRowNavigate = (record) => {
+    return {
+      onClick: () => {
+        navigate("/8e4314e1-ec72-47b5-84e2-114a5e7a697a", {
+          state: { recordId: record.id },
+        }); // Navigate to the desired path. Adjust the path as needed.
+      },
+    };
+  };
+
+  // Use Tailwind CSS classes directly
+  const rowClassName = (record, index) => {
+    // You can add more logic here if you want to apply different styles based on the record or index
+    return "cursor-pointer hover:bg-gray-100";
   };
 
   useEffect(() => {
@@ -106,15 +125,28 @@ const ListAsset = () => {
 
   return (
     <div className="flex w-full justify-center items-start">
-      {assetList.length > 0 ? (
-        <Table
-          columns={tableColumns}
-          dataSource={assetList}
-          className="w-full"
-        />
-      ) : (
-        <Empty description="표시할 데이터가 없습니다." />
-      )}
+      <ConfigProvider
+        theme={{
+          components: {
+            Table: {
+              rowHoverBg: "rgba(182, 212, 252, 0.3)",
+              /* here is your component tokens */
+            },
+          },
+        }}
+      >
+        {assetList.length > 0 ? (
+          <Table
+            columns={tableColumns}
+            dataSource={assetList}
+            className="w-full  "
+            onRow={handleRowNavigate}
+            rowClassName={rowClassName}
+          />
+        ) : (
+          <Empty description="표시할 데이터가 없습니다." />
+        )}
+      </ConfigProvider>
     </div>
   );
 };

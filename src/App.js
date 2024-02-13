@@ -15,6 +15,8 @@ import {
   CurrentLoginProvider,
 } from "./context/CurrentLogin";
 import Success from "./pages/Success";
+import ViewAsset from "./pages/ViewAsset";
+import ViewAssetClient from "./pages/ViewAssetClient";
 
 function App() {
   return (
@@ -41,6 +43,14 @@ function App() {
           <Route
             path="/f8119f14-43bf-4b3b-906a-ed77be4bab3c"
             element={<Main children={<ServiceSetting />} />}
+          />
+          <Route
+            path="/8e4314e1-ec72-47b5-84e2-114a5e7a697a"
+            element={<Main children={<ViewAsset />} />}
+          />
+          <Route
+            path="/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/:assetCode"
+            element={<ViewAssetClient />}
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

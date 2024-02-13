@@ -17,27 +17,40 @@ import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
-import { generateFileName, generateUUID } from "../functions";
+import {
+  NumberWithComma,
+  generateFileName,
+  generateUUID,
+  removeCommas,
+} from "../functions";
 import { Timestamp } from "firebase/firestore";
 import { useFirestoreAddData } from "../hooks/useFirestore";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import useImageUpload from "../hooks/useFireStorage";
+import {
+  initDepreciationPeriod,
+  initDepreciationRate,
+  initDepreciationType,
+} from "../InitValues";
+import { useEnterKeyToNextField } from "../hooks/useEnterKey";
 
 const NewAsset = () => {
   const formRef = useRef();
   const assetAdd = useFirestoreAddData();
   const [assetInputs, setAssetInputs] = useState([]);
   const [assetCodes, setAssetCodes] = useState([]);
-  const [assetCodePics, setAssetCodePics] = useState([[]]);
+  const [companyList, setCompanyList] = useState([]);
+  const [assetDepreciationType, setAssetDepreciationType] =
+    useState("설정안함");
+  const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
   const [assetCategoriesList, setAssetCategoriesList] = useState([]);
-  const [currentCategory, setCurrentCategory] = useState("");
-  const [currentCategoryInfo, setCurrentCategoryInfo] = useState({});
   const [currentProductLine, setCurrentProductLine] = useState("");
   const [productLineList, setProductLineList] = useState([]);
   const [productLineDescription, setProductLineDescription] = useState({});
   const [assetCount, setAssetCount] = useState(0);
   const [assetVendor, setAssetVendor] = useState("");
   const [assetModel, setAssetModel] = useState("");
+  const [assetCost, setAssetCost] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [productLineInput, setProductLineInput] = useState("");
   const addCategoryRef = useRef();
@@ -45,7 +58,6 @@ const NewAsset = () => {
   const assetPicUpload = useImageUpload();
 
   const { loginInfo, memberSettings } = useContext(CurrentLoginContext);
-
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
     apiType,
@@ -64,6 +76,49 @@ const NewAsset = () => {
     });
   };
 
+  const [form] = Form.useForm();
+  useEnterKeyToNextField();
+  const renderInput = (code, index) => {
+    return (
+      <div className="flex w-full justify-start items-start flex-col ">
+        <div className="flex mb-2 w-full flex-wrap">
+          <Upload
+            listType="picture"
+            fileList={assetCodes[index].firstPics}
+            customRequest={({ file, onSuccess, onError }) =>
+              handleAssetPicUploadAdd({
+                file,
+                onSuccess,
+                onError,
+                index,
+              })
+            }
+          >
+            <Button icon={<UploadOutlined />}>사진업로드</Button>
+          </Upload>
+        </div>
+        <div className="flex w-full">
+          <Input
+            key={code.assetCode.toUpperCase()} // 고유한 key 추가
+            defaultValue={code.assetCode.toUpperCase()}
+            style={{ width: "90%" }}
+            onChange={(e) => {
+              const newAssetCodes = [...assetCodes];
+
+              const newCode = e.target.value;
+              newAssetCodes.splice(index, 1, {
+                ...newAssetCodes[index],
+                assetCode: newCode,
+              });
+
+              setAssetCodes(() => [...newAssetCodes]);
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
   const getBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -73,7 +128,6 @@ const NewAsset = () => {
     });
 
   const handleFinish = (values) => {
-    console.log(values);
     // userEnteringDate를 Date 객체로 변환한 후 Firestore Timestamp로 변환
     const assetPurchasedDate = values.assetPurchasedDate
       ? Timestamp.fromDate(values.assetPurchasedDate.toDate())
@@ -99,12 +153,12 @@ const NewAsset = () => {
     if (assetCodes.length > 0) {
       assetCodes.map(async (asset, cIdx) => {
         const codeWithValue = {
-          assetCode: asset.assetCode,
+          assetCode: asset.assetCode.toUpperCase(),
           firstPics: [...asset.firstPics],
           assetOwner: memberSettings.userID,
           ...newValue,
         };
-        console.log(codeWithValue);
+
         try {
           await assetAdd.addData("assets", { ...codeWithValue }, (data) => {
             openNotification(
@@ -133,10 +187,19 @@ const NewAsset = () => {
     });
     setAssetCount(0);
     setAssetCodes([]);
+    setAssetCost(0);
   };
 
   const handleAssetName = (vendor, model, ref) => {
-    const assetName = `${vendor} ${model}`.trim();
+    let modelVendor = "";
+    let modelModel = "";
+    if (vendor !== undefined) {
+      modelVendor = vendor;
+    }
+    if (model !== undefined) {
+      modelModel = model;
+    }
+    const assetName = `${modelVendor} ${modelModel}`.trim();
 
     if (ref?.current) {
       ref?.current.setFieldsValue({
@@ -202,47 +265,6 @@ const NewAsset = () => {
     }
   };
 
-  const renderInput = (code, index) => {
-    return (
-      <div className="flex w-full justify-start items-start flex-col ">
-        <div className="flex mb-2 w-full flex-wrap">
-          <Upload
-            listType="picture"
-            fileList={assetCodes[index].firstPics}
-            customRequest={({ file, onSuccess, onError }) =>
-              handleAssetPicUploadAdd({
-                file,
-                onSuccess,
-                onError,
-                index,
-              })
-            }
-          >
-            <Button icon={<UploadOutlined />}>사진업로드</Button>
-          </Upload>
-        </div>
-        <div className="flex w-full">
-          <Input
-            key={code.assetCode.toUpperCase()} // 고유한 key 추가
-            defaultValue={code.assetCode.toUpperCase()}
-            style={{ width: "90%" }}
-            onChange={(e) => {
-              const newAssetCodes = [...assetCodes];
-
-              const newCode = e.target.value;
-              newAssetCodes.splice(index, 1, {
-                ...newAssetCodes[index],
-                assetCode: newCode,
-              });
-
-              setAssetCodes(() => [...newAssetCodes]);
-            }}
-          />
-        </div>
-      </div>
-    );
-  };
-
   const handleAssetInputs = (count = 0) => {
     if (count !== assetCount) {
       setAssetCount(count);
@@ -267,7 +289,26 @@ const NewAsset = () => {
       } else {
         setProductLineList([]);
       }
+
+      form.setFieldValue("assetDepreciationType", filtered.depreciationType);
+      form.setFieldValue(
+        "assetDepreciationPeroid",
+        filtered.depreciationPeriod
+      );
     }
+  };
+
+  const handleCompanyOptions = (baseCompany, childrenArray) => {
+    const childs = childrenArray.map((child, cIdx) => {
+      const childValue = { key: cIdx + 1, label: child, value: child };
+      return childValue;
+    });
+    const options = [
+      { key: 0, label: baseCompany, value: baseCompany },
+      ...childs,
+    ];
+
+    return options;
   };
 
   useEffect(() => {
@@ -277,6 +318,13 @@ const NewAsset = () => {
   useEffect(() => {
     if (memberSettings?.assetCategories) {
       setAssetCategoriesList(() => [...memberSettings.assetCategories]);
+      setCompanyList(() =>
+        handleCompanyOptions(
+          memberSettings.companyName,
+          memberSettings.companyChildren
+        )
+      );
+      form.setFieldValue("assetOwnerCompany", memberSettings.companyName);
     }
   }, [memberSettings]);
 
@@ -285,9 +333,14 @@ const NewAsset = () => {
     setAssetInputs(inputs);
   }, [assetCodes]); // assetCodes가 변경될 때마다 실행됩니다.
 
+  useEffect(() => {
+    if (currentProductLine !== "") {
+    }
+  }, [currentProductLine]);
+
   return (
     <div
-      className="flex w-full h-full flex-col rounded-lg"
+      className="flex w-full h-full flex-col rounded-lg p-4"
       style={{
         backgroundColor: "#fff",
         minHeight: "100%",
@@ -296,7 +349,7 @@ const NewAsset = () => {
       <div className="flex w-full ">
         <ContentTitle title="자산추가" />
       </div>
-      <div className="flex w-full flex-col lg:flex-row">
+      <div className="flex w-full flex-col lg:flex-row gap-2">
         <div className="flex w-full lg:w-1/2 justify-center items-center px-5 ">
           <div
             className="flex border w-full h-full rounded-lg p-5 "
@@ -304,7 +357,7 @@ const NewAsset = () => {
           >
             <Form
               labelCol={{
-                span: 4,
+                span: 5,
               }}
               style={{
                 width: "100%",
@@ -313,89 +366,121 @@ const NewAsset = () => {
               ref={formRef}
               onFinish={handleFinish}
               autoComplete="off"
+              form={form}
             >
-              <Form.Item name="assetCategory" label="분류">
-                <Select
-                  style={{ width: 160 }}
-                  onChange={() =>
-                    formRef?.current &&
-                    filterProductLine(
-                      formRef?.current.getFieldsValue().assetCategory,
-                      memberSettings
-                    )
-                  }
-                  //onChange={(value) => setCurrentCategory(() => value)}
-                  options={assetCategoriesList.map((category, cIdx) => ({
-                    label: category.name,
-                    value: category.name,
-                  }))}
-                  dropdownRender={(menu) => (
-                    <>
-                      {menu}
-                      <Divider
-                        style={{
-                          margin: "8px 0",
-                        }}
-                      />
-                      <Space
-                        style={{
-                          padding: "0 8px 4px",
-                        }}
-                      >
-                        <Input
-                          placeholder="대분류명"
-                          ref={addCategoryRef}
-                          value={categoryInput}
-                          onChange={(e) => {
-                            setCategoryInput(() => e.target.value);
-                          }}
-                          // onKeyDown={(e) => e.stopPropagation()}
-                        />
-                        {/* 버튼을 클릭했을때 assetCategoriesList변경해야함, productLine을 일단 빈배열로 세팅 */}
-                        <Button
-                          type="text"
-                          icon={<PlusOutlined />}
-                          onClick={() =>
-                            handleAddCustom(
-                              "category",
-                              categoryInput,
-                              assetCategoriesList
-                            )
-                          }
-                        />
-                      </Space>
-                    </>
-                  )}
-                />
-              </Form.Item>
-              {formRef?.current?.getFieldsValue().assetCategory !== "" &&
-                productLineList.length > 0 && (
-                  <Form.Item label="품목" name="assetProductLine">
+              <Form.Item label="분류" required>
+                <Space className="w-full">
+                  <Form.Item name="assetCategory" noStyle>
                     <Select
                       style={{ width: 160 }}
-                      dropdownRender={(menu) => <>{menu}</>}
-                      onChange={(value) => setCurrentProductLine(value)}
-                      value={currentProductLine}
-                      options={productLineList.map((product, pIdx) => ({
-                        label: product,
-                        value: product,
+                      onChange={() =>
+                        formRef?.current &&
+                        filterProductLine(
+                          formRef?.current.getFieldsValue().assetCategory,
+                          memberSettings
+                        )
+                      }
+                      //onChange={(value) => setCurrentCategory(() => value)}
+                      options={assetCategoriesList.map((category, cIdx) => ({
+                        label: category.name,
+                        value: category.name,
                       }))}
+                      dropdownRender={(menu) => (
+                        <>
+                          {menu}
+                          <Divider
+                            style={{
+                              margin: "8px 0",
+                            }}
+                          />
+                          <Space
+                            style={{
+                              padding: "0 8px 4px",
+                            }}
+                          >
+                            <Input
+                              placeholder="대분류명"
+                              ref={addCategoryRef}
+                              value={categoryInput}
+                              onChange={(e) => {
+                                setCategoryInput(() => e.target.value);
+                              }}
+                              // onKeyDown={(e) => e.stopPropagation()}
+                            />
+                            {/* 버튼을 클릭했을때 assetCategoriesList변경해야함, productLine을 일단 빈배열로 세팅 */}
+                            <Button
+                              type="text"
+                              icon={<PlusOutlined />}
+                              onClick={() =>
+                                handleAddCustom(
+                                  "category",
+                                  categoryInput,
+                                  assetCategoriesList
+                                )
+                              }
+                            />
+                          </Space>
+                        </>
+                      )}
                     />
                   </Form.Item>
-                )}
-              <Form.Item name="assetVendor" label="제조사">
+                  {formRef?.current?.getFieldsValue().assetCategory !== "" &&
+                    productLineList.length > 0 && (
+                      <Form.Item name="assetProductLine" noStyle>
+                        <Select
+                          style={{ width: 160 }}
+                          dropdownRender={(menu) => <>{menu}</>}
+                          onChange={(value) => setCurrentProductLine(value)}
+                          value={currentProductLine}
+                          options={productLineList.map((product, pIdx) => ({
+                            label: product,
+                            value: product,
+                          }))}
+                        />
+                      </Form.Item>
+                    )}
+                </Space>
+              </Form.Item>
+              <Form.Item
+                name="assetVendor"
+                label="제조사"
+                rules={[
+                  {
+                    required: true,
+                    message: "제조사가 없거나 미확인시 매입처를 입력해주세요.",
+                  },
+                ]}
+              >
                 <Input
                   style={{ width: "90%" }}
                   onChange={(e) => setAssetVendor(e.target.value)}
                 />
               </Form.Item>
-              <Form.Item name="assetModel" label="모델명">
+              <Form.Item
+                name="assetModel"
+                label="모델명"
+                rules={[
+                  {
+                    required: true,
+                    message: "모델명이 없다면 품목으로 작성해주세요.",
+                  },
+                ]}
+              >
                 <Input
                   style={{ width: "90%" }}
                   onChange={(e) => setAssetModel(e.target.value)}
                 />
               </Form.Item>
-              <Form.Item name="assetName" label="자산명">
+              <Form.Item
+                name="assetName"
+                label="자산명"
+                rules={[
+                  {
+                    required: true,
+                    message: "제조사와 모델명을 입력하시면, 자동 생성됩니다.",
+                  },
+                ]}
+              >
                 <Input
                   style={{ width: "90%" }}
                   onFocus={() =>
@@ -407,13 +492,127 @@ const NewAsset = () => {
                   }
                 />
               </Form.Item>
-              <Form.Item name="assetPurchaseName" label="매입처">
+              <Form.Item
+                name="assetPurchaseName"
+                label="매입처"
+                rules={[
+                  {
+                    required: true,
+                    message:
+                      "매입처를 입력해주세요. 무상매입의 경우 무상으로 입력해주세요.",
+                  },
+                ]}
+              >
                 <Input style={{ width: "90%" }} />
+              </Form.Item>{" "}
+              <Form.Item
+                name="assetOwnerCompany"
+                label="자산소유사"
+                rules={[
+                  {
+                    required: true,
+                    message: "자회사가 없는경우 회사명을 선택해주세요.",
+                  },
+                ]}
+              >
+                {/* <Input style={{ width: "90%" }} /> */}
+                <Select
+                  options={[...companyList]}
+                  style={{ width: "90%" }}
+                  defaultValue={memberSettings?.companyName}
+                />
               </Form.Item>
-              <Form.Item name="assetCount" label="수량">
+              <Form.Item label="감가방식">
+                <Space className="w-full">
+                  <Form.Item name="assetDepreciationType" noStyle>
+                    <Select
+                      options={[...initDepreciationType]}
+                      defaultValue="설정안함"
+                      onChange={() => {
+                        setAssetDepreciationType(
+                          form.getFieldValue("assetDepreciationType")
+                        );
+                      }}
+                    />
+                  </Form.Item>
+                  {assetDepreciationType === "정액법" && (
+                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                      <Select
+                        options={[...initDepreciationPeriod]}
+                        defaultValue={0}
+                      />
+                    </Form.Item>
+                  )}
+                  {assetDepreciationType === "정률법" && (
+                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                      <Select
+                        options={[...initDepreciationRate]}
+                        defaultValue={0}
+                      />
+                    </Form.Item>
+                  )}
+                  {assetDepreciationType === "설정안함" && (
+                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                      <Select
+                        options={[
+                          { key: "설정안함", value: 0, label: "설정안함" },
+                        ]}
+                        defaultValue={0}
+                      />
+                    </Form.Item>
+                  )}
+                </Space>
+              </Form.Item>
+              <Form.Item
+                name="assetCost"
+                label="취득원가"
+                rules={[
+                  { required: true, message: "취득원가를 입력해주세요." },
+                ]}
+              >
+                <Input
+                  addonAfter="원"
+                  style={{
+                    width: "70%",
+                    textAlign: "right",
+                    paddingRight: "20px",
+                  }}
+                  onChange={(e) => {
+                    setAssetCost(NumberWithComma(e.target.value));
+                    form.setFieldValue(
+                      "assetCost",
+                      removeCommas(e.target.value)
+                    );
+                  }}
+                  value={assetCost}
+                />
+                <p className="text-red-500" style={{ fontSize: "12px" }}>
+                  ＊부가세를 제외한 금액을 단가로 입력해주세요.
+                </p>
+              </Form.Item>
+              <Form.Item
+                name="assetCount"
+                label="수량"
+                rules={[
+                  {
+                    required: true,
+                    message: "취득수량을 숫자형태로 입력해주세요.",
+                  },
+                ]}
+              >
                 <InputNumber onChange={handleAssetInputs} />
               </Form.Item>
-              <Form.Item name="assetPurchasedDate" label="입고일자">
+              <Form.Item
+                name="assetPurchasedDate"
+                label="입고일자"
+                rules={[
+                  {
+                    required: true,
+                    message:
+                      "입고일자를 모르는 경우 오늘이나, 최대한 비슷한 날짜로 입력해주세요.",
+                  },
+                ]}
+              >
                 <DatePicker
                   locale={locale}
                   defaultValue={dayjs()} // 현재 날짜로 설정
@@ -427,27 +626,6 @@ const NewAsset = () => {
                   format="YYYY-MM-DD" // 필요에 따라 형식 지정
                 />
               </Form.Item>
-              <Card title="자산코드">
-                <div className="flex w-full justify-start items-center flex-col gap-y-2">
-                  {assetInputs.length > 0 &&
-                    assetInputs.map((input, iIdx) => {
-                      return (
-                        <div
-                          className="flex w-full h-auto p-2 rounded"
-                          style={{ border: "1px solid #e6e6e6" }}
-                        >
-                          <div
-                            className="flex justify-center items-center"
-                            style={{ width: "50px" }}
-                          >
-                            {iIdx + 1}
-                          </div>
-                          <div className="flex w-full">{input}</div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </Card>
               <div className="flex w-full justify-end items-center">
                 <Button
                   type="primary"
@@ -464,7 +642,29 @@ const NewAsset = () => {
           <div
             className="flex border w-full h-full rounded-lg p-5 "
             style={{ minHeight: "150px" }}
-          ></div>
+          >
+            <Card title="자산코드" className="w-full">
+              <div className="flex w-full justify-start items-center flex-col gap-y-2">
+                {assetInputs.length > 0 &&
+                  assetInputs.map((input, iIdx) => {
+                    return (
+                      <div
+                        className="flex w-full h-auto p-2 rounded"
+                        style={{ border: "1px solid #e6e6e6" }}
+                      >
+                        <div
+                          className="flex justify-center items-center"
+                          style={{ width: "50px" }}
+                        >
+                          {iIdx + 1}
+                        </div>
+                        <div className="flex w-full">{input}</div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
       {contextHolder}

@@ -186,3 +186,12 @@ export const handlePhoneNumber = (ref, fieldName, value) => {
     [fieldName]: formatPhoneNumber(value),
   });
 };
+
+export const NumberWithComma = (value) => {
+  const numberValue = value.replace(/\D/g, "");
+  return numberValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+export const removeCommas = (value) => {
+  return parseInt(value.replace(/,/g, ""), 10);
+};

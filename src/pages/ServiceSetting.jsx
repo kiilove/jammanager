@@ -26,6 +26,7 @@ import "./AutoComplete.css";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import useFirebaseAuth from "../hooks/useFireAuth";
 import { useFirestoreUpdateData } from "../hooks/useFirestore";
+import { initDepreciationPeriod, initDepreciationType } from "../InitValues";
 
 const initUserStatus = ["재직", "파견", "휴직", "퇴사"];
 const initUserJob = ["정직원", "계약직", "임시직", "프리랜서", "외부직원"];
@@ -725,11 +726,7 @@ const ServiceSetting = () => {
                                           setAssetCategoryList
                                         )
                                       }
-                                      options={[
-                                        { key: "정액법", value: "정액법" },
-                                        { key: "정률법", value: "정률법" },
-                                        { key: "설정안함", value: "설정안함" },
-                                      ]}
+                                      options={[...initDepreciationType]}
                                       className="w-full"
                                     />
                                   </Form.Item>
@@ -757,23 +754,7 @@ const ServiceSetting = () => {
                                         assetCategoryList[iIdx]
                                           .depreciationPeriod
                                       }
-                                      options={[
-                                        { key: "5년", value: 5, label: "5년" },
-                                        {
-                                          key: "10년",
-                                          value: 10,
-                                          label: "10년",
-                                        },
-                                        { key: "6년", value: 6, label: "6년" },
-                                        { key: "7년", value: 7, label: "7년" },
-                                        { key: "8년", value: 8, label: "8년" },
-                                        { key: "9년", value: 9, label: "9년" },
-                                        {
-                                          key: "설정안함",
-                                          value: 0,
-                                          label: "설정안함",
-                                        },
-                                      ]}
+                                      options={[...initDepreciationPeriod]}
                                     />
                                   </Form.Item>
                                 </div>
