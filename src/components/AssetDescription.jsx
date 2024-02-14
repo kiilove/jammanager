@@ -1,47 +1,145 @@
 import React, { useEffect, useState } from "react";
 import { initDescription } from "../InitValues";
-import { AutoComplete, Card, Form, Input, Select } from "antd";
+import { FaMinusCircle, FaPlusCircle } from "react-icons/fa";
+import {
+  AutoComplete,
+  Button,
+  Card,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+} from "antd";
 import TextArea from "antd/es/input/TextArea";
+import { compact } from "lodash";
 
 const AssetDescription = ({ propProductLine }) => {
   const [description, setDescription] = useState([]);
-  const [form] = Form.useForm();
+  const [descritionForm] = Form.useForm();
+
+  const handleAddItem = (items) => {
+    let lastKey = 1;
+    const newItems = [...items];
+    if (newItems.length > 0) {
+      lastKey = newItems[newItems.length - 1].key + 2;
+    }
+
+    const newItem = { key: lastKey, keyName: "", valueType: "custom" };
+    newItems.push({ ...newItem });
+    console.log(newItems);
+    setDescription(() => [...newItems]);
+  };
+
+  const handleCustomItem = () => {};
+  const handleRemoveItem = (key) => {
+    const newItems = description.filter((f) => f.key !== key);
+    setDescription(() => [...newItems]);
+  };
 
   const renderInput = (list) => {
+    const items = [...list];
+
     let component;
-    if (list?.length > 0) {
-      const inputs = list.map((input, iIdx) => {
+    if (items?.length > 0) {
+      const inputs = items.map((input, iIdx) => {
         switch (input.valueType) {
           case "autoComplete":
-            component = <AutoComplete />;
+            component = (
+              <Form.Item label={input.keyName}>
+                <Space.Compact className="w-full">
+                  <Form.Item name={input.keyName} noStyle>
+                    <AutoComplete placeholder="내용" />
+                  </Form.Item>
+                  {input.isCount && (
+                    <Form.Item name={`${input.keyName}_count`} noStyle>
+                      <InputNumber placeholder="수량" />
+                    </Form.Item>
+                  )}
+                  <Button
+                    onClick={() => handleRemoveItem(input.key)}
+                    icon={<FaMinusCircle className="text-red-500" />}
+                  />
+                </Space.Compact>
+              </Form.Item>
+            );
             break;
           case "textArea":
-            component = <TextArea />;
+            component = (
+              <Form.Item label={input.keyName}>
+                <Space.Compact className="w-full">
+                  <Form.Item name={input.keyName} noStyle>
+                    <TextArea />
+                  </Form.Item>
+                  <Button
+                    onClick={() => handleRemoveItem(input.key)}
+                    icon={<FaMinusCircle className="text-red-500" />}
+                  />
+                </Space.Compact>
+              </Form.Item>
+            );
             break;
           case "textSize":
             component = (
-              <div className="flex gap-x-2 justify-start items-center">
-                <Input maxLength={6} style={{ width: 70 }} />
-                <span>×</span>
-                <Input maxLength={6} style={{ width: 70 }} />
-                <span>×</span>
-                <Input maxLength={6} style={{ width: 70 }} />
-                <Select
-                  style={{ width: 70 }}
-                  options={[
-                    { value: "mm", label: "mm" },
-                    { value: "cm", label: "cm" },
-                    { value: "m", label: "m" },
-                  ]}
+              <Form.Item label={input.keyName}>
+                <Space className="flex gap-x-2 justify-start items-center">
+                  <Form.Item name="assetSizeWidth" noStyle>
+                    <Input maxLength={6} style={{ width: 70 }} />
+                  </Form.Item>
+                  <span>×</span>
+                  <Form.Item name="assetSizeWidth" noStyle>
+                    <Input maxLength={6} style={{ width: 70 }} />
+                  </Form.Item>
+                  <span>×</span>
+                  <Form.Item name="assetSizeWidth" noStyle>
+                    <Input maxLength={6} style={{ width: 70 }} />
+                  </Form.Item>
+                  <Form.Item name="assetUnit" noStyle>
+                    <Select
+                      style={{ width: 70 }}
+                      options={[
+                        { value: "mm", label: "mm" },
+                        { value: "cm", label: "cm" },
+                        { value: "m", label: "m" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Button
+                    onClick={() => handleRemoveItem(input.key)}
+                    icon={<FaMinusCircle className="text-red-500" />}
+                  />
+                </Space>
+              </Form.Item>
+            );
+
+            break;
+          case "custom":
+            component = (
+              <Space className="flex justify-start items-start w-full flex-col md:flex-row">
+                <Form.Item name="customKeyName">
+                  <Input
+                    placeholder="항목명"
+                    className="w-full md:w-28 lg:w-36"
+                  />
+                </Form.Item>
+                <Form.Item name="customKeyValue">
+                  <Input placeholder="항목내용" className="w-full" />
+                </Form.Item>
+                <Form.Item name="customKeyValueCount">
+                  <InputNumber placeholder="수량" className="w-full" />
+                </Form.Item>
+                <Button
+                  onClick={() => handleRemoveItem(input.key)}
+                  icon={<FaMinusCircle className="text-red-500" />}
                 />
-              </div>
+              </Space>
             );
             break;
           default:
             break;
         }
-        const field = <Form.Item label={input.keyName}>{component}</Form.Item>;
-        return field;
+
+        return component;
       });
       return inputs;
     }
@@ -67,7 +165,16 @@ const AssetDescription = ({ propProductLine }) => {
   return (
     <>
       {description.length > 0 && (
-        <Card title="스펙" style={{ width: "100%" }} className="rounded-md">
+        <Card
+          title="스펙"
+          style={{ width: "100%" }}
+          className="rounded-md"
+          extra={[
+            <Button onClick={() => handleAddItem(description)}>
+              항목추가
+            </Button>,
+          ]}
+        >
           <Form
             labelWrap
             labelCol={{
@@ -78,7 +185,7 @@ const AssetDescription = ({ propProductLine }) => {
               height: "100%",
             }}
             labelAlign="right"
-            form={form}
+            form={descritionForm}
           >
             {description.length > 0 && renderInput(description)}
           </Form>

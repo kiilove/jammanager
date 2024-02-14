@@ -10,6 +10,7 @@ import {
   InputNumber,
   Select,
   Space,
+  Switch,
   Upload,
   notification,
 } from "antd";
@@ -34,6 +35,7 @@ import {
 } from "../InitValues";
 import { useEnterKeyToNextField } from "../hooks/useEnterKey";
 import AssetDescription from "../components/AssetDescription";
+import TextArea from "antd/es/input/TextArea";
 
 const NewAsset = () => {
   const formRef = useRef();
@@ -48,6 +50,7 @@ const NewAsset = () => {
   const [currentProductLine, setCurrentProductLine] = useState("");
   const [productLineList, setProductLineList] = useState([]);
   const [productLineDescription, setProductLineDescription] = useState({});
+  const [isDetailDescription, setIsDetailDescription] = useState(false);
   const [assetCount, setAssetCount] = useState(0);
   const [assetVendor, setAssetVendor] = useState("");
   const [assetModel, setAssetModel] = useState("");
@@ -189,6 +192,7 @@ const NewAsset = () => {
     setAssetCount(0);
     setAssetCodes([]);
     setAssetCost(0);
+    setIsDetailDescription(false);
   };
 
   const handleAssetName = (vendor, model, ref) => {
@@ -472,13 +476,14 @@ const NewAsset = () => {
                   onChange={(e) => setAssetModel(e.target.value)}
                 />
               </Form.Item>
+
               <Form.Item
                 name="assetName"
                 label="자산명"
                 rules={[
                   {
                     required: true,
-                    message: "제조사와 모델명을 입력하시면, 자동 생성됩니다.",
+                    message: "제조사와 모델명을 입력하면 자동 생성됩니다.",
                   },
                 ]}
               >
@@ -492,6 +497,16 @@ const NewAsset = () => {
                     )
                   }
                 />
+              </Form.Item>
+              <Form.Item name="isAssetDetail" label="상세스펙">
+                <Switch
+                  onChange={(checked) => {
+                    setIsDetailDescription(checked);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item name="assetDescritionSummay" label="간단스펙">
+                <TextArea />
               </Form.Item>
               <Form.Item
                 name="assetPurchaseName"
@@ -645,7 +660,9 @@ const NewAsset = () => {
             className="flex border w-full h-full rounded-lg p-5 flex-col gap-y-2"
             style={{ minHeight: "150px" }}
           >
-            <AssetDescription propProductLine={currentProductLine} />
+            {isDetailDescription && (
+              <AssetDescription propProductLine={currentProductLine} />
+            )}
             <Card title="자산코드" className="w-full">
               <div className="flex w-full justify-start items-center flex-col gap-y-2">
                 {assetInputs.length > 0 &&

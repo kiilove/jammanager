@@ -3,7 +3,11 @@ import { useEffect } from "react";
 export const useEnterKeyToNextField = () => {
   useEffect(() => {
     const listener = (e) => {
-      if (e.code === "Enter" || e.code === "NumpadEnter") {
+      // TextArea에서는 엔터키를 눌러도 다음 필드로 넘어가지 않도록 예외 처리
+      if (
+        (e.code === "Enter" || e.code === "NumpadEnter") &&
+        e.target.tagName !== "TEXTAREA"
+      ) {
         e.preventDefault();
         const form = e.target.form;
         const index = Array.prototype.indexOf.call(form, e.target);
@@ -11,7 +15,7 @@ export const useEnterKeyToNextField = () => {
         if (nextElement) {
           nextElement.focus();
         } else {
-          form.submit(); // Focus the first element if none found
+          form.submit(); // 모든 필드가 완료되었으면 폼 제출
         }
       }
     };
