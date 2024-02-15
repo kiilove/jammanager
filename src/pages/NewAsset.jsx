@@ -345,7 +345,7 @@ const NewAsset = () => {
 
   return (
     <div
-      className="flex w-full h-full flex-col rounded-lg p-0 lg:p-4"
+      className="flex w-full h-full flex-col rounded-lg"
       style={{
         backgroundColor: "#fff",
         minHeight: "100%",
@@ -498,13 +498,13 @@ const NewAsset = () => {
                   }
                 />
               </Form.Item>
-              <Form.Item name="isAssetDetail" label="상세스펙">
+              {/* <Form.Item name="isAssetDetail" label="상세스펙">
                 <Switch
                   onChange={(checked) => {
                     setIsDetailDescription(checked);
                   }}
                 />
-              </Form.Item>
+              </Form.Item> */}
               <Form.Item name="assetDescritionSummay" label="간단스펙">
                 <TextArea />
               </Form.Item>

@@ -195,3 +195,35 @@ export const NumberWithComma = (value) => {
 export const removeCommas = (value) => {
   return parseInt(value.replace(/,/g, ""), 10);
 };
+
+export const calcDepreciation = (type, rate, originalPrice, fromDate) => {
+  const fromDateObj = new Date(fromDate.seconds * 1000);
+  const toDateObj = new Date();
+  const monthsDiff = Math.ceil(
+    (toDateObj - fromDateObj) / (1000 * 60 * 60 * 24 * 30)
+  );
+
+  let depreciationValue = 0;
+  let residualValue = originalPrice;
+
+  if (type === "정액법") {
+    const yearlyDepreciation = 100 / rate;
+    const monthlyDepreciation = originalPrice * (yearlyDepreciation / 12 / 100);
+    depreciationValue = monthlyDepreciation * Math.floor(monthsDiff);
+    residualValue -= depreciationValue;
+  } else if (type === "정률법") {
+    for (let i = 0; i < Math.floor(monthsDiff / 12); i++) {
+      const annualDepreciation = residualValue * (rate / 100);
+      residualValue -= annualDepreciation;
+    }
+    depreciationValue = originalPrice - residualValue;
+  }
+
+  residualValue = residualValue <= 1000 ? 1000 : residualValue;
+
+  return {
+    depreciationValue: parseFloat(depreciationValue.toFixed(2)),
+    residualValue: parseFloat(residualValue.toFixed(2)),
+    monthsDiffValue: parseInt(monthsDiff),
+  };
+};

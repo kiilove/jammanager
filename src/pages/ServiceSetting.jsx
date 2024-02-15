@@ -283,7 +283,7 @@ const ServiceSetting = () => {
           }}
         >
           <div className="flex w-full ">
-            <ContentTitle title="환경설정" />
+            <ContentTitle title="환경설정" titleColor="#000" />
           </div>
           <div className="flex w-full px-5">
             <Button onClick={() => handleSettingInfo(memberSettings)}>

@@ -3,7 +3,7 @@ import { RiBookletLine } from "react-icons/ri";
 import { LuUsers } from "react-icons/lu";
 import { TbReportAnalytics } from "react-icons/tb";
 import { IoSettingsOutline } from "react-icons/io5";
-import { Menu } from "antd";
+import { ConfigProvider, Menu } from "antd";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/logo/jam_blank.png";
 
@@ -56,7 +56,7 @@ const MainSide = () => {
       const menuLink = menus[parentsIndex]?.children.find(
         (f) => f.key === value.key
       ).link;
-      console.log(menuLink);
+
       navigate(menuLink);
     }
   };
@@ -65,7 +65,8 @@ const MainSide = () => {
       <div className="flex justify-center items-center h-20">
         <img src={Logo1} alt="" style={{ width: "50px" }} />
       </div>
-      <Menu items={menus} mode="inline" onClick={menuClick} />
+
+      <Menu items={menus} mode="inline" onClick={menuClick} theme="dark" />
     </div>
   );
 };

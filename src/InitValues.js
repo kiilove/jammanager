@@ -252,8 +252,8 @@ export const assetInfoFieldName = [
     label: "최초사진",
     index: 1,
     hidden: false,
-    type: "자산",
-    span: 1,
+    type: "타이틀",
+    span: 4,
   },
   {
     keyName: "assetCode",
@@ -261,6 +261,7 @@ export const assetInfoFieldName = [
     index: 0,
     hidden: false,
     type: "타이틀",
+    span: 1,
   },
   {
     keyName: "assetCategory",
@@ -268,6 +269,7 @@ export const assetInfoFieldName = [
     index: 3,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetProductLine",
@@ -275,6 +277,7 @@ export const assetInfoFieldName = [
     index: 5,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetVendor",
@@ -282,6 +285,7 @@ export const assetInfoFieldName = [
     index: 7,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetModel",
@@ -289,6 +293,7 @@ export const assetInfoFieldName = [
     index: 9,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetName",
@@ -296,6 +301,7 @@ export const assetInfoFieldName = [
     index: 11,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetOwnerCompany",
@@ -303,6 +309,7 @@ export const assetInfoFieldName = [
     index: 13,
     hidden: false,
     type: "자산",
+    span: 1,
   },
   {
     keyName: "assetPurchaseName",
@@ -310,6 +317,7 @@ export const assetInfoFieldName = [
     index: 15,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "assetPurchasedDate",
@@ -317,6 +325,7 @@ export const assetInfoFieldName = [
     index: 17,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "createdAt",
@@ -324,6 +333,7 @@ export const assetInfoFieldName = [
     index: 19,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "assetCost",
@@ -331,6 +341,7 @@ export const assetInfoFieldName = [
     index: 21,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "assetDepreciationType",
@@ -338,6 +349,7 @@ export const assetInfoFieldName = [
     index: 17,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "assetDepreciationPeroid",
@@ -345,6 +357,7 @@ export const assetInfoFieldName = [
     index: 19,
     hidden: false,
     type: "거래",
+    span: 1,
   },
   {
     keyName: "userInfo",
@@ -352,6 +365,7 @@ export const assetInfoFieldName = [
     index: 29,
     hidden: false,
     type: "사용자",
+    span: 1,
   },
   {
     keyName: "location",
@@ -359,6 +373,7 @@ export const assetInfoFieldName = [
     index: 31,
     hidden: false,
     type: "사용자",
+    span: 1,
   },
   {
     keyName: "assetOwner",
@@ -366,5 +381,12 @@ export const assetInfoFieldName = [
     index: 33,
     hidden: true,
     type: "시스템",
+  },
+  {
+    keyName: "assetDescritionSummay",
+    label: "스펙",
+    index: 35,
+    hidden: false,
+    type: "자산",
   },
 ];

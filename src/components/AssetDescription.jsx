@@ -12,7 +12,6 @@ import {
   Space,
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { compact } from "lodash";
 
 const AssetDescription = ({ propProductLine }) => {
   const [description, setDescription] = useState([]);
@@ -37,23 +36,61 @@ const AssetDescription = ({ propProductLine }) => {
     setDescription(() => [...newItems]);
   };
 
+  const handleDescriptionValue = (keyName, value) => {
+    console.log(value, keyName);
+    const newValue = { keyValue: value, valueCount: 1 };
+    const newDescription = [...description];
+    const findIndex = newDescription.findIndex((f) => f.keyName === keyName);
+    newDescription.splice(findIndex, 1, {
+      ...newDescription[findIndex],
+      ...newValue,
+    });
+
+    setDescription(() => [...newDescription]);
+  };
+
+  const handleDescriptionCount = (keyName, value = 1) => {
+    console.log(value, keyName);
+    const newValue = { valueCount: value };
+    const newDescription = [...description];
+    const findIndex = newDescription.findIndex((f) => f.keyName === keyName);
+    newDescription.splice(findIndex, 1, {
+      ...newDescription[findIndex],
+      ...newValue,
+    });
+
+    setDescription(() => [...newDescription]);
+  };
+
   const renderInput = (list) => {
     const items = [...list];
 
     let component;
     if (items?.length > 0) {
       const inputs = items.map((input, iIdx) => {
+        console.log(input.valueCount);
         switch (input.valueType) {
           case "autoComplete":
             component = (
               <Form.Item label={input.keyName}>
                 <Space.Compact className="w-full">
                   <Form.Item name={input.keyName} noStyle>
-                    <AutoComplete placeholder="내용" />
+                    <AutoComplete
+                      placeholder="내용"
+                      onChange={(value) =>
+                        handleDescriptionValue(input.keyName, value)
+                      }
+                    />
                   </Form.Item>
                   {input.isCount && (
                     <Form.Item name={`${input.keyName}_count`} noStyle>
-                      <InputNumber placeholder="수량" />
+                      <InputNumber
+                        placeholder="수량"
+                        defaultValue={parseInt(input.valueCount) || 1}
+                        onChange={(value) =>
+                          handleDescriptionCount(input.keyName, value)
+                        }
+                      />
                     </Form.Item>
                   )}
                   <Button

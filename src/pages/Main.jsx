@@ -1,4 +1,4 @@
-import { Button, Layout, Menu, Spin, theme } from "antd";
+import { Button, ConfigProvider, Layout, Menu, Spin, theme } from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -107,7 +107,6 @@ const Main = ({ children }) => {
   }, [currentUser]);
 
   useEffect(() => {
-    console.log(memberInfo, memberSetting);
     if (memberSetting) {
       setMemberSettings(() => ({ ...memberSetting }));
     }
@@ -121,37 +120,52 @@ const Main = ({ children }) => {
         </div>
       )}
       {!isLoading && (
-        <Layout>
-          <Sider
-            trigger={null}
-            collapsible
-            collapsed={collapsed}
-            className=" bg-white hidden lg:inline"
-            theme="light"
+        <Layout className="p-0 ">
+          <ConfigProvider
+            theme={{
+              components: {
+                Menu: {
+                  darkItemBg: "#005c8a",
+                  darkItemColor: "rgba(255, 255, 255, 0.8)",
+                  darkItemHoverBg: "#003c5a",
+                  darkSubMenuItemBg: "#002030",
+                  darkItemSelectedBg: "#0d70a1",
+                  iconSize: 19,
+                },
+              },
+            }}
           >
-            <MainSide />
-          </Sider>
-          <Layout>
-            <Header style={{ backgroundColor: colorBgContainer }}>
-              {loginInfo?.email}
-              {memberInfo?.companyName}
-              <Button
-                onClick={() => {
-                  logOut();
-                }}
-              >
-                로그아웃
-              </Button>
-            </Header>
-            <Content
-              style={{
-                minHeight: 280,
-              }}
-              className="mt-5 lg:rounded-lg lg:m-5"
+            <Sider
+              trigger={null}
+              collapsible
+              collapsed={collapsed}
+              className="hidden lg:inline bg-transparent "
+              style={{ backgroundColor: "#005c8a" }}
             >
-              {children}
-            </Content>
-          </Layout>
+              <MainSide />
+            </Sider>
+            <Layout>
+              <Header style={{ backgroundColor: colorBgContainer }}>
+                {loginInfo?.email}
+                {memberInfo?.companyName}
+                <Button
+                  onClick={() => {
+                    logOut();
+                  }}
+                >
+                  로그아웃
+                </Button>
+              </Header>
+              <Content
+                style={{
+                  minHeight: 280,
+                }}
+                className="mt-1 lg:rounded-lg lg:m-1"
+              >
+                {children}
+              </Content>
+            </Layout>
+          </ConfigProvider>
         </Layout>
       )}
     </>
