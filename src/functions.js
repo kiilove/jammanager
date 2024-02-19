@@ -227,3 +227,26 @@ export const calcDepreciation = (type, rate, originalPrice, fromDate) => {
     monthsDiffValue: parseInt(monthsDiff),
   };
 };
+
+export const highlightText = (text, searchKeyword) => {
+  if (!searchKeyword.trim()) {
+    return text;
+  }
+
+  const parts = text.split(new RegExp(`(${searchKeyword})`, "gi"));
+  return parts.map((part, index) =>
+    part.toLowerCase() === searchKeyword.toLowerCase() ? (
+      <span
+        key={index}
+        style={{
+          backgroundColor: "rgb(34, 197, 94)",
+          color: "white",
+        }}
+      >
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  );
+};

@@ -1,72 +1,260 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useFirestoreQuery } from "../hooks/useFirestore";
-import { ConfigProvider, Empty, Table } from "antd";
+import Draggable from "react-draggable";
+import {
+  Button,
+  ConfigProvider,
+  Dropdown,
+  Empty,
+  Image,
+  Input,
+  Menu,
+  Modal,
+  Table,
+  Tag,
+} from "antd";
+import { EllipsisOutlined } from "@ant-design/icons";
+import { BiDetail } from "react-icons/bi";
+import { FaUserTag } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { ContentTitle } from "../commonstyles/Title";
+import { groupByKey, highlightText } from "../functions";
+import dayjs from "dayjs";
+import "./ListAsset.css";
 
 const ListAsset = () => {
   const [assetList, setAssetList] = useState([]);
   const assetQuery = useFirestoreQuery();
   const navigate = useNavigate();
+  const [assetCategoryList, setAssetCategoryList] = useState([]);
+  const [assetVendorList, setAssetVendorList] = useState([]);
+  const [assetPurchaseNameList, setAssetPurchaseNameList] = useState([]);
+  const [locationList, setLocationList] = useState([]);
+  const [userInfoList, setUserInfoList] = useState([]);
+  const [searchParams, setSearchParams] = useState({
+    assetCategory: [],
+    assetVendor: [],
+    assetPurchaseName: [],
+    location: [],
+    userInfo: [],
+  });
+  const [searchParamsList, setSearchParamsList] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState(null); // 모달에 표시될 내용
+  const [dragDisabled, setDragDisabled] = useState(true);
+  const [bounds, setBounds] = useState({
+    left: 0,
+    top: 0,
+    bottom: 0,
+    right: 0,
+  });
+  const [modals, setModals] = useState([]);
+
+  const draggleRef = useRef(null);
+
+  const handleViewDetail = (record) => {
+    const newModal = {
+      ...record, // 모달에 표시할 내용
+    };
+    setModals([...modals, newModal]);
+  };
+
+  // 모달 제거 함수
+  const removeModal = (id) => {
+    setModals(modals.filter((modal) => modal.id !== id));
+  };
+
+  const onStart = (event, uiData) => {
+    const { clientWidth, clientHeight } = window.document.documentElement;
+    const targetRect = draggleRef.current.getBoundingClientRect();
+    setBounds({
+      left: -targetRect.left + uiData.x,
+      right: clientWidth - (targetRect.right - uiData.x),
+      top: -targetRect.top + uiData.y,
+      bottom: clientHeight - (targetRect.bottom - uiData.y),
+    });
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+  };
+
+  const modalDraggable = (nodeRef) => {
+    return (
+      <Draggable bounds="parent" handle=".draggable-handle">
+        <div ref={nodeRef}>
+          {/* 이 div는 Draggable의 자식으로, Modal을 감싸줍니다. */}
+        </div>
+      </Draggable>
+    );
+  };
+
+  const drawItem = (record) => [
+    {
+      key: "0",
+      icon: <BiDetail className="text-base" />,
+      label: <span className="text-xs">자세히보기</span>,
+      onClick: () => {
+        handleViewDetail(record); // 여기서 record는 현재 행의 데이터입니다.
+      },
+    },
+    {
+      key: "1",
+      icon: <FaUserTag className="text-base" />,
+      label: <span className="text-xs">사용자배정</span>,
+    },
+  ];
 
   const tableColumns = [
-    {
-      title: "자산코드",
-      dataIndex: "assetCode",
-      key: "assetCode",
-      width: "30px",
-    },
     {
       title: "종류",
       dataIndex: "assetCategory",
       key: "assetCategory",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => a.assetCategory.localeCompare(b.assetCategory),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "자산명",
       dataIndex: "assetName",
       key: "assetName",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => a.assetName.localeCompare(b.assetName),
+      render: (text, record) => (
+        <button
+          className="flex justify-start items-start flex-col"
+          onClick={() => handleRowNavigate(record)}
+        >
+          <span>{highlightText(text, searchKeyword)}</span>
+          <span style={{ fontSize: 11 }}>
+            {highlightText(record.assetCode.toUpperCase(), searchKeyword)}
+          </span>
+        </button>
+      ),
     },
     {
       title: "제조사",
       dataIndex: "assetVendor",
       key: "assetVendor",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => a.assetVendor.localeCompare(b.assetVendor),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "모델명",
       dataIndex: "assetModel",
       key: "assetModel",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => a.assetModel.localeCompare(b.assetModel),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "매입처",
       dataIndex: "assetPurchaseName",
       key: "assetPurchaseName",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => a.assetName.localeCompare(b.assetName),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "입고일자",
       dataIndex: "assetPurchasedDate",
       key: "assetPurchasedDate",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) =>
         new Date(a.assetPurchasedDate) - new Date(b.assetPurchasedDate),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "등록일자",
       dataIndex: "createdAt",
       key: "createdAt",
+      className: "text-xs",
+      showSorterTooltip: false,
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
+    },
+    {
+      title: "사용일수(사용개월수)",
+      key: "usageDaysMonths",
+      className: "text-xs",
+      showSorterTooltip: false,
+      render: (_, record) => {
+        const purchasedAt = dayjs(record.assetPurchasedDate);
+        const today = dayjs();
+        const usageDays = today.diff(purchasedAt, "day");
+        const usageMonths = today.diff(purchasedAt, "month");
+        return `${usageDays.toLocaleString()}일 (${usageMonths.toLocaleString()}개월)`;
+      },
     },
     {
       title: "자산위치",
       dataIndex: "location",
       key: "location",
+      className: "text-xs",
+      showSorterTooltip: false,
+      render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "사용자",
       dataIndex: "userInfo",
       key: "userInfo",
+      className: "text-xs",
+      showSorterTooltip: false,
+      render: (userInfo) => {
+        let color = "green";
+        switch (userInfo) {
+          case "폐기":
+            color = "volcano";
+            break;
+          case "미배정":
+            color = "geekblue";
+
+          default:
+            break;
+        }
+
+        return (
+          <Tag color={color} key={userInfo}>
+            {userInfo}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "",
+      key: "action",
+      className: "text-xs",
+      render: (_, record) => (
+        <Dropdown
+          overlay={
+            <Menu
+              items={drawItem(record)} // 함수 호출을 통해 record를 전달합니다.
+            />
+          }
+        >
+          <a onClick={(e) => e.preventDefault()}>
+            <EllipsisOutlined style={{ fontSize: "20px" }} />
+          </a>
+        </Dropdown>
+      ),
     },
   ];
 
@@ -95,8 +283,18 @@ const ListAsset = () => {
   const fetchAsset = async () => {
     try {
       await assetQuery.getDocuments("assets", (data) => {
-        setAssetList(() => formatDatesInArray(data));
+        setAssetList(() =>
+          formatDatesInArray(data).sort((a, b) =>
+            a.assetCategory.localeCompare(b.assetCategory)
+          )
+        );
+
         //console.log(formatDatesInArray(data));
+        setAssetCategoryList(groupByKey(data, "assetCategory"));
+        setAssetVendorList(groupByKey(data, "assetVendor"));
+        setAssetPurchaseNameList(groupByKey(data, "assetPurchaseName"));
+        setLocationList(groupByKey(data, "location"));
+        setUserInfoList(groupByKey(data, "userInfo"));
       });
     } catch (error) {
       console.log(error);
@@ -104,27 +302,156 @@ const ListAsset = () => {
   };
 
   const handleRowNavigate = (record) => {
-    return {
-      onClick: () => {
-        navigate("/8e4314e1-ec72-47b5-84e2-114a5e7a697a", {
-          state: { recordId: record.id },
-        }); // Navigate to the desired path. Adjust the path as needed.
-      },
-    };
+    console.log(record);
+    navigate("/8e4314e1-ec72-47b5-84e2-114a5e7a697a", {
+      state: { recordId: record.id },
+    });
   };
 
   // Use Tailwind CSS classes directly
   const rowClassName = (record, index) => {
     // You can add more logic here if you want to apply different styles based on the record or index
-    return "cursor-pointer hover:bg-gray-100";
+    return "text-xs  hover:bg-gray-100";
   };
+
+  // const filterDatasBySearchParams = (datas, params) => {
+  //   // Define the keys (parameter names) to filter by
+  //   const filterKeys = [
+  //     "assetCategory",
+  //     "assetVendor",
+  //     "assetPurchaseName",
+  //     "location",
+  //   ];
+
+  //   const filteredDatas = datas.filter((data) =>
+  //     filterKeys.every(
+  //       (key) =>
+  //         // Check if params[key] is not set or empty, or if it includes the corresponding data property
+  //         !params[key] || !params[key].length || params[key].includes(data[key])
+  //     )
+  //   );
+
+  //   return filteredDatas;
+  // };
+
+  const handleReduceParamArray = (array, value) => {
+    const filtered = array.filter((f) => f === value);
+    const notFiltered = array.filter((f) => f !== value);
+
+    if (filtered.length === 0) {
+      filtered.push(...notFiltered);
+      filtered.push(value);
+      return filtered;
+    }
+    if (filtered.length > 0) {
+      return notFiltered;
+    }
+  };
+
+  const handleSearchParams = (paramType, paramList, value) => {
+    switch (paramType) {
+      case "assetCategory":
+        setSearchParams(() => ({
+          ...searchParams,
+          assetCategory: handleReduceParamArray(
+            searchParams.assetCategory,
+            value
+          ),
+        }));
+        break;
+      case "assetVendor":
+        setSearchParams(() => ({
+          ...searchParams,
+          assetVendor: handleReduceParamArray(searchParams.assetVendor, value),
+        }));
+        break;
+
+      case "assetPurchaseName":
+        setSearchParams(() => ({
+          ...searchParams,
+          assetPurchaseName: handleReduceParamArray(
+            searchParams.assetPurchaseName,
+            value
+          ),
+        }));
+        break;
+
+      case "location":
+        setSearchParams(() => ({
+          ...searchParams,
+          location: handleReduceParamArray(searchParams.location, value),
+        }));
+        break;
+
+      case "useInfo":
+        setSearchParams(() => ({
+          ...searchParams,
+          useInfo: handleReduceParamArray(searchParams.useInfo, value),
+        }));
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    setSearchParamsList([
+      ...Object.values(searchParams)
+        .map((param) => {
+          return param;
+        })
+        .flat(),
+    ]);
+  }, [searchParams]);
+
+  const filteredAssetList = useMemo(() => {
+    // 기존 searchParams에 따른 필터링과 검색 키워드에 따른 필터링을 함께 적용
+    return assetList.filter((asset) => {
+      // searchParams에 따른 필터링 조건
+      const matchesSearchParams = Object.keys(searchParams).every((key) => {
+        return (
+          !searchParams[key].length || searchParams[key].includes(asset[key])
+        );
+      });
+
+      // 검색 키워드에 따른 필터링 조건
+      const matchesSearchKeyword =
+        !searchKeyword ||
+        Object.values(asset).some((value) => {
+          return (
+            typeof value === "string" &&
+            value.toLowerCase().includes(searchKeyword.toLowerCase())
+          );
+        });
+
+      return matchesSearchParams && matchesSearchKeyword;
+    });
+  }, [assetList, searchParams, searchKeyword]); // searchKeyword를 의존성 배열에 추가
 
   useEffect(() => {
     fetchAsset();
   }, []);
 
+  const buttonUnCheckStyle = "bg-gray-100 text-xs p-2 cursor-pointer";
+  const buttonCheckStyle =
+    "flex justify-center items-center text-xs px-2 bg-green-500 rounded-2xl h-7 text-gray-100 cursor-pointer";
+  const sections = [
+    { title: "브랜드", param: "assetCategory", list: assetCategoryList },
+    { title: "제조사", param: "assetVendor", list: assetVendorList },
+    {
+      title: "구입처",
+      param: "assetPurchaseName",
+      list: assetPurchaseNameList,
+    },
+    {
+      title: "자산위치",
+      param: "location",
+      list: locationList,
+    },
+  ];
   return (
-    <div className="flex w-full justify-center items-start">
+    <div className="flex w-full justify-center items-start ">
       <ConfigProvider
         theme={{
           components: {
@@ -135,17 +462,195 @@ const ListAsset = () => {
           },
         }}
       >
-        {assetList.length > 0 ? (
-          <Table
-            columns={tableColumns}
-            dataSource={assetList}
-            className="w-full  "
-            onRow={handleRowNavigate}
-            rowClassName={rowClassName}
-          />
-        ) : (
-          <Empty description="표시할 데이터가 없습니다." />
-        )}
+        <div
+          className="flex w-full h-full flex-col rounded-lg"
+          style={{
+            backgroundColor: "#fff",
+            minHeight: "100%",
+          }}
+        >
+          <div className="flex w-full ">
+            <ContentTitle title="자산목록" />
+          </div>
+          {modals.map((modal) => {
+            console.log(modal);
+            const {
+              id,
+              assetCategory,
+              assetCode,
+              assetCost,
+              assetDepreciationPeroid,
+              assetDepreciationType,
+              assetDescritionSummay,
+              assetModel,
+              assetName,
+              assetOwner,
+              assetOwnerCompany,
+              assetProductLine,
+              assetPurchaseName,
+              assetPurchasedDate,
+              assetVendor,
+              createdAt,
+              location,
+              userInfo,
+              firstPics,
+            } = modal;
+            return (
+              <Draggable key={modal.id}>
+                <Modal
+                  mask={false}
+                  maskClosable={false}
+                  keyboard={false}
+                  wrapClassName="aaa"
+                  width={500}
+                  style={{
+                    position: "fixed",
+                    // transform: 'translateX(-50%)',
+                    left: (document.body.clientWidth - 500) / 2,
+                  }}
+                  title={
+                    <div
+                      style={{
+                        width: "100%",
+                        cursor: "move",
+                      }}
+                      onMouseOver={() => {
+                        if (dragDisabled) {
+                          setDragDisabled(false);
+                        }
+                      }}
+                      onMouseOut={() => {
+                        setDragDisabled(true);
+                      }}
+                      onFocus={() => {}}
+                      onBlur={() => {}}
+                      // end
+                    >
+                      <div className="flex justify-between items-end">
+                        <div className="flex">
+                          <Image
+                            width={128}
+                            preview={false}
+                            src={firstPics[0]?.url}
+                            fallback="data:image/png;base64,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"
+                          />
+                          <div className="flex flex-col justify-start ml-4">
+                            <div>{assetName}</div>
+                            <div
+                              style={{ color: "rgba(0, 0, 0, 0.45)" }}
+                              className="text-sm"
+                            >
+                              {assetCode}
+                            </div>
+                            <div
+                              style={{ color: "rgba(0, 0, 0, 0.8)" }}
+                              className="text-xs"
+                            >
+                              제조사 {assetVendor}
+                            </div>
+                            <div
+                              style={{ color: "rgba(0, 0, 0, 0.8)" }}
+                              className="text-xs"
+                            >
+                              모델명 {assetModel}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  footer={null}
+                  open={true}
+                  onOk={() => removeModal(modal.id)}
+                  onCancel={() => removeModal(modal.id)}
+                  modalRender={(modal) => (
+                    <Draggable
+                      disabled={dragDisabled}
+                      bounds={bounds}
+                      onStart={(event, uiData) => onStart(event, uiData)}
+                    >
+                      <div aa="2" ref={draggleRef}>
+                        {modal}
+                      </div>
+                    </Draggable>
+                  )}
+                ></Modal>
+              </Draggable>
+            );
+          })}
+
+          <div className="flex w-full px-4 flex-col mb-5">
+            {sections.map(({ title, param, list }) => (
+              <div className="flex w-full" key={title}>
+                <div
+                  className="flex bg-gray-500 pl-4 justify-start items-center"
+                  style={{ width: "130px" }}
+                >
+                  <span className="font-semibold text-gray-100 text-xs">
+                    {title}
+                  </span>
+                </div>
+                <div className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full h-10">
+                  {list.length > 0 &&
+                    list.map((type, idx) => (
+                      <div
+                        key={idx}
+                        className={
+                          searchParams[param].some((f) => f === type.label)
+                            ? buttonCheckStyle
+                            : buttonUnCheckStyle
+                        }
+                        onClick={() => {
+                          handleSearchParams(param, searchParams, type.label);
+                        }}
+                      >
+                        {type.label}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))}
+            <div className="flex w-full" key="searchKeyword">
+              <div
+                className="flex bg-gray-500 pl-4 justify-start items-center"
+                style={{ width: "130px", height: "55px" }}
+              >
+                <span className="font-semibold text-gray-100 text-xs">
+                  검색어
+                </span>
+              </div>
+              <div
+                className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full"
+                style={{ height: "55px" }}
+              >
+                <Input.Search
+                  style={{ width: 300 }}
+                  onChange={(e) =>
+                    e.target.value.trim() === "" && setSearchKeyword("")
+                  }
+                  onSearch={(value) => setSearchKeyword(value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex w-full px-4">
+            {assetList.length > 0 ? (
+              <Table
+                rowSelection={rowSelection}
+                size="small"
+                columns={tableColumns}
+                dataSource={filteredAssetList}
+                className="w-full  "
+                rowKey={"id"}
+                rowClassName={rowClassName}
+                pagination={{ currnet: 1, pageSize: 10 }}
+              />
+            ) : (
+              <Empty />
+            )}
+          </div>
+        </div>
       </ConfigProvider>
     </div>
   );
