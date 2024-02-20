@@ -1,4 +1,12 @@
-import { Button, ConfigProvider, Layout, Menu, Spin, theme } from "antd";
+import {
+  Button,
+  ConfigProvider,
+  Drawer,
+  Layout,
+  Menu,
+  Spin,
+  theme,
+} from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -7,6 +15,7 @@ import {
   VideoCameraOutlined,
 } from "@ant-design/icons";
 import Sider from "antd/es/layout/Sider";
+import { GiHamburgerMenu } from "react-icons/gi";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Content, Header } from "antd/es/layout/layout";
@@ -20,6 +29,7 @@ import { decryptObject } from "../functions";
 const Main = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDrawer, setIsDrawer] = useState(false);
   const [memberInfo, setMemberInfo] = useState({});
   const [memberSetting, setMemberSetting] = useState({});
   const { loginInfo, setLoginInfo, memberSettings, setMemberSettings } =
@@ -57,7 +67,6 @@ const Main = ({ children }) => {
       await membersQuery.getDocuments(
         "members",
         (data) => {
-          console.log(data);
           if (data.length > 0) {
             const decryptObj = {
               companyExtraAddress: data[0].companyExtraAddress,
@@ -70,7 +79,12 @@ const Main = ({ children }) => {
             const fetchedMember = {
               ...decryptObject(decryptObj, process.env.REACT_APP_SECRET_KEY),
             };
-            setMemberInfo(() => ({ ...fetchedMember }));
+            const filteredMember = {
+              companyName: fetchedMember.companyName,
+              userEmail: fetchedMember.userEmail,
+              userID: fetchedMember.userID,
+            };
+            setMemberInfo(() => ({ ...filteredMember }));
           }
         },
         condition
@@ -121,31 +135,26 @@ const Main = ({ children }) => {
       )}
       {!isLoading && (
         <Layout className="p-0 ">
-          <ConfigProvider
-            theme={{
-              components: {
-                Menu: {
-                  darkItemBg: "#005c8a",
-                  darkItemColor: "rgba(255, 255, 255, 0.8)",
-                  darkItemHoverBg: "#003c5a",
-                  darkSubMenuItemBg: "#002030",
-                  darkItemSelectedBg: "#0d70a1",
-                  iconSize: 19,
-                },
-              },
-            }}
+          <Sider
+            trigger={null}
+            collapsible
+            collapsed={collapsed}
+            className="hidden lg:inline bg-transparent "
+            style={{ backgroundColor: "#005c8a" }}
           >
-            <Sider
-              trigger={null}
-              collapsible
-              collapsed={collapsed}
-              className="hidden lg:inline bg-transparent "
-              style={{ backgroundColor: "#005c8a" }}
-            >
-              <MainSide />
-            </Sider>
-            <Layout>
-              <Header style={{ backgroundColor: colorBgContainer }}>
+            <MainSide />
+          </Sider>
+          <Layout>
+            <Header style={{ backgroundColor: colorBgContainer, padding: 0 }}>
+              <div className="flex lg:hidden w-full h-full justify-start items-center px-2">
+                <Button
+                  icon={<GiHamburgerMenu style={{ fontSize: "20px" }} />}
+                  className="flex justify-center items-center"
+                  style={{ width: "45px", height: "45px" }}
+                  onClick={() => setIsDrawer(true)}
+                />
+              </div>
+              <div className="hidden lg:flex h-full w-full justify-end items-center gap-x-2">
                 {loginInfo?.email}
                 {memberInfo?.companyName}
                 <Button
@@ -155,17 +164,34 @@ const Main = ({ children }) => {
                 >
                   로그아웃
                 </Button>
-              </Header>
-              <Content
-                style={{
-                  minHeight: 280,
+              </div>
+              <Drawer
+                open={isDrawer}
+                onClose={() => setIsDrawer(false)}
+                placement="left"
+                styles={{
+                  header: {
+                    borderBottom: `1px solid #424242`,
+                    padding: 16,
+                  },
                 }}
-                className="mt-1 lg:rounded-lg lg:m-1"
               >
-                {children}
-              </Content>
-            </Layout>
-          </ConfigProvider>
+                <MainSide
+                  theme="light"
+                  setDrawer={setIsDrawer}
+                  isDrawer={true}
+                />
+              </Drawer>
+            </Header>
+            <Content
+              style={{
+                minHeight: 280,
+              }}
+              className="mt-1 lg:rounded-lg lg:m-1"
+            >
+              {children}
+            </Content>
+          </Layout>
         </Layout>
       )}
     </>

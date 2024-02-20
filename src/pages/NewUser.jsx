@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { ContentTitle } from "../commonstyles/Title";
 import {
   Button,
@@ -16,8 +16,10 @@ import dayjs from "dayjs";
 import { formatPhoneNumber, generateUUID, getToday } from "../functions";
 import { Timestamp } from "firebase/firestore";
 import { useFirestoreAddData } from "../hooks/useFirestore";
+import { CurrentLoginContext } from "../context/CurrentLogin";
 
 const NewUser = () => {
+  const { memberSettings } = useContext(CurrentLoginContext);
   const formRef = useRef();
   const userAdd = useFirestoreAddData();
   const [api, contextHolder] = notification.useNotification();

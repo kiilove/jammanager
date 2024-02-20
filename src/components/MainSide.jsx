@@ -7,7 +7,7 @@ import { ConfigProvider, Menu } from "antd";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/logo/jam_blank.png";
 
-const MainSide = () => {
+const MainSide = ({ theme = "dark", setDrawer, isDrawer = false }) => {
   const navigate = useNavigate();
   function getItem(label, key, link, icon, children, type) {
     return {
@@ -47,8 +47,11 @@ const MainSide = () => {
     const checkLink = menus.find((f) => f.key === value.key);
     if (checkLink?.link !== undefined) {
       const link = menus.find((f) => f.key === value.key).link;
-      console.log(link);
+
       navigate(link);
+      if (setDrawer !== null) {
+        setDrawer(false);
+      }
     } else {
       const parentsKey = value?.keyPath[value.keyPath.length - 1];
 
@@ -58,15 +61,27 @@ const MainSide = () => {
       ).link;
 
       navigate(menuLink);
+      if (setDrawer !== undefined) {
+        setDrawer(false);
+      }
     }
   };
   return (
-    <div className="w-full flex-col">
+    <div className="w-full flex-col ">
       <div className="flex justify-center items-center h-20">
         <img src={Logo1} alt="" style={{ width: "50px" }} />
       </div>
 
-      <Menu items={menus} mode="inline" onClick={menuClick} theme="dark" />
+      <Menu
+        items={menus}
+        mode="inline"
+        onClick={menuClick}
+        theme={theme}
+        style={{
+          fontWeight: 600,
+          fontSize: isDrawer ? 18 : 14,
+        }}
+      />
     </div>
   );
 };

@@ -5,8 +5,10 @@
 
 body {
   margin: 0;
-  font-family: "Noto Sans KR", "Nanum Gothic Coding", "Nanum Myeongjo",
-    "Apple SD Gothic", sans-serif;
+  font-family: "Nanum Gothic", "Nanum Gothic Coding", "Nanum Myeongjo",
+    "Apple SD Gothic", sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: auto;

@@ -7,7 +7,6 @@ import {
   AutoComplete,
   Button,
   Card,
-  ConfigProvider,
   Form,
   Input,
   List,
@@ -296,138 +295,145 @@ const ServiceSetting = () => {
               className="flex w-full md:w-1/2 lg:w-1/3"
               style={{ maxWidth: "540px" }}
             >
-              <Form
-                labelCol={{
-                  span: 6,
-                }}
-                style={{
-                  width: "100%",
-                }}
-                labelAlign="right"
-                ref={companyRef}
-                form={form}
-                layout="vertical"
+              <Card
+                title="회사설정"
+                size="small"
+                className="w-full "
+                headStyle={{ backgroundColor: "#efeff0", color: "#000000" }}
               >
-                <Form.Item name="companyLogo" label="회사로고">
-                  <Upload
-                    listType="picture-card"
-                    fileList={companyLogoFile}
-                    onPreview={handlePreview}
-                    onRemove={handleCompanyLogoFileRemove}
-                    customRequest={handleCompanyLogoUploadAdd}
+                <Form
+                  labelCol={{
+                    span: 6,
+                  }}
+                  style={{
+                    width: "100%",
+                  }}
+                  labelAlign="right"
+                  ref={companyRef}
+                  form={form}
+                  layout="vertical"
+                >
+                  <Form.Item name="companyLogo" label="회사로고">
+                    <Upload
+                      listType="picture-card"
+                      fileList={companyLogoFile}
+                      onPreview={handlePreview}
+                      onRemove={handleCompanyLogoFileRemove}
+                      customRequest={handleCompanyLogoUploadAdd}
+                    >
+                      {companyLogoFile.length >= 2 ? null : uploadButton}
+                    </Upload>
+                  </Form.Item>
+                  <Form.Item
+                    name="companyName"
+                    label="회사명"
+                    initialValue={memberSettings.companyName}
                   >
-                    {companyLogoFile.length >= 2 ? null : uploadButton}
-                  </Upload>
-                </Form.Item>
-                <Form.Item
-                  name="companyName"
-                  label="회사명"
-                  initialValue={memberSettings.companyName}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  name="isCompanyChildren"
-                  label="자회사보유"
-                  initialValue={memberSettings.isCompanyChildren}
-                >
-                  <Switch
-                    checked={isCompanyChildren}
-                    onChange={(value) => setIsCompanyChildren(value)}
-                  />
-                </Form.Item>
-                {isCompanyChildren && (
-                  <Form.Item label="자회사관리">
-                    {companyChildrenEditMode ? (
-                      <Form.Item noStyle name="companyChildrenName">
-                        <Space.Compact>
-                          <Input placeholder="회사명" />
-                          <Button>m</Button>
-                          <Button>수정</Button>
-                        </Space.Compact>
-                      </Form.Item>
-                    ) : (
-                      <Form.Item noStyle name="companyChildrenName">
-                        <List
-                          size="small"
-                          bordered
-                          header={
-                            <div className="flex w-full justify-start gap-x-2">
-                              <Input
-                                placeholder="자회사명"
-                                onChange={(e) =>
-                                  setCompanyChildrenInput(e.target.value)
-                                }
-                                value={companyChildrenInput}
-                                ref={companyChildrenRef}
-                                onKeyDown={(e) => {
-                                  const list = [...companyChildrenList];
-                                  if (
-                                    e.key === "Enter" &&
-                                    companyChildrenRef?.current?.input.value
-                                  ) {
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="isCompanyChildren"
+                    label="자회사보유"
+                    initialValue={memberSettings.isCompanyChildren}
+                  >
+                    <Switch
+                      checked={isCompanyChildren}
+                      onChange={(value) => setIsCompanyChildren(value)}
+                    />
+                  </Form.Item>
+                  {isCompanyChildren && (
+                    <Form.Item label="자회사관리">
+                      {companyChildrenEditMode ? (
+                        <Form.Item noStyle name="companyChildrenName">
+                          <Space.Compact>
+                            <Input placeholder="회사명" />
+                            <Button>m</Button>
+                            <Button>수정</Button>
+                          </Space.Compact>
+                        </Form.Item>
+                      ) : (
+                        <Form.Item noStyle name="companyChildrenName">
+                          <List
+                            size="small"
+                            bordered
+                            header={
+                              <div className="flex w-full justify-start gap-x-2">
+                                <Input
+                                  placeholder="자회사명"
+                                  onChange={(e) =>
+                                    setCompanyChildrenInput(e.target.value)
+                                  }
+                                  value={companyChildrenInput}
+                                  ref={companyChildrenRef}
+                                  onKeyDown={(e) => {
                                     const list = [...companyChildrenList];
+                                    if (
+                                      e.key === "Enter" &&
+                                      companyChildrenRef?.current?.input.value
+                                    ) {
+                                      const list = [...companyChildrenList];
+                                      list.push(
+                                        companyChildrenRef?.current.input.value
+                                      );
+                                      setCompanyChildrenList([...list]);
+                                      setCompanyChildrenInput("");
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  onClick={() => {
+                                    const list = [...companyChildrenList];
+
                                     list.push(
                                       companyChildrenRef?.current.input.value
                                     );
+
                                     setCompanyChildrenList([...list]);
                                     setCompanyChildrenInput("");
-                                  }
-                                }}
-                              />
-                              <Button
-                                onClick={() => {
-                                  const list = [...companyChildrenList];
-
-                                  list.push(
-                                    companyChildrenRef?.current.input.value
-                                  );
-
-                                  setCompanyChildrenList([...list]);
-                                  setCompanyChildrenInput("");
-                                }}
-                              >
-                                추가
-                              </Button>
-                            </div>
-                          }
-                          dataSource={companyChildrenList}
-                          renderItem={(item, iIdx) => (
-                            <List.Item
-                              actions={[
-                                <Popconfirm
-                                  title="삭제"
-                                  description="자회사를 삭제하시겠습니까?"
-                                  onConfirm={() =>
-                                    handleChildrenRemove(
-                                      iIdx,
-                                      companyChildrenList,
-                                      setCompanyChildrenList,
-                                      setCompanyChildrenInput
-                                    )
-                                  }
-                                  onCancel={() => {
-                                    return;
                                   }}
-                                  okText="예"
-                                  cancelText="아니오"
-                                  okType="default"
                                 >
-                                  <Button danger style={{ border: 0 }}>
-                                    <RiDeleteBin5Line />
-                                  </Button>
-                                </Popconfirm>,
-                              ]}
-                            >
-                              {item}
-                            </List.Item>
-                          )}
-                        />
-                      </Form.Item>
-                    )}
-                  </Form.Item>
-                )}
-              </Form>
+                                  추가
+                                </Button>
+                              </div>
+                            }
+                            dataSource={companyChildrenList}
+                            renderItem={(item, iIdx) => (
+                              <List.Item
+                                actions={[
+                                  <Popconfirm
+                                    title="삭제"
+                                    description="자회사를 삭제하시겠습니까?"
+                                    onConfirm={() =>
+                                      handleChildrenRemove(
+                                        iIdx,
+                                        companyChildrenList,
+                                        setCompanyChildrenList,
+                                        setCompanyChildrenInput
+                                      )
+                                    }
+                                    onCancel={() => {
+                                      return;
+                                    }}
+                                    okText="예"
+                                    cancelText="아니오"
+                                    okType="default"
+                                  >
+                                    <Button danger style={{ border: 0 }}>
+                                      <RiDeleteBin5Line />
+                                    </Button>
+                                  </Popconfirm>,
+                                ]}
+                              >
+                                {item}
+                              </List.Item>
+                            )}
+                          />
+                        </Form.Item>
+                      )}
+                    </Form.Item>
+                  )}
+                </Form>
+              </Card>
             </div>
             <div
               className="flex w-full md:w-1/2 lg:w-1/3"
@@ -768,7 +774,7 @@ const ServiceSetting = () => {
           </div>
         </div>
       )}
-      {contextHolder}{" "}
+      {contextHolder}
     </>
   );
 };
