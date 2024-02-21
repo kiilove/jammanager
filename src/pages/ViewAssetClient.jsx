@@ -8,7 +8,7 @@ import {
 } from "antd";
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useFirestoreGetDocument } from "../hooks/useFirestore";
 import { assetInfoFieldName } from "../InitValues";
 import dayjs from "dayjs";
@@ -17,7 +17,7 @@ import { calcDepreciation, groupByKey } from "../functions";
 const ViewAssetClient = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [assetItems, setAssetItems] = useState([]);
-  const location = useLocation();
+  const params = useParams();
   const navigate = useNavigate();
   const assetDocumentGet = useFirestoreGetDocument();
   const [api, contextHolder] = notification.useNotification();
@@ -235,10 +235,10 @@ const ViewAssetClient = () => {
   };
 
   useEffect(() => {
-    if (location?.state) {
-      fetchAsset(location.state.recordId);
+    if (params?.assetCode) {
+      fetchAsset(params.assetCode);
     }
-  }, [location]);
+  }, [params]);
 
   return (
     <>
