@@ -83,7 +83,9 @@ const ViewAsset = () => {
           );
         } else {
           console.log(data);
-          const descriptionItems = Object.keys(data).map((item, iIdx) => {
+          const newData = { ...data };
+          delete newData.assetAccessory;
+          const descriptionItems = Object.keys(newData).map((item, iIdx) => {
             let value = data[item];
 
             // Check if the item is a Timestamp object and convert
@@ -195,7 +197,7 @@ const ViewAsset = () => {
             index: 1,
             isHidden: false,
             type: "타이틀",
-            span: 4,
+            span: 8,
           };
           descriptionItems.push({ ...qrItem });
           descriptionItems.push({ ...monthsDiffValueItem });
@@ -254,7 +256,7 @@ const ViewAsset = () => {
           >
             <Descriptions
               title="자산정보"
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[0]}
               bordered
               className="w-full rounded"
@@ -262,13 +264,13 @@ const ViewAsset = () => {
               column={{
                 xs: 1,
                 sm: 1,
-                md: 2,
-                lg: 4,
-                xl: 4,
+                md: 4,
+                lg: 8,
+                xl: 8,
               }}
             />
             <Descriptions
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[1]}
               bordered
               className="w-full"
@@ -276,7 +278,7 @@ const ViewAsset = () => {
             />
             <Descriptions
               title="거래정보"
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[2]}
               bordered
               className="w-full"

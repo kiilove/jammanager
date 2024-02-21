@@ -8,16 +8,15 @@ import {
 } from "antd";
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useFirestoreGetDocument } from "../hooks/useFirestore";
 import { assetInfoFieldName } from "../InitValues";
 import dayjs from "dayjs";
-import { groupByKey } from "../functions";
+import { calcDepreciation, groupByKey } from "../functions";
 
 const ViewAssetClient = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [assetItems, setAssetItems] = useState([]);
-  const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const assetDocumentGet = useFirestoreGetDocument();
@@ -74,7 +73,6 @@ const ViewAssetClient = () => {
   const fetchAsset = async (id) => {
     try {
       assetDocumentGet.getDocument("assets", id, (data) => {
-        console.log(data);
         if (!data) {
           openNotification(
             "error",
@@ -84,7 +82,10 @@ const ViewAssetClient = () => {
             3
           );
         } else {
-          const descriptionItems = Object.keys(data).map((item, iIdx) => {
+          console.log(data);
+          const newData = { ...data };
+          delete newData.assetAccessory;
+          const descriptionItems = Object.keys(newData).map((item, iIdx) => {
             let value = data[item];
 
             // Check if the item is a Timestamp object and convert
@@ -99,11 +100,15 @@ const ViewAssetClient = () => {
               value.length > 0
             ) {
               value = (
-                <div className="flex w-full justify-center">
+                <div
+                  className="flex w-full justify-center"
+                  style={{ maxWidth: "80%" }}
+                >
                   <img
                     src={value[0].url}
                     alt="Asset"
-                    style={{ maxWidth: "100px", maxHeight: "200px" }}
+                    className=" object-contain"
+                    style={{ width: "200px", height: "200px" }}
                   />
                 </div>
               );
@@ -122,6 +127,47 @@ const ViewAssetClient = () => {
             return newItem;
           });
           descriptionItems.sort((a, b) => a.index - b.index);
+          console.log(descriptionItems);
+          console.log(
+            calcDepreciation(
+              data.assetDepreciationType,
+              data.assetDepreciationPeroid,
+              data.assetCost,
+              data.assetPurchasedDate
+            )
+          );
+          const { depreciationValue, residualValue, monthsDiffValue } =
+            calcDepreciation(
+              data.assetDepreciationType,
+              data.assetDepreciationPeroid,
+              data.assetCost,
+              data.assetPurchasedDate
+            );
+          const depreciationValueItem = {
+            key: 1000,
+            label: "감가금액",
+            children: `${depreciationValue.toLocaleString()}원`,
+            index: 100,
+            isHidden: false,
+            type: "자산",
+          };
+
+          const residualValueItem = {
+            key: 1000,
+            label: "잔존금액",
+            children: `${residualValue.toLocaleString()}원`,
+            index: 103,
+            isHidden: false,
+            type: "자산",
+          };
+          const monthsDiffValueItem = {
+            key: 1000,
+            label: "사용기간",
+            children: `${monthsDiffValue}개월`,
+            index: 99,
+            isHidden: false,
+            type: "자산",
+          };
 
           const qrItem = {
             key: 1000,
@@ -150,11 +196,13 @@ const ViewAssetClient = () => {
             ),
             index: 1,
             isHidden: false,
-            type: "자산",
-            span: 1,
+            type: "타이틀",
+            span: 8,
           };
           descriptionItems.push({ ...qrItem });
-          console.log(descriptionItems);
+          descriptionItems.push({ ...monthsDiffValueItem });
+          descriptionItems.push({ ...depreciationValueItem });
+          descriptionItems.push({ ...residualValueItem });
 
           const descriptionType = groupByKey(
             descriptionItems.filter((f) => f.isHidden === false),
@@ -169,8 +217,6 @@ const ViewAssetClient = () => {
 
             return filtered;
           });
-
-          console.log(groupByType);
 
           setAssetItems(() => [...groupByType]);
           setIsLoading(false);
@@ -189,11 +235,10 @@ const ViewAssetClient = () => {
   };
 
   useEffect(() => {
-    console.log(params);
-    if (params?.assetCode) {
-      fetchAsset(params.assetCode);
+    if (location?.state) {
+      fetchAsset(location.state.recordId);
     }
-  }, [params]);
+  }, [location]);
 
   return (
     <>
@@ -206,23 +251,26 @@ const ViewAssetClient = () => {
         <div className="flex w-full h-full justify-center items-center bg-white rounded-lg p-4 flex-col gap-y-2">
           <ConfigProvider
             theme={{
-              components: {
-                Descriptions: {
-                  labelBg: "rgba(0, 0, 0, 0.08)",
-                },
-              },
+              components: {},
             }}
           >
             <Descriptions
               title="자산정보"
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[0]}
               bordered
-              className="w-full"
+              className="w-full rounded"
               size="small"
+              column={{
+                xs: 1,
+                sm: 1,
+                md: 4,
+                lg: 8,
+                xl: 8,
+              }}
             />
             <Descriptions
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[1]}
               bordered
               className="w-full"
@@ -230,7 +278,7 @@ const ViewAssetClient = () => {
             />
             <Descriptions
               title="거래정보"
-              layout="vertical"
+              //layout="vertical"
               items={assetItems[2]}
               bordered
               className="w-full"

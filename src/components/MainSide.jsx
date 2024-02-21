@@ -78,8 +78,8 @@ const MainSide = ({ theme = "dark", setDrawer, isDrawer = false }) => {
         onClick={menuClick}
         theme={theme}
         style={{
-          fontWeight: 600,
-          fontSize: isDrawer ? 18 : 14,
+          fontWeight: 400,
+          fontSize: isDrawer ? 16 : 15,
         }}
       />
     </div>

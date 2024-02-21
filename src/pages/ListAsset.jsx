@@ -588,7 +588,7 @@ const ListAsset = () => {
             </div>
           </div>
 
-          <div className="flex w-full px-4">
+          <div className="flex w-full px-4 justify-center items-start">
             {assetList.length > 0 ? (
               <Table
                 rowSelection={rowSelection}
@@ -601,7 +601,7 @@ const ListAsset = () => {
                 pagination={{ currnet: 1, pageSize: 10 }}
               />
             ) : (
-              <Empty />
+              <Empty description="등록된 자산이 없습니다." />
             )}
           </div>
         </div>

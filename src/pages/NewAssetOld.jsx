@@ -57,7 +57,7 @@ const NewAsset = () => {
   const [assetWarranty, setAssetWarranty] = useState(0);
   const [assetVendor, setAssetVendor] = useState("");
   const [assetModel, setAssetModel] = useState("");
-
+  const [assetCost, setAssetCost] = useState("");
   const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
   const [categoryInput, setCategoryInput] = useState("");
@@ -86,19 +86,6 @@ const NewAsset = () => {
   };
 
   const [form] = Form.useForm();
-  const assetVendorRef = useRef();
-  const assetModelRef = useRef();
-  const assetNameRef = useRef();
-  const assetDescritionSummayRef = useRef();
-  const assetWarrantyRef = useRef();
-  const assetPurchaseNameRef = useRef();
-  const assetOwnerCompanyRef = useRef();
-  const assetDepreciationTypeRef = useRef();
-  const assetDepreciationPeroidRef = useRef();
-  const assetCountRef = useRef();
-  const assetCostRef = useRef();
-  const assetPurchasedDateRef = useRef();
-  const createAtRef = useRef();
   const assetAccessoryNameRef = useRef();
   const assetAccessoryCountRef = useRef();
   const assetAccessorAddRef = useRef();
@@ -160,9 +147,7 @@ const NewAsset = () => {
     };
     handleAssetAccessory(assetAccessory, "add", newIndex, { ...newValue });
     setCurrentAssetAccessory({});
-    assetAccessoryNameRef.current.focus({
-      cursor: "all",
-    });
+    assetAccessoryNameRef.current.focus();
   };
   const handleAssetAccessory = (list, action, index, value) => {
     const newList = [...list];
@@ -201,12 +186,11 @@ const NewAsset = () => {
 
     // userEnteringDate와 createdAt 필드 추가
     newValue.assetPurchasedDate = assetPurchasedDate;
-    newValue.assetCost = removeCommas(values.assetCost);
     newValue.assetAccessory = [...newAccessory];
     newValue.createdAt = createdAtValue;
     newValue.location = "출고대기";
     newValue.userInfo = "미배정";
-    //newValue.assetWarranty = assetWarranty;
+    newValue.assetWarranty = assetWarranty;
     delete newValue.assetCount;
 
     if (assetCodes.length > 0) {
@@ -248,7 +232,8 @@ const NewAsset = () => {
     setAssetCount(0);
     setAssetCodes([]);
     setAssetAccessory([]);
-
+    setAssetCost(0);
+    setAssetWarranty(0);
     setIsDetailDescription(false);
   };
 
@@ -407,20 +392,9 @@ const NewAsset = () => {
     }
   }, [currentProductLine]);
 
-  const Inputs = [
-    {
-      key: 1,
-      children: [
-        {
-          index: 1,
-          type: "select",
-          label: "",
-          name: "assetCategory",
-          style: { width: 160 },
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    console.log(assetModel);
+  }, [assetModel]);
 
   return (
     <div
@@ -514,12 +488,7 @@ const NewAsset = () => {
                         <Select
                           style={{ width: 160 }}
                           dropdownRender={(menu) => <>{menu}</>}
-                          onChange={(value) => {
-                            setCurrentProductLine(value);
-                            assetVendorRef?.current.focus({
-                              cursor: "all",
-                            });
-                          }}
+                          onChange={(value) => setCurrentProductLine(value)}
                           value={currentProductLine}
                           options={productLineList.map((product, pIdx) => ({
                             label: product,
@@ -542,17 +511,11 @@ const NewAsset = () => {
               >
                 <Input
                   style={{ width: "100%" }}
-                  ref={assetVendorRef}
                   value={assetVendor}
                   onChange={(e) => {
                     e.preventDefault();
                     setAssetVendor(() => e.target.value);
                   }}
-                  onPressEnter={() =>
-                    assetModelRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
               </Form.Item>
               <Form.Item
@@ -568,16 +531,10 @@ const NewAsset = () => {
                 <Input
                   style={{ width: "100%" }}
                   value={assetModel}
-                  ref={assetModelRef}
                   onChange={(e) => {
                     e.preventDefault();
                     setAssetModel(() => e.target.value);
                   }}
-                  onPressEnter={() =>
-                    assetNameRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
               </Form.Item>
 
@@ -593,7 +550,6 @@ const NewAsset = () => {
               >
                 <Input
                   style={{ width: "100%" }}
-                  ref={assetNameRef}
                   onFocus={() =>
                     handleAssetName(
                       formRef?.current.getFieldsValue()?.assetVendor,
@@ -601,29 +557,17 @@ const NewAsset = () => {
                       formRef
                     )
                   }
-                  onPressEnter={() =>
-                    assetWarrantyRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
               </Form.Item>
-              <Form.Item
-                name="assetWarranty"
-                label="보증기간"
-                help="＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요."
-              >
+              <Form.Item name="assetWarranty" label="보증기간">
                 <InputNumber
-                  //onChange={(value) => setAssetWarranty(value)}
+                  onChange={(value) => setAssetWarranty(value)}
                   style={{ width: "150px", maxWidth: "100%" }}
-                  ref={assetWarrantyRef}
                   addonAfter={<span>개월</span>}
-                  onPressEnter={() =>
-                    assetDescritionSummayRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
+                <p className="text-red-500" style={{ fontSize: "12px" }}>
+                  ＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요.
+                </p>
               </Form.Item>
               {/* <Form.Item name="isAssetDetail" label="상세스펙">
                 <Switch
@@ -633,7 +577,7 @@ const NewAsset = () => {
                 />
               </Form.Item> */}
               <Form.Item name="assetDescritionSummay" label="간단스펙">
-                <TextArea ref={assetDescritionSummayRef} />
+                <TextArea />
               </Form.Item>
               <Form.Item
                 name="assetPurchaseName"
@@ -646,15 +590,7 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                <Input
-                  ref={assetPurchaseNameRef}
-                  style={{ width: "100%" }}
-                  onPressEnter={() =>
-                    assetOwnerCompanyRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
-                />
+                <Input style={{ width: "100%" }} />
               </Form.Item>
 
               <Form.Item
@@ -672,12 +608,6 @@ const NewAsset = () => {
                   options={[...companyList]}
                   style={{ width: "100%" }}
                   defaultValue={memberSettings?.companyName}
-                  ref={assetOwnerCompanyRef}
-                  onPressEnter={() =>
-                    assetCostRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
               </Form.Item>
               <Form.Item label="감가방식">
@@ -685,7 +615,6 @@ const NewAsset = () => {
                   <Form.Item name="assetDepreciationType" noStyle>
                     <Select
                       options={[...initDepreciationType]}
-                      ref={assetDepreciationTypeRef}
                       defaultValue="설정안함"
                       onChange={() => {
                         setAssetDepreciationType(
@@ -728,7 +657,6 @@ const NewAsset = () => {
                 rules={[
                   { required: true, message: "취득원가를 입력해주세요." },
                 ]}
-                help="＊부가세를 제외한 금액을 단가로 입력해주세요."
               >
                 <Input
                   addonAfter="원"
@@ -737,22 +665,18 @@ const NewAsset = () => {
                     textAlign: "right",
                     paddingRight: "20px",
                   }}
-                  ref={assetCostRef}
-                  onFocus={() => assetCostRef.current.focus({ cursor: "all" })}
                   onChange={(e) => {
-                    console.log(NumberWithComma(e.target.value));
-
+                    setAssetCost(NumberWithComma(e.target.value));
                     form.setFieldValue(
                       "assetCost",
-                      NumberWithComma(e.target.value)
+                      removeCommas(e.target.value)
                     );
                   }}
-                  onPressEnter={() =>
-                    assetCountRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
+                  value={assetCost}
                 />
+                <p className="text-red-500" style={{ fontSize: "12px" }}>
+                  ＊부가세를 제외한 금액을 단가로 입력해주세요.
+                </p>
               </Form.Item>
               <Form.Item
                 name="assetCount"
@@ -763,17 +687,8 @@ const NewAsset = () => {
                     message: "취득수량을 숫자형태로 입력해주세요.",
                   },
                 ]}
-                help="100개 이상은 나눠서 등록해주세요."
               >
-                <InputNumber
-                  ref={assetCountRef}
-                  max={100}
-                  onChange={handleAssetInputs}
-                  onPressEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                />
+                <InputNumber onChange={handleAssetInputs} />
               </Form.Item>
               <Form.Item
                 name="assetPurchasedDate"
@@ -787,32 +702,16 @@ const NewAsset = () => {
                 ]}
               >
                 <DatePicker
-                  ref={assetPurchasedDateRef}
                   locale={locale}
                   defaultValue={dayjs()} // 현재 날짜로 설정
                   format="YYYY-MM-DD" // 필요에 따라 형식 지정
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      createAtRef?.current.focus({
-                        cursor: "all",
-                      });
-                    }
-                  }}
                 />
               </Form.Item>
               <Form.Item name="createdAt" label="등록일자">
                 <DatePicker
-                  ref={createAtRef}
                   locale={locale}
                   defaultValue={dayjs()} // 현재 날짜로 설정
                   format="YYYY-MM-DD" // 필요에 따라 형식 지정
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      assetAccessoryNameRef?.current.focus({
-                        cursor: "all",
-                      });
-                    }
-                  }}
                 />
               </Form.Item>
               <div className="flex w-full justify-end items-center">
@@ -851,9 +750,7 @@ const NewAsset = () => {
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          assetAccessoryCountRef?.current.focus({
-                            cursor: "all",
-                          });
+                          assetAccessoryCountRef?.current.focus();
                         }
                       }}
                     />
