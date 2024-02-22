@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { ContentTitle } from "../commonstyles/Title";
 import {
+  AutoComplete,
   Button,
   Card,
   DatePicker,
@@ -49,12 +50,14 @@ const NewAsset = () => {
     useState("설정안함");
   const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
   const [assetCategoriesList, setAssetCategoriesList] = useState([]);
+  const [assetCategoryOptions, setAssetCategoryOptions] = useState([]);
   const [currentProductLine, setCurrentProductLine] = useState("");
   const [productLineList, setProductLineList] = useState([]);
+  const [productLineOptions, setProductLineOptions] = useState([]);
   const [productLineDescription, setProductLineDescription] = useState({});
   const [isDetailDescription, setIsDetailDescription] = useState(false);
   const [assetCount, setAssetCount] = useState(0);
-  const [assetWarranty, setAssetWarranty] = useState(0);
+
   const [assetVendor, setAssetVendor] = useState("");
   const [assetModel, setAssetModel] = useState("");
 
@@ -293,6 +296,12 @@ const NewAsset = () => {
         newMemberSettings.push({ ...newCategory });
         setAssetCategoriesList(() => [...newMemberSettings]);
         break;
+      case "category":
+        newMemberSettings.push({ ...newCategory });
+        setAssetCategoriesList(() => [...newMemberSettings]);
+        break;
+      default:
+        break;
     }
   };
 
@@ -380,6 +389,19 @@ const NewAsset = () => {
     return options;
   };
 
+  const handleAssetOptions = (childrenArray) => {
+    const childs = childrenArray.map((child, cIdx) => {
+      const childValue = {
+        key: cIdx + 1,
+        label: child.name,
+        value: child.name,
+      };
+      return childValue;
+    });
+
+    return childs;
+  };
+
   useEffect(() => {
     initFormValue(formRef);
   }, []);
@@ -387,6 +409,10 @@ const NewAsset = () => {
   useEffect(() => {
     if (memberSettings?.assetCategories) {
       setAssetCategoriesList(() => [...memberSettings.assetCategories]);
+
+      setAssetCategoryOptions(() =>
+        handleAssetOptions([...memberSettings.assetCategories])
+      );
       setCompanyList(() =>
         handleCompanyOptions(
           memberSettings.companyName,
@@ -455,6 +481,9 @@ const NewAsset = () => {
               <Form.Item label="분류" required>
                 <Space className="w-full">
                   <Form.Item name="assetCategory" noStyle>
+                    {/* <AutoComplete options={[...assetCategoryOptions]}>
+                      <Input />
+                    </AutoComplete> */}
                     <Select
                       style={{ width: 160 }}
                       onChange={() =>
@@ -469,43 +498,42 @@ const NewAsset = () => {
                         label: category.name,
                         value: category.name,
                       }))}
-                      dropdownRender={(menu) => (
-                        <>
-                          {menu}
-                          <Divider
-                            style={{
-                              margin: "8px 0",
-                            }}
-                          />
-                          <Space
-                            style={{
-                              padding: "0 8px 4px",
-                            }}
-                          >
-                            <Input
-                              placeholder="대분류명"
-                              ref={addCategoryRef}
-                              value={categoryInput}
-                              onChange={(e) => {
-                                setCategoryInput(() => e.target.value);
-                              }}
-                              // onKeyDown={(e) => e.stopPropagation()}
-                            />
-                            {/* 버튼을 클릭했을때 assetCategoriesList변경해야함, productLine을 일단 빈배열로 세팅 */}
-                            <Button
-                              type="text"
-                              icon={<PlusOutlined />}
-                              onClick={() =>
-                                handleAddCustom(
-                                  "category",
-                                  categoryInput,
-                                  assetCategoriesList
-                                )
-                              }
-                            />
-                          </Space>
-                        </>
-                      )}
+                      // dropdownRender={(menu) => (
+                      //   <>
+                      //     {menu}
+                      //     <Divider
+                      //       style={{
+                      //         margin: "8px 0",
+                      //       }}
+                      //     />
+                      //     <Space
+                      //       style={{
+                      //         padding: "0 8px 4px",
+                      //       }}
+                      //     >
+                      //       <Input
+                      //         placeholder="대분류명"
+                      //         ref={addCategoryRef}
+                      //         value={categoryInput}
+                      //         onChange={(e) => {
+                      //           setCategoryInput(() => e.target.value);
+                      //         }}
+                      //       />
+
+                      //       <Button
+                      //         type="text"
+                      //         icon={<PlusOutlined />}
+                      //         onClick={() =>
+                      //           handleAddCustom(
+                      //             "category",
+                      //             categoryInput,
+                      //             assetCategoriesList
+                      //           )
+                      //         }
+                      //       />
+                      //     </Space>
+                      //   </>
+                      // )}
                     />
                   </Form.Item>
                   {formRef?.current?.getFieldsValue().assetCategory !== "" &&

@@ -49,7 +49,7 @@ const MainSide = ({ theme = "dark", setDrawer, isDrawer = false }) => {
       const link = menus.find((f) => f.key === value.key).link;
 
       navigate(link);
-      if (setDrawer !== null) {
+      if (setDrawer !== undefined) {
         setDrawer(false);
       }
     } else {

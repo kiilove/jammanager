@@ -5,7 +5,7 @@ export const ContentTitle = ({
   titleColor = "black",
   titleFontSize = "18px",
 }) => (
-  <div className="flex w-full h-14 p-5 ">
+  <div className="flex w-full  p-5 ">
     <span
       style={{
         ...basicFont,
