@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
-import _ from "lodash";
+import _, { size } from "lodash";
 import {
   Button,
   Card,
@@ -15,6 +15,8 @@ import {
 } from "antd";
 import { IoApps } from "react-icons/io5";
 import { RiDeleteBin5Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa";
+import { EditOutlined, UserOutlined } from "@ant-design/icons";
 const CategorySetting = ({ onUpdate }) => {
   const [categoryForm] = Form.useForm();
   const { memberSettings } = useContext(CurrentLoginContext);
@@ -27,25 +29,7 @@ const CategorySetting = ({ onUpdate }) => {
 
   const filteredCategories = useMemo(() => {
     const newCategories = [...memberSettings.assetCategories];
-    newCategories.action = (
-      <Popconfirm
-        title="삭제"
-        description="재직상태종류를 삭제하시겠습니까?"
-        onConfirm={() => {
-          return;
-        }}
-        onCancel={() => {
-          return;
-        }}
-        okText="예"
-        cancelText="아니오"
-        okType="default"
-      >
-        <Button danger style={{ border: 0 }}>
-          <RiDeleteBin5Line />
-        </Button>
-      </Popconfirm>
-    );
+
     const matchedData = newCategories.map((category, cIdx) => {
       let productLineData = [];
       if (category?.productLine?.length > 0) {
@@ -53,6 +37,34 @@ const CategorySetting = ({ onUpdate }) => {
           const newValue = {
             key: `${cIdx}-${pIdx}`,
             name: product,
+            action: (
+              <div className="flex w-full justify-center items-center gap-1 flex-col md:flex-row">
+                <div className="flex w-full h-full justify-center items-center">
+                  <Button style={{ border: 0 }}>
+                    <EditOutlined />
+                  </Button>
+                </div>
+                <div className="flex w-full h-full justify-center items-center">
+                  <Popconfirm
+                    title="삭제"
+                    description="품목을 삭제하시겠습니까?"
+                    onConfirm={() => {
+                      return;
+                    }}
+                    onCancel={() => {
+                      return;
+                    }}
+                    okText="예"
+                    cancelText="아니오"
+                    okType="default"
+                  >
+                    <Button danger style={{ border: 0 }}>
+                      <RiDeleteBin5Line />
+                    </Button>
+                  </Popconfirm>
+                </div>
+              </div>
+            ),
             depreciationType: product?.depreciationType
               ? product.depreciationType
               : category.depreciationType,
@@ -69,7 +81,34 @@ const CategorySetting = ({ onUpdate }) => {
         depreciationType: category.depreciationType,
         depreciationPeriod: category.depreciationPeriod,
         children: [...productLineData],
-        action: category.action,
+        action: (
+          <div className="flex w-full justify-center items-center gap-1 flex-col md:flex-row">
+            <div className="flex w-full h-full justify-center items-center">
+              <Button style={{ border: 0 }}>
+                <EditOutlined />
+              </Button>
+            </div>
+            <div className="flex w-full h-full justify-center items-center">
+              <Popconfirm
+                title="삭제"
+                description="분류를 삭제하시겠습니까?"
+                onConfirm={() => {
+                  return;
+                }}
+                onCancel={() => {
+                  return;
+                }}
+                okText="예"
+                cancelText="아니오"
+                okType="default"
+              >
+                <Button danger style={{ border: 0 }}>
+                  <RiDeleteBin5Line />
+                </Button>
+              </Popconfirm>
+            </div>
+          </div>
+        ),
       };
       console.log(newTableData);
       return newTableData;

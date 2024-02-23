@@ -59,6 +59,7 @@ const initCategory2 = [
 const ServiceSetting = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenu, setIsMenu] = useState(false);
+  const [currentSelected, setCurrentSelected] = useState("title1");
 
   const [isCompanyChildren, setIsCompanyChildren] = useState(false);
   const [companyInfo, setCompanyInfo] = useState({});
@@ -176,6 +177,7 @@ const ServiceSetting = () => {
     if (component) {
       setCurrentComponent(() => component);
       setIsMenu(false);
+      setCurrentSelected(value.key);
     }
   };
 
@@ -184,6 +186,7 @@ const ServiceSetting = () => {
       items={menus}
       mode="inline"
       onClick={menuClick}
+      selectedKeys={currentSelected}
       style={{
         fontWeight: 400,
         fontSize: 15,
@@ -230,7 +233,9 @@ const ServiceSetting = () => {
   useEffect(() => {
     if (isDesktopOrLaptop || isTablet) {
       // 데스크톱 또는 랩탑일 때의 컴포넌트
-      setCurrentComponent(<CompanySetting onUpdate={onUpdate} />);
+      setCurrentComponent(
+        menus.find((f) => f.key === currentSelected)?.component
+      );
       setIsMenu(false);
     } else if (isMobile || isPortrait) {
       // 태블릿 또는 모바일이고 세로 방향일 때의 컴포넌트
@@ -238,7 +243,11 @@ const ServiceSetting = () => {
       setIsMenu(true);
     } else {
       // 그 외의 경우 (예: 모바일 가로 방향)
-      setCurrentComponent(<CompanySetting onUpdate={onUpdate} />);
+      setCurrentComponent(
+        setCurrentComponent(
+          menus.find((f) => f.key === currentSelected)?.component
+        )
+      );
     }
   }, [isDesktopOrLaptop, isTablet, isMobile, isPortrait]);
 
