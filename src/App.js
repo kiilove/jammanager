@@ -45,6 +45,7 @@ function App() {
               darkSubMenuItemBg: "#002030",
               darkItemSelectedBg: "#0d70a1",
             },
+            List: {},
           },
         }}
       >

@@ -114,8 +114,21 @@ const ViewAsset = () => {
               );
             }
 
+            if (item === "assetRentalPeriod" && value.length > 0) {
+              value = (
+                <div className="flex w-full gap-x-2">
+                  <span>{dayjs(value[0].toDate()).format("YYYY-MM-DD")}</span>-
+                  <span>
+                    {dayjs(value[1].toDate()).format("YYYY-MM-DD")}
+                    <span></span>
+                  </span>
+                </div>
+              );
+            }
+
             const fieldInfo =
               assetInfoFieldName.find((f) => f.keyName === item) || {};
+
             const newItem = {
               key: iIdx,
               label: fieldInfo.label || item,

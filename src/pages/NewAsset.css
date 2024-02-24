@@ -1,0 +1,5 @@
+@media (max-width: 768px) {
+  .ant-picker-panel-container {
+    flex-direction: column; /* 달력 패널을 세로로 정렬 */
+  }
+}

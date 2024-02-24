@@ -12,7 +12,14 @@ import {
   IoCheckmarkCircleOutline,
   IoAlertCircleOutline,
 } from "react-icons/io5";
-import { initCategory, initUserJob, initUserStatus } from "../InitValues";
+import {
+  initCategory,
+  initUserContract,
+  initUserDepartment,
+  initUserRank,
+  initUserSpot,
+  initUserStatus,
+} from "../InitValues";
 
 const initApplys = {
   serviceApply: false,
@@ -209,7 +216,10 @@ const Register = () => {
                   {
                     userID: data.userID,
                     userStatus: [...initUserStatus],
-                    userJobs: [...initUserJob],
+                    userContract: [...initUserContract],
+                    userSpot: [...initUserSpot],
+                    userRank: [...initUserRank],
+                    userDepartment: [...initUserDepartment],
                     assetCategories: [...initCategory],
                     firstCreatedAt: Timestamp.fromDate(new Date()),
                     memberShipType: "demo",

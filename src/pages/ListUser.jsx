@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 import { Empty, Table } from "antd";
+import { CurrentLoginContext } from "../context/CurrentLogin";
+import { where } from "firebase/firestore";
 
 const ListUser = () => {
   const [userList, setUserList] = useState([]);
+  const { memberSettings } = useContext(CurrentLoginContext);
   const userQuery = useFirestoreQuery();
 
   const tableColumns = [
     {
       title: "사번",
-      dataIndex: "userIdNumber",
+      dataIndex: "userCompanyID",
       key: "userIdNumber",
     },
     {
@@ -19,7 +22,7 @@ const ListUser = () => {
     },
     {
       title: "사내번호",
-      dataIndex: "userPhoneNumber",
+      dataIndex: "userCompanyPhoneNumber",
       key: "userPhoneNumber",
     },
     {
@@ -77,6 +80,8 @@ const ListUser = () => {
   };
 
   const fetchUser = async () => {
+    console.log(memberSettings);
+    const condition = [where[("userOwner", "==", memberSettings.userID)]];
     try {
       await userQuery.getDocuments("users", (data) => {
         setUserList(() => formatDatesInArray(data));

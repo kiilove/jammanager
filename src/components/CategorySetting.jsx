@@ -1,13 +1,15 @@
-import React, { useContext, useEffect, useMemo, useRef } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
-import _, { size } from "lodash";
+import _ from "lodash";
 import {
   Button,
   Card,
   Col,
   ConfigProvider,
+  Dropdown,
   Form,
   Input,
+  Menu,
   Popconfirm,
   Row,
   Select,
@@ -16,8 +18,18 @@ import {
 import { IoApps } from "react-icons/io5";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { FaRegEdit } from "react-icons/fa";
-import { EditOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  UserOutlined,
+  FolderAddOutlined,
+  EllipsisOutlined,
+} from "@ant-design/icons";
 const CategorySetting = ({ onUpdate }) => {
+  const [modalOpen, setModalOpen] = useState({
+    header: false,
+    category: false,
+    productLine: false,
+  });
   const [categoryForm] = Form.useForm();
   const { memberSettings } = useContext(CurrentLoginContext);
   const prevSettingsRef = useRef({
@@ -26,6 +38,95 @@ const CategorySetting = ({ onUpdate }) => {
     companyChildrenList: [],
     companyLogoFile: [],
   });
+  const drawHeaderItem = (index) => {
+    return [
+      {
+        key: "0",
+        icon: <EditOutlined />,
+        label: <span className="text-xs">분류추가</span>,
+      },
+    ];
+  };
+
+  const categoryColumn = [
+    {
+      key: 1,
+      title: "분류",
+      dataIndex: "name",
+      width: "50%",
+      fixed: "left",
+    },
+    {
+      key: 2,
+      title: "감가방식",
+      dataIndex: "depreciationType",
+      width: "20%",
+      fixed: true,
+    },
+    {
+      key: 3,
+      title: "감가기간(율)",
+      dataIndex: "depreciationPeriod",
+      width: "20%",
+      fixed: true,
+    },
+    {
+      key: 4,
+      title: (
+        <Dropdown overlay={<Menu items={drawHeaderItem()} />}>
+          <div className="flex w-full justify-center items-center">
+            <a onClick={(e) => e.preventDefault()}>
+              <IoApps style={{ fontSize: "20px" }} />
+            </a>
+          </div>
+        </Dropdown>
+      ),
+      width: "10%",
+      align: "center",
+      fixed: true,
+      dataIndex: "action",
+    },
+  ];
+
+  const drawCategryItem = (value, index, list) => {
+    return [
+      {
+        key: "0",
+        icon: <FolderAddOutlined />,
+        label: <span className="text-xs">{`${value?.name} 하위품목추가`}</span>,
+      },
+      {
+        key: "1",
+        icon: <EditOutlined />,
+        label: <span className="text-xs">{`${value?.name} 수정`}</span>,
+      },
+      {
+        key: "2",
+        icon: <RiDeleteBin5Line />,
+        label: <span className="text-xs">{`${value?.name} 삭제`}</span>,
+      },
+    ];
+  };
+  const drawProductLineItem = (value, index, list) => {
+    return [
+      {
+        key: "0",
+        icon: <EditOutlined />,
+        label: (
+          <span className="text-xs">{`${value?.name || value} 수정`}</span>
+        ),
+      },
+      {
+        key: "1",
+        icon: <RiDeleteBin5Line />,
+        label: (
+          <span className="text-xs">{`${value?.name || value} 삭제`}</span>
+        ),
+      },
+    ];
+  };
+
+  const renderCategoryModal = () => {};
 
   const filteredCategories = useMemo(() => {
     const newCategories = [...memberSettings.assetCategories];
@@ -34,36 +135,26 @@ const CategorySetting = ({ onUpdate }) => {
       let productLineData = [];
       if (category?.productLine?.length > 0) {
         productLineData = category.productLine.map((product, pIdx) => {
+          console.log(product);
           const newValue = {
             key: `${cIdx}-${pIdx}`,
-            name: product,
+            name: product.name,
             action: (
-              <div className="flex w-full justify-center items-center gap-1 flex-col md:flex-row">
-                <div className="flex w-full h-full justify-center items-center">
-                  <Button style={{ border: 0 }}>
-                    <EditOutlined />
-                  </Button>
-                </div>
-                <div className="flex w-full h-full justify-center items-center">
-                  <Popconfirm
-                    title="삭제"
-                    description="품목을 삭제하시겠습니까?"
-                    onConfirm={() => {
-                      return;
-                    }}
-                    onCancel={() => {
-                      return;
-                    }}
-                    okText="예"
-                    cancelText="아니오"
-                    okType="default"
-                  >
-                    <Button danger style={{ border: 0 }}>
-                      <RiDeleteBin5Line />
-                    </Button>
-                  </Popconfirm>
-                </div>
-              </div>
+              <Dropdown
+                overlay={
+                  <Menu
+                    items={drawProductLineItem(
+                      product,
+                      pIdx,
+                      category?.productLine || []
+                    )}
+                  />
+                }
+              >
+                <a onClick={(e) => e.preventDefault()}>
+                  <EllipsisOutlined style={{ fontSize: "20px" }} />
+                </a>
+              </Dropdown>
             ),
             depreciationType: product?.depreciationType
               ? product.depreciationType
@@ -82,32 +173,15 @@ const CategorySetting = ({ onUpdate }) => {
         depreciationPeriod: category.depreciationPeriod,
         children: [...productLineData],
         action: (
-          <div className="flex w-full justify-center items-center gap-1 flex-col md:flex-row">
-            <div className="flex w-full h-full justify-center items-center">
-              <Button style={{ border: 0 }}>
-                <EditOutlined />
-              </Button>
-            </div>
-            <div className="flex w-full h-full justify-center items-center">
-              <Popconfirm
-                title="삭제"
-                description="분류를 삭제하시겠습니까?"
-                onConfirm={() => {
-                  return;
-                }}
-                onCancel={() => {
-                  return;
-                }}
-                okText="예"
-                cancelText="아니오"
-                okType="default"
-              >
-                <Button danger style={{ border: 0 }}>
-                  <RiDeleteBin5Line />
-                </Button>
-              </Popconfirm>
-            </div>
-          </div>
+          <Dropdown
+            overlay={
+              <Menu items={drawCategryItem(category, cIdx, newCategories)} />
+            }
+          >
+            <a onClick={(e) => e.preventDefault()}>
+              <EllipsisOutlined style={{ fontSize: "20px" }} />
+            </a>
+          </Dropdown>
         ),
       };
       console.log(newTableData);
@@ -135,41 +209,7 @@ const CategorySetting = ({ onUpdate }) => {
             <Table
               size="small"
               dataSource={filteredCategories}
-              columns={[
-                {
-                  key: 1,
-                  title: "분류",
-                  dataIndex: "name",
-                  width: "50%",
-                  fixed: "left",
-                },
-                {
-                  key: 2,
-                  title: "감가방식",
-                  dataIndex: "depreciationType",
-                  width: "20%",
-                  fixed: true,
-                },
-                {
-                  key: 3,
-                  title: "감가기간(율)",
-                  dataIndex: "depreciationPeriod",
-                  width: "20%",
-                  fixed: true,
-                },
-                {
-                  key: 4,
-                  title: (
-                    <div className="flex w-full justify-center items-center">
-                      <IoApps />
-                    </div>
-                  ),
-                  dataIndex: "action",
-                  width: "10%",
-                  align: "center",
-                  fixed: true,
-                },
-              ]}
+              columns={categoryColumn}
             />
           </Col>
           <Col></Col>

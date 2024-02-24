@@ -250,3 +250,20 @@ export const highlightText = (text, searchKeyword) => {
     )
   );
 };
+
+export const generateUniqueCompanyID = (existingNumbers) => {
+  const generateRandomNumber = () => {
+    let randomNumber = "";
+    for (let i = 0; i < 10; i++) {
+      randomNumber += Math.floor(Math.random() * 10).toString(); // 0부터 9까지의 숫자를 랜덤하게 생성하여 문자열로 추가
+    }
+    return randomNumber;
+  };
+
+  let uniqueNumber = generateRandomNumber();
+  while (existingNumbers.includes(uniqueNumber)) {
+    uniqueNumber = generateRandomNumber(); // 기존 번호에 포함되어 있으면 새로운 번호 생성
+  }
+
+  return uniqueNumber;
+};

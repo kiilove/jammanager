@@ -16,7 +16,12 @@ import {
   Upload,
   notification,
 } from "antd";
-import { PlusOutlined, UploadOutlined, MinusOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  UploadOutlined,
+  MinusOutlined,
+  DownOutlined,
+} from "@ant-design/icons";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
@@ -39,6 +44,8 @@ import {
 import { useEnterKeyToNextField } from "../hooks/useEnterKey";
 import AssetDescription from "../components/AssetDescription";
 import TextArea from "antd/es/input/TextArea";
+import { useMediaQuery } from "react-responsive";
+import "./NewAsset.css";
 
 const NewAsset = () => {
   const formRef = useRef();
@@ -46,6 +53,7 @@ const NewAsset = () => {
   const [assetInputs, setAssetInputs] = useState([]);
   const [assetCodes, setAssetCodes] = useState([]);
   const [companyList, setCompanyList] = useState([]);
+  const [assetPuchasedType, setAssetPuchasedType] = useState("구매");
   const [assetDepreciationType, setAssetDepreciationType] =
     useState("설정안함");
   const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
@@ -61,6 +69,10 @@ const NewAsset = () => {
   const [assetVendor, setAssetVendor] = useState("");
   const [assetModel, setAssetModel] = useState("");
 
+  const [assetVendorOptions, setAssetVendorOptions] = useState([]);
+  const [assetModelOptions, setAssetModelOptions] = useState([]);
+  const [assetPurchaseOptions, setAssetPurchaseOptions] = useState([]);
+
   const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
   const [categoryInput, setCategoryInput] = useState("");
@@ -69,7 +81,8 @@ const NewAsset = () => {
   const addProductLineRef = useRef();
   const assetPicUpload = useImageUpload();
 
-  const { loginInfo, memberSettings } = useContext(CurrentLoginContext);
+  const { loginInfo, memberSettings, grouped, setGrouped } =
+    useContext(CurrentLoginContext);
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
     apiType,
@@ -87,11 +100,20 @@ const NewAsset = () => {
       maxCount,
     });
   };
+  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isTablet = useMediaQuery({
+    query: "(min-width: 768px) and (max-width: 1223px)",
+  });
+  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
+
+  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
+  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
 
   const [form] = Form.useForm();
   const assetVendorRef = useRef();
   const assetModelRef = useRef();
   const assetNameRef = useRef();
+  const assetPurchasedTypeRef = useRef();
   const assetDescritionSummayRef = useRef();
   const assetWarrantyRef = useRef();
   const assetPurchaseNameRef = useRef();
@@ -105,6 +127,7 @@ const NewAsset = () => {
   const assetAccessoryNameRef = useRef();
   const assetAccessoryCountRef = useRef();
   const assetAccessorAddRef = useRef();
+  const assetVendorAutoRef = useRef();
   //useEnterKeyToNextField();
 
   const renderInput = (code, index) => {
@@ -182,6 +205,24 @@ const NewAsset = () => {
   const handleFinish = (values) => {
     // userEnteringDate를 Date 객체로 변환한 후 Firestore Timestamp로 변환
 
+    const updateGrouped = (condition, key, value) => {
+      if (condition?.length === 0) {
+        setGrouped((prevGrouped) => ({
+          ...prevGrouped,
+          [key]: [...prevGrouped[key], { value, label: value }],
+        }));
+      }
+    };
+
+    // 사용 예:
+    updateGrouped(assetModelOptions, "groupedModel", values.assetModel);
+    updateGrouped(assetVendorOptions, "groupedVendor", values.assetVendor);
+    updateGrouped(
+      assetPurchaseOptions,
+      "groupedPurchaseName",
+      values.assetPurchaseName
+    );
+
     const assetPurchasedDate = values.assetPurchasedDate
       ? Timestamp.fromDate(values.assetPurchasedDate.toDate())
       : "";
@@ -189,6 +230,14 @@ const NewAsset = () => {
     const createdAtValue = values.createdAt
       ? Timestamp.fromDate(values.createdAt.toDate())
       : Timestamp.fromDate(new Date());
+
+    let assetRentalPeriod = [];
+    if (values.assetRentalPeriod?.length > 0) {
+      const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
+        return Timestamp.fromDate(rent.toDate());
+      });
+      assetRentalPeriod = newPeriod;
+    }
 
     // value 객체의 각 필드를 확인하고 undefined인 경우 빈 문자열로 대체
     const newValue = Object.keys(values).reduce((acc, key) => {
@@ -206,6 +255,7 @@ const NewAsset = () => {
     newValue.assetPurchasedDate = assetPurchasedDate;
     newValue.assetCost = removeCommas(values.assetCost);
     newValue.assetAccessory = [...newAccessory];
+    newValue.assetRentalPeriod = assetRentalPeriod;
     newValue.createdAt = createdAtValue;
     newValue.location = "출고대기";
     newValue.userInfo = "미배정";
@@ -251,7 +301,7 @@ const NewAsset = () => {
     setAssetCount(0);
     setAssetCodes([]);
     setAssetAccessory([]);
-
+    form.setFieldValue("assetOwnerCompany", memberSettings.companyName);
     setIsDetailDescription(false);
   };
 
@@ -278,30 +328,6 @@ const NewAsset = () => {
         ...ref?.current.getFieldsValue(),
         assetName,
       });
-    }
-  };
-
-  //직접추가 부분 구현해야함
-  const handleAddCustom = (type, value, original) => {
-    const newMemberSettings = [...original];
-    const newCategory = {
-      depreciationType: "설정안함",
-      depreciationPeroid: 0,
-      name: value,
-      key: original.length > 0 ? original.length + 1 : 0,
-      productLine: [],
-    };
-    switch (type) {
-      case "category":
-        newMemberSettings.push({ ...newCategory });
-        setAssetCategoriesList(() => [...newMemberSettings]);
-        break;
-      case "category":
-        newMemberSettings.push({ ...newCategory });
-        setAssetCategoriesList(() => [...newMemberSettings]);
-        break;
-      default:
-        break;
     }
   };
 
@@ -367,12 +393,6 @@ const NewAsset = () => {
       } else {
         setProductLineList([]);
       }
-
-      form.setFieldValue("assetDepreciationType", filtered.depreciationType);
-      form.setFieldValue(
-        "assetDepreciationPeroid",
-        filtered.depreciationPeriod
-      );
     }
   };
 
@@ -400,6 +420,13 @@ const NewAsset = () => {
     });
 
     return childs;
+  };
+
+  const SearchOption = () => {};
+
+  const handleSearchOptions = (keyword, list, setList) => {
+    const filteredList = list.filter((f) => f.value.includes(keyword));
+    setList(filteredList);
   };
 
   useEffect(() => {
@@ -430,8 +457,34 @@ const NewAsset = () => {
 
   useEffect(() => {
     if (currentProductLine !== "") {
+      const filteredProductLine = memberSettings.assetCategories.find(
+        (f) => f.name === form.getFieldValue("assetCategory")
+      )?.productLine;
+      if (filteredProductLine?.length > 0) {
+        const findInfo = filteredProductLine.find(
+          (f) => f.name === form.getFieldValue("assetProductLine")
+        );
+        if (findInfo) {
+          form.setFieldValue(
+            "assetDepreciationType",
+            findInfo.depreciationType
+          );
+          form.setFieldValue(
+            "assetDepreciationPeroid",
+            findInfo.depreciationPeriod
+          );
+        }
+      }
     }
   }, [currentProductLine]);
+
+  useEffect(() => {
+    if (grouped) {
+      setAssetModelOptions(() => [...grouped.groupedModel]);
+      setAssetVendorOptions(() => [...grouped.groupedVendor]);
+      setAssetPurchaseOptions(() => [...grouped.groupedPurchaseName]);
+    }
+  }, [grouped]);
 
   const Inputs = [
     {
@@ -486,54 +539,19 @@ const NewAsset = () => {
                     </AutoComplete> */}
                     <Select
                       style={{ width: 160 }}
-                      onChange={() =>
+                      onChange={() => {
+                        form.setFieldValue("assetProductLine", "");
                         formRef?.current &&
-                        filterProductLine(
-                          formRef?.current.getFieldsValue().assetCategory,
-                          memberSettings
-                        )
-                      }
+                          filterProductLine(
+                            formRef?.current.getFieldsValue().assetCategory,
+                            memberSettings
+                          );
+                      }}
                       //onChange={(value) => setCurrentCategory(() => value)}
                       options={assetCategoriesList.map((category, cIdx) => ({
                         label: category.name,
                         value: category.name,
                       }))}
-                      // dropdownRender={(menu) => (
-                      //   <>
-                      //     {menu}
-                      //     <Divider
-                      //       style={{
-                      //         margin: "8px 0",
-                      //       }}
-                      //     />
-                      //     <Space
-                      //       style={{
-                      //         padding: "0 8px 4px",
-                      //       }}
-                      //     >
-                      //       <Input
-                      //         placeholder="대분류명"
-                      //         ref={addCategoryRef}
-                      //         value={categoryInput}
-                      //         onChange={(e) => {
-                      //           setCategoryInput(() => e.target.value);
-                      //         }}
-                      //       />
-
-                      //       <Button
-                      //         type="text"
-                      //         icon={<PlusOutlined />}
-                      //         onClick={() =>
-                      //           handleAddCustom(
-                      //             "category",
-                      //             categoryInput,
-                      //             assetCategoriesList
-                      //           )
-                      //         }
-                      //       />
-                      //     </Space>
-                      //   </>
-                      // )}
                     />
                   </Form.Item>
                   {formRef?.current?.getFieldsValue().assetCategory !== "" &&
@@ -543,19 +561,57 @@ const NewAsset = () => {
                           style={{ width: 160 }}
                           dropdownRender={(menu) => <>{menu}</>}
                           onChange={(value) => {
-                            setCurrentProductLine(value);
+                            setCurrentProductLine({
+                              label: value,
+                              value: value,
+                            });
+
+                            setAssetPuchasedType(value === "구독" && "렌탈");
+                            form.setFieldValue(
+                              "assetPuchasedType",
+                              value === "구독" ? "렌탈" : "구매"
+                            );
                             assetVendorRef?.current.focus({
                               cursor: "all",
                             });
                           }}
                           value={currentProductLine}
                           options={productLineList.map((product, pIdx) => ({
-                            label: product,
-                            value: product,
+                            label: product.name,
+                            value: product.name,
                           }))}
                         />
                       </Form.Item>
                     )}
+                </Space>
+              </Form.Item>
+              <Form.Item label="취득방식">
+                <Space
+                  className="w-full"
+                  direction={isDesktopOrLaptop ? "horizontal" : "vertical"}
+                >
+                  <Form.Item name="assetPuchasedType" noStyle>
+                    <Select
+                      style={{ width: 120 }}
+                      defaultValue={"구매"}
+                      value={assetPuchasedType}
+                      onChange={(value) => setAssetPuchasedType(value)}
+                      options={[
+                        { key: 1, label: "구매", value: "구매" },
+                        { key: 2, label: "렌탈(구독)", value: "렌탈" },
+                      ]}
+                    />
+                  </Form.Item>
+                  {assetPuchasedType === "렌탈" && (
+                    <Form.Item name="assetRentalPeriod" noStyle>
+                      <DatePicker.RangePicker
+                        locale={locale}
+                        defaultValue={[dayjs(), dayjs()]} // 현재 날짜로 설정
+                        format="YYYY-MM-DD"
+                        onChange={(e) => console.log(e)}
+                      />
+                    </Form.Item>
+                  )}
                 </Space>
               </Form.Item>
               <Form.Item
@@ -568,7 +624,7 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                <Input
+                {/* <Input
                   style={{ width: "100%" }}
                   ref={assetVendorRef}
                   value={assetVendor}
@@ -581,7 +637,40 @@ const NewAsset = () => {
                       cursor: "all",
                     })
                   }
-                />
+                /> */}
+                <AutoComplete
+                  options={assetVendorOptions}
+                  ref={assetVendorAutoRef}
+                  onSearch={(value) =>
+                    handleSearchOptions(
+                      value,
+                      grouped.groupedVendor,
+                      setAssetVendorOptions
+                    )
+                  }
+                >
+                  <Input
+                    style={{ width: "100%" }}
+                    ref={assetVendorRef}
+                    value={assetVendor}
+                    onChange={(e) => {
+                      e.preventDefault();
+                      setAssetVendor(() => e.target.value);
+                    }}
+                    onPressEnter={() =>
+                      assetModelRef?.current.focus({
+                        cursor: "all",
+                      })
+                    }
+                    addonAfter={
+                      <DownOutlined
+                        className=" bg-transparent"
+                        style={{ fontSize: 7 }}
+                        onClick={() => assetVendorAutoRef?.current.focus()}
+                      />
+                    }
+                  />
+                </AutoComplete>
               </Form.Item>
               <Form.Item
                 name="assetModel"
@@ -593,20 +682,37 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                <Input
-                  style={{ width: "100%" }}
-                  value={assetModel}
-                  ref={assetModelRef}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    setAssetModel(() => e.target.value);
-                  }}
-                  onPressEnter={() =>
-                    assetNameRef?.current.focus({
-                      cursor: "all",
-                    })
+                <AutoComplete
+                  options={assetModelOptions}
+                  onSearch={(value) =>
+                    handleSearchOptions(
+                      value,
+                      grouped.groupedModel,
+                      setAssetModelOptions
+                    )
                   }
-                />
+                >
+                  <Input
+                    style={{ width: "100%" }}
+                    value={assetModel}
+                    ref={assetModelRef}
+                    onChange={(e) => {
+                      e.preventDefault();
+                      setAssetModel(() => e.target.value);
+                    }}
+                    onPressEnter={() =>
+                      assetNameRef?.current.focus({
+                        cursor: "all",
+                      })
+                    }
+                    addonAfter={
+                      <DownOutlined
+                        className=" bg-transparent"
+                        style={{ fontSize: 7 }}
+                      />
+                    }
+                  />
+                </AutoComplete>
               </Form.Item>
 
               <Form.Item
@@ -674,15 +780,32 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                <Input
-                  ref={assetPurchaseNameRef}
-                  style={{ width: "100%" }}
-                  onPressEnter={() =>
-                    assetOwnerCompanyRef?.current.focus({
-                      cursor: "all",
-                    })
+                <AutoComplete
+                  options={assetPurchaseOptions}
+                  onSearch={(value) =>
+                    handleSearchOptions(
+                      value,
+                      grouped.groupedPurchaseName,
+                      setAssetPurchaseOptions
+                    )
                   }
-                />
+                >
+                  <Input
+                    ref={assetPurchaseNameRef}
+                    style={{ width: "100%" }}
+                    onPressEnter={() =>
+                      assetOwnerCompanyRef?.current.focus({
+                        cursor: "all",
+                      })
+                    }
+                    addonAfter={
+                      <DownOutlined
+                        className=" bg-transparent"
+                        style={{ fontSize: 7 }}
+                      />
+                    }
+                  />
+                </AutoComplete>
               </Form.Item>
 
               <Form.Item
@@ -842,6 +965,9 @@ const NewAsset = () => {
                     }
                   }}
                 />
+              </Form.Item>
+              <Form.Item name="assetMemo" label="비고">
+                <TextArea />
               </Form.Item>
               <div className="flex w-full justify-end items-center">
                 <Button

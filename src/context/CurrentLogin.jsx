@@ -12,10 +12,18 @@ const testLoginInfo = {
 export const CurrentLoginProvider = ({ children }) => {
   const [loginInfo, setLoginInfo] = useState({});
   const [memberSettings, setMemberSettings] = useState({});
+  const [grouped, setGrouped] = useState({});
 
   return (
     <CurrentLoginContext.Provider
-      value={{ loginInfo, setLoginInfo, memberSettings, setMemberSettings }}
+      value={{
+        loginInfo,
+        setLoginInfo,
+        memberSettings,
+        setMemberSettings,
+        grouped,
+        setGrouped,
+      }}
     >
       {children}
     </CurrentLoginContext.Provider>

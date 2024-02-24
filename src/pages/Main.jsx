@@ -24,7 +24,7 @@ import { CurrentLoginContext } from "../context/CurrentLogin";
 import useFirebaseAuth from "../hooks/useFireAuth";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 import { where } from "firebase/firestore";
-import { decryptObject } from "../functions";
+import { decryptObject, groupByKey } from "../functions";
 
 const Main = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -32,11 +32,18 @@ const Main = ({ children }) => {
   const [isDrawer, setIsDrawer] = useState(false);
   const [memberInfo, setMemberInfo] = useState({});
   const [memberSetting, setMemberSetting] = useState({});
-  const { loginInfo, setLoginInfo, memberSettings, setMemberSettings } =
-    useContext(CurrentLoginContext);
+  const {
+    loginInfo,
+    setLoginInfo,
+    memberSettings,
+    setMemberSettings,
+    grouped,
+    setGrouped,
+  } = useContext(CurrentLoginContext);
   const { currentUser, logOut } = useFirebaseAuth();
   const membersQuery = useFirestoreQuery();
   const memberSettingQuery = useFirestoreQuery();
+  const assetByOwnerIdQuery = useFirestoreQuery();
   const navigate = useNavigate();
 
   const {
@@ -94,6 +101,29 @@ const Main = ({ children }) => {
     }
   };
 
+  const fetchAssetsQuery = async (value) => {
+    const condition = [where("assetOwner", "==", value)];
+    try {
+      await assetByOwnerIdQuery.getDocuments(
+        "assets",
+        (data) => {
+          const groupedModel = groupByKey(data, "assetModel");
+          const groupedVendor = groupByKey(data, "assetVendor");
+          const groupedPurchaseName = groupByKey(data, "assetPurchaseName");
+
+          setGrouped(() => ({
+            groupedModel,
+            groupedVendor,
+            groupedPurchaseName,
+          }));
+        },
+        condition
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // 로그인 정보를 체크하는 useEffect
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -109,6 +139,7 @@ const Main = ({ children }) => {
         setLoginInfo(currentUser),
         fetchMembersQuery(currentUser.uid),
         fetchMemberSettingQuery(currentUser.uid),
+        fetchAssetsQuery(currentUser.uid),
         clearTimeout(timer),
       ];
       Promise.all(promises).then(() => {

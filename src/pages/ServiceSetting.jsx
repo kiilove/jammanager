@@ -36,26 +36,9 @@ import CompanySetting from "../components/CompanySetting";
 import { useMediaQuery } from "react-responsive";
 import CategorySetting from "../components/CategorySetting";
 import { FaBuilding } from "react-icons/fa";
+import { LuUsers } from "react-icons/lu";
+import HRSetting from "../components/HRSetting";
 
-const initUserStatus = ["재직", "파견", "휴직", "퇴사"];
-const initUserJob = ["정직원", "계약직", "임시직", "프리랜서", "외부직원"];
-const initCategory = ["전산장비", "소프트웨어", "가구", "기타"];
-const initCategory2 = [
-  {
-    key: 1,
-    name: "전산장비",
-    depreciationType: "설정안함",
-    depreciationPeriod: 0,
-  },
-  {
-    key: 2,
-    name: "소프트웨어",
-    depreciationType: "설정안함",
-    depreciationPeriod: 0,
-  },
-  { key: 3, name: "가구", depreciationType: "설정안함", depreciationPeriod: 0 },
-  { key: 4, name: "기타", depreciationType: "설정안함", depreciationPeriod: 0 },
-];
 const ServiceSetting = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenu, setIsMenu] = useState(false);
@@ -69,7 +52,7 @@ const ServiceSetting = () => {
 
   const [userStatusList, setUserStatusList] = useState([]);
   const [userStatusInput, setUserStatusInput] = useState();
-  const [userJobList, setUserJobList] = useState([]);
+  const [userJobList, setUserContractList] = useState([]);
   const [userJobInput, setUserJobInput] = useState();
 
   const [assetCategoryList, setAssetCategoryList] = useState([]);
@@ -90,6 +73,7 @@ const ServiceSetting = () => {
 
   const { logOut } = useFirebaseAuth;
   const settingsUpdate = useFirestoreUpdateData();
+
   const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
   const isTablet = useMediaQuery({
     query: "(min-width: 768px) and (max-width: 1223px)",
@@ -170,6 +154,13 @@ const ServiceSetting = () => {
       <RiBookletLine />,
       <CategorySetting onUpdate={onUpdate} />
     ),
+    getItem(
+      "인사설정",
+      "title3",
+      undefined,
+      <LuUsers />,
+      <HRSetting onUpdate={onUpdate} />
+    ),
   ];
 
   const menuClick = (value) => {
@@ -218,7 +209,7 @@ const ServiceSetting = () => {
           "isCompanyChildren",
           memberSettings.isCompanyChildren
         ),
-        setUserJobList(() => [...memberSettings.userJobs]),
+        setUserContractList(() => [...memberSettings.userContract]),
         setUserStatusList(() => [...memberSettings.userStatus]),
         setAssetCategoryList(() => [...memberSettings.assetCategories]),
         clearTimeout(timer),
