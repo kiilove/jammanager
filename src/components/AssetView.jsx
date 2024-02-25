@@ -199,7 +199,7 @@ const AssetView = ({ data }) => {
                 </div>
                 <div className="flex">
                   <span className="mr-1">취득일자:</span>
-                  <span>{data.assetPurchasedDate}</span>
+                  <span>{data.assetPurchasedDateConverted}</span>
                 </div>
                 <div className="flex">
                   <span className="mr-1">위치:</span>
@@ -207,7 +207,7 @@ const AssetView = ({ data }) => {
                 </div>
                 <div className="flex">
                   <span className="mr-1">사용자:</span>
-                  <span>{data.userInfo}</span>
+                  <span>{data.userInfo?.userName}</span>
                 </div>
               </div>
             </Col>

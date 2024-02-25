@@ -4,8 +4,10 @@ export const ContentTitle = ({
   title,
   titleColor = "black",
   titleFontSize = "18px",
+  padding = 5,
+  marginBottom = 0,
 }) => (
-  <div className="flex w-full  p-5 ">
+  <div className={`flex w-full p-${padding} mb-${marginBottom}`}>
     <span
       style={{
         ...basicFont,

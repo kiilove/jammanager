@@ -32,8 +32,8 @@ import {
   generateUUID,
   removeCommas,
 } from "../functions";
-import { Timestamp } from "firebase/firestore";
-import { useFirestoreAddData } from "../hooks/useFirestore";
+import { Timestamp, where } from "firebase/firestore";
+import { useFirestoreAddData, useFirestoreQuery } from "../hooks/useFirestore";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import useImageUpload from "../hooks/useFireStorage";
 import {
@@ -41,7 +41,7 @@ import {
   initDepreciationRate,
   initDepreciationType,
 } from "../InitValues";
-import { useEnterKeyToNextField } from "../hooks/useEnterKey";
+
 import AssetDescription from "../components/AssetDescription";
 import TextArea from "antd/es/input/TextArea";
 import { useMediaQuery } from "react-responsive";
@@ -49,7 +49,7 @@ import "./NewAsset.css";
 
 const NewAsset = () => {
   const formRef = useRef();
-  const assetAdd = useFirestoreAddData();
+
   const [assetInputs, setAssetInputs] = useState([]);
   const [assetCodes, setAssetCodes] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -75,11 +75,15 @@ const NewAsset = () => {
 
   const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
+  const [userList, setUserList] = useState([]);
+  const [userOptions, setUserOptions] = useState([]);
   const [categoryInput, setCategoryInput] = useState("");
   const [productLineInput, setProductLineInput] = useState("");
   const addCategoryRef = useRef();
   const addProductLineRef = useRef();
   const assetPicUpload = useImageUpload();
+  const assetAdd = useFirestoreAddData();
+  const assetFeedAdd = useFirestoreAddData();
 
   const { loginInfo, memberSettings, grouped, setGrouped } =
     useContext(CurrentLoginContext);
@@ -149,7 +153,7 @@ const NewAsset = () => {
             <Button icon={<UploadOutlined />}>사진업로드</Button>
           </Upload>
         </div>
-        <div className="flex w-full">
+        <div className="flex w-full mb-2">
           <Input
             key={code.assetCode.toUpperCase()} // 고유한 key 추가
             defaultValue={code.assetCode.toUpperCase()}
@@ -167,9 +171,44 @@ const NewAsset = () => {
             }}
           />
         </div>
+        {/* <div className="flex w-full mb-2">
+          <AutoComplete
+            options={userOptions}
+            onSearch={(value) => onUserSearch(value, userList)}
+            popupMatchSelectWidth={300}
+            style={{
+              width: 250,
+            }}
+          >
+            <Input />
+          </AutoComplete>
+        </div> */}
       </div>
     );
   };
+
+  const makeUserLabelValueData = (options) => {
+    const newOptions = [...options];
+    let lableValue = [];
+    if (newOptions.length > 0) {
+      lableValue = newOptions.map((option, oIdx) => {
+        const newValue = option.userUID;
+        const newLabel = (
+          <div className="w-full flex flex-col">
+            <div className="flex w-full gap-x-2">
+              <span>{option.userName}</span>
+              <span>{option.userSpot}</span>
+              <span>{option.userRank}</span>
+              <span>{option.userEmail}</span>
+            </div>
+          </div>
+        );
+        return { value: newValue, label: newLabel };
+      });
+    }
+    return lableValue;
+  };
+
   const handleAssetAccessoryAdd = () => {
     const newIndex = assetAccessory.length + 1;
     const newValue = {
@@ -184,6 +223,7 @@ const NewAsset = () => {
         />
       ),
     };
+
     handleAssetAccessory(assetAccessory, "add", newIndex, { ...newValue });
     setCurrentAssetAccessory({});
     assetAccessoryNameRef.current.focus({
@@ -258,13 +298,14 @@ const NewAsset = () => {
     newValue.assetRentalPeriod = assetRentalPeriod;
     newValue.createdAt = createdAtValue;
     newValue.location = "출고대기";
-    newValue.userInfo = "미배정";
+    newValue.userInfo = { userName: "미지정" };
     //newValue.assetWarranty = assetWarranty;
     delete newValue.assetCount;
 
     if (assetCodes.length > 0) {
       assetCodes.map(async (asset, cIdx) => {
         const codeWithValue = {
+          assetUID: generateUUID(),
           assetCode: asset.assetCode.toUpperCase(),
           firstPics: [...asset.firstPics],
           assetOwner: memberSettings.userID,
@@ -273,16 +314,36 @@ const NewAsset = () => {
         console.log(codeWithValue);
 
         try {
-          await assetAdd.addData("assets", { ...codeWithValue }, (data) => {
-            openNotification(
-              "success",
-              "추가 성공",
-              `${data?.assetName}을 추가했습니다.`,
-              "topRight",
-              3,
-              5
-            );
-          });
+          await assetAdd.addData(
+            "assets",
+            { ...codeWithValue },
+            async (data) => {
+              await assetFeedAdd.addData(
+                "assetFeeds",
+                {
+                  refAssetID: data.id,
+                  refAssetUID: codeWithValue.assetUID,
+                  createBy: "system",
+                  createAt: Timestamp.fromDate(new Date()),
+                  feedType: "입고",
+                  feedContext: `${dayjs(assetPurchasedDate.toDate()).format(
+                    "YYYY-MM-DD"
+                  )}에 입고되었습니다.`,
+                  feedPics: [...asset.firstPics],
+                },
+                () => {
+                  openNotification(
+                    "success",
+                    "추가 성공",
+                    `${data?.assetName}을 추가했습니다.`,
+                    "topRight",
+                    3,
+                    5
+                  );
+                }
+              );
+            }
+          );
         } catch (error) {
           console.log(error);
         }

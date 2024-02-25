@@ -1,53 +1,178 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
-import _ from "lodash";
+import _, { set } from "lodash";
 import {
   Button,
-  Card,
   Col,
   ConfigProvider,
   Dropdown,
   Form,
-  Input,
   Menu,
+  Modal,
   Popconfirm,
   Row,
-  Select,
   Table,
 } from "antd";
 import { IoApps } from "react-icons/io5";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import { FaRegEdit } from "react-icons/fa";
 import {
   EditOutlined,
-  UserOutlined,
   FolderAddOutlined,
   EllipsisOutlined,
+  ExclamationCircleFilled,
 } from "@ant-design/icons";
+import AssetCategoryModal from "./AssetCategoryModal";
+import { initCategory } from "../InitValues";
+import AssetProductLineModal from "./AssetProductLineModal";
+
 const CategorySetting = ({ onUpdate }) => {
   const [modalOpen, setModalOpen] = useState({
-    header: false,
-    category: false,
-    productLine: false,
+    visible: false,
+    component: null,
   });
-  const [categoryForm] = Form.useForm();
+  const [assetCategories, setAssetCategories] = useState([]);
+  const [currentProductLine, setCurrentProductLine] = useState([]);
+  const [currentParentIndex, setCurrentParentIndex] = useState(0);
+  const [isChanged, setIsChanged] = useState(false);
+
   const { memberSettings } = useContext(CurrentLoginContext);
   const prevSettingsRef = useRef({
-    companyName: "",
-    isCompanyChildren: false,
-    companyChildrenList: [],
-    companyLogoFile: [],
+    assetCategories: [],
+    productLine: [],
   });
+  const { confirm } = Modal;
+  const handleRemoveCategory = (data, setData, index) => {
+    const newData = [...data];
+    newData.splice(index, 1);
+    setData(() => [...newData]);
+  };
+
   const drawHeaderItem = (index) => {
     return [
       {
         key: "0",
         icon: <EditOutlined />,
         label: <span className="text-xs">분류추가</span>,
+        onClick: () => {
+          setModalOpen(() => ({
+            visible: true,
+            component: (
+              <AssetCategoryModal
+                action="add"
+                data={assetCategories}
+                setData={setAssetCategories}
+                setClose={setModalOpen}
+              />
+            ),
+          }));
+        },
       },
     ];
   };
 
+  const deleteConfirm = ({ title, index }) => {
+    confirm({
+      title: `${title}을 정말 삭제하시겠습니까?`,
+      icon: <ExclamationCircleFilled />,
+      content: "기존 자산 수정에 문제를 일으킬 수 있습니다.",
+      okType: "default",
+      okText: "아니오",
+      cancelText: "예",
+      onOk() {
+        return;
+      },
+      onCancel() {
+        handleRemoveCategory(assetCategories, setAssetCategories, index);
+      },
+    });
+  };
+
+  const initCategoriesConfirm = () => {
+    confirm({
+      title: `자산 분류 초기화`,
+      icon: <ExclamationCircleFilled />,
+      content: "기존 자산 수정에 문제를 일으킬 수 있습니다.",
+      okType: "default",
+      okText: "아니오",
+      cancelText: "예",
+      onOk() {
+        return;
+      },
+      onCancel() {
+        setAssetCategories(() => [...initCategory]);
+      },
+    });
+  };
+
+  const drawCategryItem = (value, index, list) => {
+    return [
+      {
+        key: "0",
+        icon: <FolderAddOutlined />,
+        label: <span className="text-xs">{`${value?.name} 하위품목추가`}</span>,
+        onClick: () => {
+          setCurrentParentIndex(index);
+          setModalOpen(() => ({
+            visible: true,
+            component: (
+              <AssetProductLineModal
+                action="add"
+                data={assetCategories}
+                setData={setAssetCategories}
+                setClose={setModalOpen}
+                index={null}
+                parentIndex={index}
+              />
+            ),
+          }));
+        },
+      },
+      {
+        key: "1",
+        icon: <EditOutlined />,
+        label: <span className="text-xs">{`${value?.name} 수정`}</span>,
+        onClick: () => {
+          setModalOpen(() => ({
+            visible: true,
+            component: (
+              <AssetCategoryModal
+                action="edit"
+                data={assetCategories}
+                setData={setAssetCategories}
+                setClose={setModalOpen}
+                index={index}
+              />
+            ),
+          }));
+        },
+      },
+      {
+        key: "2",
+        icon: <RiDeleteBin5Line />,
+        label: <span className="text-xs">{`${value?.name} 삭제`}</span>,
+        onClick: () => deleteConfirm({ title: value?.name, index }),
+      },
+    ];
+  };
+
+  const drawProductLineItem = (value, index, list) => {
+    return [
+      {
+        key: "0",
+        icon: <EditOutlined />,
+        label: (
+          <span className="text-xs">{`${value?.name || value} 수정`}</span>
+        ),
+      },
+      {
+        key: "1",
+        icon: <RiDeleteBin5Line />,
+        label: (
+          <span className="text-xs">{`${value?.name || value} 삭제`}</span>
+        ),
+      },
+    ];
+  };
   const categoryColumn = [
     {
       key: 1,
@@ -88,54 +213,13 @@ const CategorySetting = ({ onUpdate }) => {
     },
   ];
 
-  const drawCategryItem = (value, index, list) => {
-    return [
-      {
-        key: "0",
-        icon: <FolderAddOutlined />,
-        label: <span className="text-xs">{`${value?.name} 하위품목추가`}</span>,
-      },
-      {
-        key: "1",
-        icon: <EditOutlined />,
-        label: <span className="text-xs">{`${value?.name} 수정`}</span>,
-      },
-      {
-        key: "2",
-        icon: <RiDeleteBin5Line />,
-        label: <span className="text-xs">{`${value?.name} 삭제`}</span>,
-      },
-    ];
-  };
-  const drawProductLineItem = (value, index, list) => {
-    return [
-      {
-        key: "0",
-        icon: <EditOutlined />,
-        label: (
-          <span className="text-xs">{`${value?.name || value} 수정`}</span>
-        ),
-      },
-      {
-        key: "1",
-        icon: <RiDeleteBin5Line />,
-        label: (
-          <span className="text-xs">{`${value?.name || value} 삭제`}</span>
-        ),
-      },
-    ];
-  };
-
-  const renderCategoryModal = () => {};
-
   const filteredCategories = useMemo(() => {
-    const newCategories = [...memberSettings.assetCategories];
+    const newCategories = [...assetCategories];
 
     const matchedData = newCategories.map((category, cIdx) => {
       let productLineData = [];
       if (category?.productLine?.length > 0) {
         productLineData = category.productLine.map((product, pIdx) => {
-          console.log(product);
           const newValue = {
             key: `${cIdx}-${pIdx}`,
             name: product.name,
@@ -184,12 +268,44 @@ const CategorySetting = ({ onUpdate }) => {
           </Dropdown>
         ),
       };
-      console.log(newTableData);
+
       return newTableData;
     });
 
     return matchedData;
+  }, [assetCategories]);
+
+  const requestUpdate = (value, msg) => {
+    const newValue = {
+      ...value,
+      assetCategories,
+    };
+
+    onUpdate(value.id, newValue, msg);
+  };
+  useEffect(() => {
+    setAssetCategories(() => [...memberSettings.assetCategories]);
   }, [memberSettings]);
+
+  const settingsHaveChanged = () => {
+    const prevSettings = prevSettingsRef.current;
+    return !_.isEqual(prevSettings, {
+      assetCategories,
+      productLine: assetCategories[currentParentIndex]?.productLine ?? [],
+    });
+  };
+
+  useEffect(() => {
+    setIsChanged(settingsHaveChanged());
+    if (memberSettings.isSettingAutoSave && settingsHaveChanged()) {
+      requestUpdate({ ...memberSettings }, false);
+    }
+    prevSettingsRef.current = {
+      assetCategories,
+      productLine: assetCategories[currentParentIndex]?.productLine ?? [],
+    };
+  }, [memberSettings.isSettingAutoSave, assetCategories, currentParentIndex]);
+
   return (
     <Row gutter={8} className="w-full">
       <ConfigProvider
@@ -199,6 +315,16 @@ const CategorySetting = ({ onUpdate }) => {
           },
         }}
       >
+        <Modal
+          open={modalOpen.visible}
+          mask={false}
+          maskClosable={false}
+          keyboard={false}
+          footer={null}
+          onCancel={() => setModalOpen({ visible: false, component: null })}
+        >
+          {modalOpen.component}
+        </Modal>
         <Form
           labelCol={{
             span: 16,
@@ -210,10 +336,37 @@ const CategorySetting = ({ onUpdate }) => {
               size="small"
               dataSource={filteredCategories}
               columns={categoryColumn}
+              pagination={false}
             />
           </Col>
           <Col></Col>
         </Form>
+        <div className="flex w-full justify-end mt-5 gap-x-2">
+          <Button danger onClick={initCategoriesConfirm}>
+            분류 초기화
+          </Button>
+          {memberSettings.isSettingAutoSave ? (
+            <span className="text-gray-400 font-semibold text-xs">
+              자동저장사용중
+            </span>
+          ) : (
+            <Button
+              htmlType="submit"
+              type="primary"
+              className="bg-blue-500 "
+              onClick={() =>
+                requestUpdate(
+                  {
+                    ...memberSettings,
+                  },
+                  true
+                )
+              }
+            >
+              저장
+            </Button>
+          )}
+        </div>
       </ConfigProvider>
     </Row>
   );

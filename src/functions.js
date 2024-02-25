@@ -267,3 +267,25 @@ export const generateUniqueCompanyID = (existingNumbers) => {
 
   return uniqueNumber;
 };
+
+export const makeFeedObject = (
+  refAssetId,
+  refAssetUID,
+  createBy,
+  createAt,
+  feedType,
+  feedContext,
+  feedPics
+) => {
+  const newFeed = {
+    refAssetId,
+    refAssetUID,
+    createBy,
+    createAt,
+    feedType,
+    feedContext,
+    feedPics,
+  };
+
+  return newFeed;
+};

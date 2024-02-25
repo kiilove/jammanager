@@ -13,6 +13,7 @@ import {
   Input,
   List,
   Menu,
+  Modal,
   Popconfirm,
   Result,
   Row,
@@ -38,38 +39,18 @@ import CategorySetting from "../components/CategorySetting";
 import { FaBuilding } from "react-icons/fa";
 import { LuUsers } from "react-icons/lu";
 import HRSetting from "../components/HRSetting";
+import _ from "lodash";
 
 const ServiceSetting = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenu, setIsMenu] = useState(false);
   const [currentSelected, setCurrentSelected] = useState("title1");
 
-  const [isCompanyChildren, setIsCompanyChildren] = useState(false);
-  const [companyInfo, setCompanyInfo] = useState({});
-  const [companyChildrenList, setCompanyChildrenList] = useState([]);
-  const [companyLogoFile, setCompanyLogoFile] = useState([]);
-  const companyLogoUpload = useImageUpload();
-
-  const [userStatusList, setUserStatusList] = useState([]);
-  const [userStatusInput, setUserStatusInput] = useState();
-  const [userJobList, setUserContractList] = useState([]);
-  const [userJobInput, setUserJobInput] = useState();
-
-  const [assetCategoryList, setAssetCategoryList] = useState([]);
-  const [assetCategoryInput, setAssetCategoryInput] = useState();
-
   const [currentComponent, setCurrentComponent] = useState(<div></div>);
 
-  const companyChildrenRef = useRef();
-  const userStatusRef = useRef();
-  const userJobRef = useRef();
-  const companyRef = useRef();
-  const userRef = useRef();
-  const assetRef = useRef();
   const [form] = Form.useForm();
 
-  const { loginInfo, memberSettings, setMemberSettings } =
-    useContext(CurrentLoginContext);
+  const { memberSettings, setMemberSettings } = useContext(CurrentLoginContext);
 
   const { logOut } = useFirebaseAuth;
   const settingsUpdate = useFirestoreUpdateData();
@@ -82,7 +63,14 @@ const ServiceSetting = () => {
 
   const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
   const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
-
+  const prevSettingsRef = useRef({
+    assetCategories: [],
+    userContract: [],
+    userDepartment: [],
+    userRank: [],
+    userSpot: [],
+    userStatus: [],
+  });
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
     apiType,
@@ -194,26 +182,7 @@ const ServiceSetting = () => {
       }
     }, 3000);
     if (memberSettings?.companyName) {
-      const promises = [
-        setCompanyInfo(() => ({
-          companyName: memberSettings.companyName,
-          companyLogo: [...memberSettings.companyLogo],
-          isCompanyChildren: memberSettings.isCompanyChildren,
-          companyChildren: [...memberSettings.companyChildren],
-        })),
-        setCompanyLogoFile(() => [...memberSettings.companyLogo]),
-        setCompanyChildrenList(() => [...memberSettings.companyChildren]),
-        setIsCompanyChildren(memberSettings.isCompanyChildren),
-        form?.setFieldValue("companyName", memberSettings.companyName),
-        form?.setFieldValue(
-          "isCompanyChildren",
-          memberSettings.isCompanyChildren
-        ),
-        setUserContractList(() => [...memberSettings.userContract]),
-        setUserStatusList(() => [...memberSettings.userStatus]),
-        setAssetCategoryList(() => [...memberSettings.assetCategories]),
-        clearTimeout(timer),
-      ];
+      const promises = [clearTimeout(timer)];
       Promise.all(promises).then(() => {
         setIsLoading(false);
       });

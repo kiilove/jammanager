@@ -10,10 +10,12 @@ import Draggable from "react-draggable";
 import {
   Button,
   ConfigProvider,
+  Descriptions,
   Dropdown,
   Empty,
   Image,
   Input,
+  List,
   Menu,
   Modal,
   Table,
@@ -28,6 +30,8 @@ import { groupByKey, highlightText } from "../functions";
 import dayjs from "dayjs";
 import "./ListAsset.css";
 import AssetView from "../components/AssetView";
+import AssetAssignment from "../components/AssetAssignment";
+import { useMediaQuery } from "react-responsive";
 
 const ListAsset = () => {
   const [assetList, setAssetList] = useState([]);
@@ -49,6 +53,10 @@ const ListAsset = () => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isAssetAssignment, setIsAssetAssignment] = useState({
+    visible: false,
+    assetID: "",
+  });
   const [modalContent, setModalContent] = useState(null); // 모달에 표시될 내용
   const [dragDisabled, setDragDisabled] = useState(true);
   const [bounds, setBounds] = useState({
@@ -61,11 +69,29 @@ const ListAsset = () => {
 
   const draggleRef = useRef(null);
 
+  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isTablet = useMediaQuery({
+    query: "(min-width: 768px) and (max-width: 1223px)",
+  });
+  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
+
+  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
+  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
+
   const handleViewDetail = (record) => {
     const newModal = {
       ...record, // 모달에 표시할 내용
     };
     setModals([...modals, newModal]);
+  };
+
+  const handleViewAssetDefined = (record) => {
+    console.log(record);
+    setIsAssetAssignment({
+      visible: true,
+      assetID: record.id,
+      data: record,
+    });
   };
 
   // 모달 제거 함수
@@ -114,6 +140,9 @@ const ListAsset = () => {
       key: "1",
       icon: <FaUserTag className="text-base" />,
       label: <span className="text-xs">사용자배정</span>,
+      onClick: () => {
+        handleViewAssetDefined(record);
+      },
     },
   ];
 
@@ -175,21 +204,23 @@ const ListAsset = () => {
     },
     {
       title: "입고일자",
-      dataIndex: "assetPurchasedDate",
-      key: "assetPurchasedDate",
+      dataIndex: "assetPurchasedDateConverted",
+      key: "assetPurchasedDateConverted",
       className: "text-xs",
       showSorterTooltip: false,
       sorter: (a, b) =>
-        new Date(a.assetPurchasedDate) - new Date(b.assetPurchasedDate),
+        new Date(a.assetPurchasedDateConverted) -
+        new Date(b.assetPurchasedDateConverted),
       render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
       title: "등록일자",
-      dataIndex: "createdAt",
-      key: "createdAt",
+      dataIndex: "createdAtConverted",
+      key: "createdAtConverted",
       className: "text-xs",
       showSorterTooltip: false,
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      sorter: (a, b) =>
+        new Date(a.createdAtConverted) - new Date(b.createdAtConverted),
       render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
@@ -198,7 +229,7 @@ const ListAsset = () => {
       className: "text-xs",
       showSorterTooltip: false,
       render: (_, record) => {
-        const purchasedAt = dayjs(record.assetPurchasedDate);
+        const purchasedAt = dayjs(record.assetPurchasedDateConverted);
         const today = dayjs();
         const usageDays = today.diff(purchasedAt, "day");
         const usageMonths = today.diff(purchasedAt, "month");
@@ -221,7 +252,7 @@ const ListAsset = () => {
       showSorterTooltip: false,
       render: (userInfo) => {
         let color = "green";
-        switch (userInfo) {
+        switch (userInfo?.userName) {
           case "폐기":
             color = "volcano";
             break;
@@ -233,8 +264,8 @@ const ListAsset = () => {
         }
 
         return (
-          <Tag color={color} key={userInfo}>
-            {userInfo}
+          <Tag color={color} key={userInfo?.userName}>
+            {userInfo?.userName}
           </Tag>
         );
       },
@@ -260,23 +291,32 @@ const ListAsset = () => {
   ];
 
   const formatDatesInArray = (data) => {
+    console.log(data);
     return data.map((item) => {
       // Firestore Timestamp에서 JavaScript Date 객체로 변환
-      const assetPurchasedDate = item.assetPurchasedDate
-        ? new Date(item.assetPurchasedDate.seconds * 1000)
-            .toISOString()
-            .split("T")[0]
-        : "";
+      const convertTimestampToDate = (timestamp) => {
+        if (!timestamp || typeof timestamp.seconds !== "number") {
+          return "";
+        }
 
-      const createdAt = item.createdAt
-        ? new Date(item.createdAt.seconds * 1000).toISOString().split("T")[0]
-        : "";
+        try {
+          return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
+        } catch (error) {
+          console.error("Date conversion error:", error);
+          return "";
+        }
+      };
+
+      const assetPurchasedDateConverted = convertTimestampToDate(
+        item.assetPurchasedDate
+      );
+      const createdAtConverted = convertTimestampToDate(item.createdAt);
 
       // 기존 객체에 변환된 날짜를 추가
       return {
         ...item,
-        assetPurchasedDate,
-        createdAt,
+        assetPurchasedDateConverted,
+        createdAtConverted,
       };
     });
   };
@@ -532,6 +572,21 @@ const ListAsset = () => {
               </Draggable>
             );
           })}
+          <Modal
+            mask={false}
+            maskClosable={false}
+            keyboard={false}
+            footer={null}
+            open={isAssetAssignment.visible}
+            onCancel={() =>
+              setIsAssetAssignment({ ...isAssetAssignment, visible: false })
+            }
+          >
+            <AssetAssignment
+              data={isAssetAssignment.data}
+              setClose={isAssetAssignment}
+            />
+          </Modal>
 
           <div className="flex w-full px-4 flex-col mb-5 ">
             {sections.map(({ title, param, list }) => (
@@ -578,7 +633,7 @@ const ListAsset = () => {
                 style={{ height: "55px" }}
               >
                 <Input.Search
-                  style={{ width: 300 }}
+                  style={{ width: isMobile ? 230 : 300 }}
                   onChange={(e) =>
                     e.target.value.trim() === "" && setSearchKeyword("")
                   }
@@ -590,16 +645,64 @@ const ListAsset = () => {
 
           <div className="flex w-full px-4 justify-center items-start">
             {assetList.length > 0 ? (
-              <Table
-                rowSelection={rowSelection}
-                size="small"
-                columns={tableColumns}
-                dataSource={filteredAssetList}
-                className="w-full  "
-                rowKey={"id"}
-                rowClassName={rowClassName}
-                pagination={{ currnet: 1, pageSize: 10 }}
-              />
+              !isMobile ? (
+                <Table
+                  rowSelection={rowSelection}
+                  size="small"
+                  columns={tableColumns}
+                  dataSource={filteredAssetList}
+                  className="w-full  "
+                  rowKey={"id"}
+                  rowClassName={rowClassName}
+                  pagination={{ currnet: 1, pageSize: 10 }}
+                />
+              ) : (
+                <List
+                  className="w-full"
+                  bordered
+                  dataSource={filteredAssetList}
+                  renderItem={(item) => {
+                    const descriptionItems = [
+                      { key: 1, label: "자산명", children: item?.assetName },
+                      {
+                        key: 2,
+                        label: <span>자산코드</span>,
+                        children: (
+                          <span style={{ fontSize: 12 }}>
+                            {item?.assetCode}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: 3,
+                        label: <span>매입처</span>,
+                        children: <span>{item?.assetPurchaseName}</span>,
+                      },
+                      {
+                        key: 4,
+                        label: <span>입고일자</span>,
+                        children: <span>{item?.assetPurchasedDate}</span>,
+                      },
+                      {
+                        key: 5,
+                        label: <span>위치</span>,
+                        children: <span>{item?.location}</span>,
+                      },
+                      {
+                        key: 6,
+                        label: <span>사용자</span>,
+                        children: <span>{item?.userInfo}</span>,
+                      },
+                      { key: 7, children: <Button>자세히</Button> },
+                    ];
+                    return (
+                      <List.Item>
+                        <Descriptions items={descriptionItems}></Descriptions>
+                      </List.Item>
+                    );
+                  }}
+                />
+              )
             ) : (
               <Empty description="등록된 자산이 없습니다." />
             )}
