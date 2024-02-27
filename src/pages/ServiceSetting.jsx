@@ -88,7 +88,7 @@ const ServiceSetting = () => {
       maxCount,
     });
   };
-  const onUpdate = async (id, value, msg) => {
+  const onUpdate = async (id, value, msg = true) => {
     const newValue = { ...value };
     Object.keys(newValue).map((key, kIdx) => {
       if (newValue[key] === undefined) {
@@ -288,7 +288,7 @@ const ServiceSetting = () => {
                       <Space className="w-1/2">
                         <ContentTitle title="환경설정" />
                       </Space>
-                      <Space className="w-1/2 flex justify-end">
+                      {/* <Space className="w-1/2 flex justify-end">
                         <span>자동저장</span>
                         <Switch
                           size="small"
@@ -308,7 +308,7 @@ const ServiceSetting = () => {
                             );
                           }}
                         />
-                      </Space>
+                      </Space> */}
                     </div>
                     <div className="flex">
                       <MenuComponent />

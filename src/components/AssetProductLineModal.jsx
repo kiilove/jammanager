@@ -1,8 +1,12 @@
 import { Button, Col, Divider, Form, Input, Row, Select } from "antd";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { ContentTitle } from "../commonstyles/Title";
-import { initDepreciationPeriod, initDepreciationType } from "../InitValues";
+import {
+  initDepreciationPeriod,
+  initDepreciationRate,
+  initDepreciationType,
+} from "../InitValues";
 
 const AssetProductLineModal = ({
   action,
@@ -11,45 +15,62 @@ const AssetProductLineModal = ({
   setClose,
   index,
   parentIndex,
+  setProductLine,
 }) => {
   const [productForm] = Form.useForm();
+  const [currentDepreciationType, setCurrentDepreciationType] = useState();
 
   const handleFinished = (value) => {
     const parentData = [...data];
     const newData = { ...data[parentIndex] };
+
     const newValue = { ...value };
     switch (action) {
       case "add":
         const newKey = `${parentIndex}-${data.length + 1}`;
         newValue.key = newKey;
         newValue.index = data.length + 1;
-
         newData.productLine.push({ ...newValue });
         parentData.splice(parentIndex, 1, newData);
-        console.log(parentData);
+        productForm.resetFields();
         setData(() => [...parentData]);
         setClose(() => ({ visible: false, component: null }));
         break;
       case "edit":
-        // newData.splice(index, 1, { ...newData[index], ...newValue });
+        const newProductLine = newData.productLine || [];
+        const currentProductValue = { ...newProductLine[index] } | {};
+        newProductLine.splice(index, 1, {
+          ...newValue,
+          ...currentProductValue,
+        });
 
-        // setData(() => [...newData]);
-        // setClose(() => ({ visible: false, component: null }));
+        newData.productLine = [...newProductLine];
+        console.log(newProductLine);
+        parentData.splice(parentIndex, 1, { ...newData });
+        console.log(parentData);
+        productForm.resetFields();
+        setData(() => [...parentData]);
+        //setProductLine(() => [...newProductLine]);
+        setClose(() => ({ visible: false, component: null }));
         break;
       default:
         break;
     }
   };
   useEffect(() => {
+    productForm.resetFields();
     if (action === "edit") {
-      const assetCategory = { ...data[index] };
+      const assetCategory = { ...data[parentIndex] };
+
       productForm.setFieldsValue({
-        name: assetCategory.name,
-        depreciationType: assetCategory.depreciationType,
-        depreciationPeriod: assetCategory.depreciationPeriod,
+        name: assetCategory.productLine[index]?.name,
+        depreciationType: assetCategory.productLine[index]?.depreciationType,
+        depreciationPeriod:
+          assetCategory.productLine[index]?.depreciationPeriod,
       });
     }
-  }, [data, index]);
+  }, [data, parentIndex, index, action]);
+
   return (
     <Row className={"w-full"}>
       <Col span={24}>
@@ -75,7 +96,14 @@ const AssetProductLineModal = ({
             <Select options={initDepreciationType} style={{ width: 180 }} />
           </Form.Item>
           <Form.Item label="감가기간(율)" name="depreciationPeriod">
-            <Select options={initDepreciationPeriod} style={{ width: 180 }} />
+            <Select
+              options={
+                productForm.getFieldValue("depreciationType") === "정률법"
+                  ? initDepreciationRate
+                  : initDepreciationPeriod
+              }
+              style={{ width: 180 }}
+            />
           </Form.Item>
           <div className="flex w-full justify-end px-2">
             <Button htmlType="submit" type="primary" className="bg-blue-500">

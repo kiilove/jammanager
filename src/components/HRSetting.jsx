@@ -107,11 +107,17 @@ const HRSetting = ({ onUpdate }) => {
 
   // 공통 Dropdown 생성 함수
   const createExtra = (menuLabel) => (
-    <Dropdown overlay={<Menu items={drawHeaderItem(menuLabel)} />}>
+    <Dropdown
+      overlay={<Menu items={drawHeaderItem(menuLabel)} trigger={["click"]} />}
+    >
       <div className="flex w-full justify-center items-center">
-        <a onClick={(e) => e.preventDefault()}>
-          <MoreOutlined style={{ fontSize: "20px" }} />
-        </a>
+        <MoreOutlined
+          style={{ fontSize: "20px" }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
       </div>
     </Dropdown>
   );

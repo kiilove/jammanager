@@ -41,12 +41,21 @@ const CategorySetting = ({ onUpdate }) => {
     productLine: [],
   });
   const { confirm } = Modal;
+
   const handleRemoveCategory = (data, setData, index) => {
     const newData = [...data];
     newData.splice(index, 1);
     setData(() => [...newData]);
   };
 
+  const handleRemoveProduct = (data, setData, parentIndex, index) => {
+    const newData = [...data];
+    const currentData = newData[parentIndex];
+    currentData.productLine.splice(index, 1);
+
+    newData.splice(index, 1, currentData);
+    setData(() => [...newData]);
+  };
   const drawHeaderItem = (index) => {
     return [
       {
@@ -83,6 +92,28 @@ const CategorySetting = ({ onUpdate }) => {
       },
       onCancel() {
         handleRemoveCategory(assetCategories, setAssetCategories, index);
+      },
+    });
+  };
+
+  const deleteProductConfirm = ({ title, parentIndex, index }) => {
+    confirm({
+      title: `${title}을 정말 삭제하시겠습니까?`,
+      icon: <ExclamationCircleFilled />,
+      content: "기존 자산 수정에 문제를 일으킬 수 있습니다.",
+      okType: "default",
+      okText: "아니오",
+      cancelText: "예",
+      onOk() {
+        return;
+      },
+      onCancel() {
+        handleRemoveProduct(
+          assetCategories,
+          setAssetCategories,
+          parentIndex,
+          index
+        );
       },
     });
   };
@@ -155,7 +186,7 @@ const CategorySetting = ({ onUpdate }) => {
     ];
   };
 
-  const drawProductLineItem = (value, index, list) => {
+  const drawProductLineItem = (value, parentIndex, index, list) => {
     return [
       {
         key: "0",
@@ -163,6 +194,23 @@ const CategorySetting = ({ onUpdate }) => {
         label: (
           <span className="text-xs">{`${value?.name || value} 수정`}</span>
         ),
+        onClick: () => {
+          setCurrentParentIndex(parentIndex);
+          setModalOpen(() => ({
+            visible: true,
+            component: (
+              <AssetProductLineModal
+                action="edit"
+                data={assetCategories}
+                setData={setAssetCategories}
+                setClose={setModalOpen}
+                index={index}
+                parentIndex={parentIndex}
+                setProductLine={currentProductLine}
+              />
+            ),
+          }));
+        },
       },
       {
         key: "1",
@@ -170,6 +218,9 @@ const CategorySetting = ({ onUpdate }) => {
         label: (
           <span className="text-xs">{`${value?.name || value} 삭제`}</span>
         ),
+        onClick: () => {
+          deleteProductConfirm({ title: value?.name, parentIndex, index });
+        },
       },
     ];
   };
@@ -229,6 +280,7 @@ const CategorySetting = ({ onUpdate }) => {
                   <Menu
                     items={drawProductLineItem(
                       product,
+                      cIdx,
                       pIdx,
                       category?.productLine || []
                     )}
@@ -291,20 +343,37 @@ const CategorySetting = ({ onUpdate }) => {
     const prevSettings = prevSettingsRef.current;
     return !_.isEqual(prevSettings, {
       assetCategories,
-      productLine: assetCategories[currentParentIndex]?.productLine ?? [],
+      productLine: currentProductLine,
     });
   };
 
   useEffect(() => {
+    console.log(assetCategories);
+    if (assetCategories.length > 0) {
+      setCurrentProductLine(
+        (prev) =>
+          [...assetCategories[currentParentIndex]?.productLine] || [...prev]
+      );
+    }
+
     setIsChanged(settingsHaveChanged());
     if (memberSettings.isSettingAutoSave && settingsHaveChanged()) {
       requestUpdate({ ...memberSettings }, false);
     }
     prevSettingsRef.current = {
       assetCategories,
-      productLine: assetCategories[currentParentIndex]?.productLine ?? [],
+      productLine: currentProductLine,
     };
   }, [memberSettings.isSettingAutoSave, assetCategories, currentParentIndex]);
+
+  useEffect(() => {
+    console.log(currentProductLine);
+    if (assetCategories[currentParentIndex]?.productLine?.length > 0) {
+      setCurrentProductLine(() => [
+        ...assetCategories[currentParentIndex].productLine,
+      ]);
+    }
+  }, [currentParentIndex]);
 
   return (
     <Row gutter={8} className="w-full">
@@ -344,12 +413,27 @@ const CategorySetting = ({ onUpdate }) => {
         <div className="flex w-full justify-end mt-5 gap-x-2">
           <Button danger onClick={initCategoriesConfirm}>
             분류 초기화
+          </Button>{" "}
+          <Button
+            htmlType="submit"
+            type="primary"
+            className="bg-blue-500 "
+            onClick={() =>
+              requestUpdate(
+                {
+                  ...memberSettings,
+                },
+                true
+              )
+            }
+          >
+            저장
           </Button>
-          {memberSettings.isSettingAutoSave ? (
+          {/* {memberSettings.isSettingAutoSave ? (
             <span className="text-gray-400 font-semibold text-xs">
               자동저장사용중
             </span>
-          ) : (
+          ) : isChanged ? (
             <Button
               htmlType="submit"
               type="primary"
@@ -365,7 +449,7 @@ const CategorySetting = ({ onUpdate }) => {
             >
               저장
             </Button>
-          )}
+          ) : null} */}
         </div>
       </ConfigProvider>
     </Row>

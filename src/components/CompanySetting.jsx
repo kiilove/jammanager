@@ -285,7 +285,23 @@ const CompanySetting = ({ onUpdate }) => {
                 </Form.Item>
               )}
               <div className="flex w-full justify-end">
-                {memberSettings.isSettingAutoSave ? (
+                <Button
+                  htmlType="submit"
+                  size="large"
+                  type="primary"
+                  className="bg-blue-500 "
+                  onClick={() =>
+                    requestUpdate(
+                      {
+                        ...memberSettings,
+                      },
+                      true
+                    )
+                  }
+                >
+                  저장
+                </Button>
+                {/* {memberSettings.isSettingAutoSave ? (
                   <span className="text-gray-400 font-semibold text-xs">
                     자동저장사용중
                   </span>
@@ -306,7 +322,7 @@ const CompanySetting = ({ onUpdate }) => {
                   >
                     저장
                   </Button>
-                )}
+                )} */}
               </div>
             </Col>
           </Row>
