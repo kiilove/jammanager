@@ -269,23 +269,38 @@ export const generateUniqueCompanyID = (existingNumbers) => {
 };
 
 export const makeFeedObject = (
-  refAssetId,
+  refAssetID,
   refAssetUID,
   createBy,
   createAt,
+  actionAt,
   feedType,
   feedContext,
   feedPics
 ) => {
   const newFeed = {
-    refAssetId,
+    refAssetID,
     refAssetUID,
     createBy,
     createAt,
+    actionAt,
     feedType,
     feedContext,
     feedPics,
   };
 
   return newFeed;
+};
+
+export const convertTimestampToDate = (timestamp) => {
+  if (!timestamp || typeof timestamp.seconds !== "number") {
+    return "";
+  }
+
+  try {
+    return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
+  } catch (error) {
+    console.error("Date conversion error:", error);
+    return "";
+  }
 };

@@ -25,6 +25,7 @@ import useFirebaseAuth from "../hooks/useFireAuth";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 import { where } from "firebase/firestore";
 import { decryptObject, groupByKey } from "../functions";
+import { useMediaQuery } from "react-responsive";
 
 const Main = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -39,6 +40,8 @@ const Main = ({ children }) => {
     setMemberSettings,
     grouped,
     setGrouped,
+    media,
+    setMedia,
   } = useContext(CurrentLoginContext);
   const { currentUser, logOut } = useFirebaseAuth();
   const membersQuery = useFirestoreQuery();
@@ -49,6 +52,13 @@ const Main = ({ children }) => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isTablet = useMediaQuery({
+    query: "(min-width: 768px) and (max-width: 1223px)",
+  });
+  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
+  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
+  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
 
   const fetchMemberSettingQuery = async (value) => {
     const condition = [where("userID", "==", value)];
@@ -74,6 +84,7 @@ const Main = ({ children }) => {
       await membersQuery.getDocuments(
         "members",
         (data) => {
+          console.log(data);
           if (data.length > 0) {
             const decryptObj = {
               companyExtraAddress: data[0].companyExtraAddress,
@@ -156,6 +167,10 @@ const Main = ({ children }) => {
       setMemberSettings(() => ({ ...memberSetting }));
     }
   }, [memberInfo, memberSetting]);
+
+  useEffect(() => {
+    setMedia(() => ({ isDesktopOrLaptop, isTablet, isMobile, isRetina }));
+  }, [isDesktopOrLaptop, isTablet, isMobile, isRetina]);
 
   return (
     <>

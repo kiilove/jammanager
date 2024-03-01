@@ -18,6 +18,8 @@ import Success from "./pages/Success";
 import ViewAsset from "./pages/ViewAsset";
 import ViewAssetClient from "./pages/ViewAssetClient";
 import { ConfigProvider } from "antd";
+import ViewAssetInfo from "./pages/ViewAssetInfo";
+import EditAsset from "./pages/EditAsset";
 
 function App() {
   return (
@@ -74,7 +76,11 @@ function App() {
             />
             <Route
               path="/8e4314e1-ec72-47b5-84e2-114a5e7a697a"
-              element={<Main children={<ViewAsset />} />}
+              element={<Main children={<ViewAssetInfo />} />}
+            />
+            <Route
+              path="/337a93f8-ff79-4ce9-95a7-6b041bb418f6"
+              element={<Main children={<EditAsset />} />}
             />
             <Route
               path="/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/:assetCode"

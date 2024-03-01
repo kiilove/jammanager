@@ -134,14 +134,15 @@ const AssetAssignment = ({ data, setClose }) => {
       data.assetUID,
       "system",
       Timestamp.fromDate(new Date()),
-      "사용자배정",
-      `${data.assetName}을 ${userInfo.userName}에게 ${dayjs(
-        assetAssignDate
-      ).format("YYYY-MM-DD")}배정하였습니다.`,
+      assetUpdatedValue.assetAssignDate,
+      "배정",
+      `${userInfo.userName}에게 ${dayjs(assetAssignDate).format(
+        "YYYY-MM-DD"
+      )}배정하였습니다.`,
       []
     );
 
-    console.log(feedValue);
+    //console.log(feedValue);
 
     try {
       await assetUpdate.updateData(

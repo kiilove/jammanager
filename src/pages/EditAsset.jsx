@@ -28,6 +28,7 @@ import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
 import {
   NumberWithComma,
+  convertTimestampToDate,
   generateFileName,
   generateUUID,
   removeCommas,
@@ -46,23 +47,22 @@ import AssetDescription from "../components/AssetDescription";
 import TextArea from "antd/es/input/TextArea";
 import { useMediaQuery } from "react-responsive";
 import "./NewAsset.css";
+import { useLocation } from "react-router-dom";
 
-const NewAsset = () => {
+const EditAsset = () => {
   const formRef = useRef();
 
   const [assetInputs, setAssetInputs] = useState([]);
   const [assetCodes, setAssetCodes] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [assetPurchasedType, setAssetPurchasedType] = useState("구매");
+  const [assetPurchasedDate, setAssetPurchasedDate] = useState();
   const [assetDepreciationType, setAssetDepreciationType] =
     useState("설정안함");
-  const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
   const [assetCategoriesList, setAssetCategoriesList] = useState([]);
   const [assetCategoryOptions, setAssetCategoryOptions] = useState([]);
   const [currentProductLine, setCurrentProductLine] = useState("");
   const [productLineList, setProductLineList] = useState([]);
-  const [productLineOptions, setProductLineOptions] = useState([]);
-  const [productLineDescription, setProductLineDescription] = useState({});
   const [isDetailDescription, setIsDetailDescription] = useState(false);
   const [assetCount, setAssetCount] = useState(0);
 
@@ -75,17 +75,10 @@ const NewAsset = () => {
 
   const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
-  const [userList, setUserList] = useState([]);
-  const [userOptions, setUserOptions] = useState([]);
-  const [categoryInput, setCategoryInput] = useState("");
-  const [productLineInput, setProductLineInput] = useState("");
-  const addCategoryRef = useRef();
-  const addProductLineRef = useRef();
   const assetPicUpload = useImageUpload();
-  const assetAdd = useFirestoreAddData();
   const assetFeedAdd = useFirestoreAddData();
 
-  const { loginInfo, memberSettings, grouped, setGrouped } =
+  const { memberSettings, grouped, setGrouped, media } =
     useContext(CurrentLoginContext);
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
@@ -104,26 +97,16 @@ const NewAsset = () => {
       maxCount,
     });
   };
-  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
-  const isTablet = useMediaQuery({
-    query: "(min-width: 768px) and (max-width: 1223px)",
-  });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
-
-  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
-  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
-
-  const [form] = Form.useForm();
+  const location = useLocation();
+  const [editForm] = Form.useForm();
   const assetVendorRef = useRef();
   const assetModelRef = useRef();
   const assetNameRef = useRef();
-  const assetPurchasedTypeRef = useRef();
   const assetDescritionSummayRef = useRef();
   const assetWarrantyRef = useRef();
   const assetPurchaseNameRef = useRef();
   const assetOwnerCompanyRef = useRef();
   const assetDepreciationTypeRef = useRef();
-  const assetDepreciationPeroidRef = useRef();
   const assetCountRef = useRef();
   const assetCostRef = useRef();
   const assetPurchasedDateRef = useRef();
@@ -171,42 +154,8 @@ const NewAsset = () => {
             }}
           />
         </div>
-        {/* <div className="flex w-full mb-2">
-          <AutoComplete
-            options={userOptions}
-            onSearch={(value) => onUserSearch(value, userList)}
-            popupMatchSelectWidth={300}
-            style={{
-              width: 250,
-            }}
-          >
-            <Input />
-          </AutoComplete>
-        </div> */}
       </div>
     );
-  };
-
-  const makeUserLabelValueData = (options) => {
-    const newOptions = [...options];
-    let lableValue = [];
-    if (newOptions.length > 0) {
-      lableValue = newOptions.map((option, oIdx) => {
-        const newValue = option.userUID;
-        const newLabel = (
-          <div className="w-full flex flex-col">
-            <div className="flex w-full gap-x-2">
-              <span>{option.userName}</span>
-              <span>{option.userSpot}</span>
-              <span>{option.userRank}</span>
-              <span>{option.userEmail}</span>
-            </div>
-          </div>
-        );
-        return { value: newValue, label: newLabel };
-      });
-    }
-    return lableValue;
   };
 
   const handleAssetAccessoryAdd = () => {
@@ -254,7 +203,6 @@ const NewAsset = () => {
       }
     };
 
-    // 사용 예:
     updateGrouped(assetModelOptions, "groupedModel", values.assetModel);
     updateGrouped(assetVendorOptions, "groupedVendor", values.assetVendor);
     updateGrouped(
@@ -263,20 +211,26 @@ const NewAsset = () => {
       values.assetPurchaseName
     );
 
-    const assetPurchasedDate = values.assetPurchasedDate
-      ? Timestamp.fromDate(values.assetPurchasedDate.toDate())
-      : "";
+    const assetPurchasedDate = Timestamp.fromDate(
+      values.assetPurchasedDate.toDate()
+    );
+    const assetPurchasedDateConverted =
+      convertTimestampToDate(assetPurchasedDate);
 
-    const createdAtValue = values.createdAt
-      ? Timestamp.fromDate(values.createdAt.toDate())
-      : Timestamp.fromDate(new Date());
+    const editedAt = Timestamp.fromDate(new Date());
+    const editedAtConverted = convertTimestampToDate(editedAt);
 
     let assetRentalPeriod = [];
+    let assetRentalPeriodConverted = [];
     if (values.assetRentalPeriod?.length > 0) {
       const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
         return Timestamp.fromDate(rent.toDate());
       });
+      const newPeriodConverted = values.assetRentalPeriod.map((rent, rIdx) => {
+        return convertTimestampToDate(Timestamp.fromDate(rent.toDate()));
+      });
       assetRentalPeriod = newPeriod;
+      assetRentalPeriodConverted = newPeriodConverted;
     }
 
     // value 객체의 각 필드를 확인하고 undefined인 경우 빈 문자열로 대체
@@ -293,76 +247,15 @@ const NewAsset = () => {
 
     // userEnteringDate와 createdAt 필드 추가
     newValue.assetPurchasedDate = assetPurchasedDate;
-    newValue.assetCost = removeCommas(values.assetCost);
+    newValue.assetPurchasedDateConverted = assetPurchasedDateConverted;
+    //newValue.assetCost = removeCommas(values.assetCost);
     newValue.assetAccessory = [...newAccessory];
     newValue.assetRentalPeriod = assetRentalPeriod;
-    newValue.createdAt = createdAtValue;
-    newValue.location = "출고대기";
-    newValue.userInfo = { userName: "미지정" };
-    //newValue.assetWarranty = assetWarranty;
-    delete newValue.assetCount;
-
-    if (assetCodes.length > 0) {
-      assetCodes.map(async (asset, cIdx) => {
-        const codeWithValue = {
-          assetUID: generateUUID(),
-          assetCode: asset.assetCode.toUpperCase(),
-          firstPics: [...asset.firstPics],
-          assetOwner: memberSettings.userID,
-          ...newValue,
-        };
-        //console.log(codeWithValue);
-
-        try {
-          await assetAdd.addData(
-            "assets",
-            { ...codeWithValue },
-            async (data) => {
-              await assetFeedAdd.addData(
-                "assetFeeds",
-                {
-                  refAssetID: data.id,
-                  refAssetUID: codeWithValue.assetUID,
-                  createBy: "system",
-                  createAt: Timestamp.fromDate(new Date()),
-                  actionAt: assetPurchasedDate,
-                  feedType: "추가",
-                  feedContext: `자산에 추가 되었습니다.`,
-                  feedPics: [...asset.firstPics],
-                },
-                () => {
-                  openNotification(
-                    "success",
-                    "추가 성공",
-                    `${data?.assetName}을 추가했습니다.`,
-                    "topRight",
-                    3,
-                    5
-                  );
-                }
-              );
-            }
-          );
-        } catch (error) {
-          console.log(error);
-        }
-      });
-    }
-    initFormValue(formRef);
-  };
-
-  const initFormValue = (ref) => {
-    ref?.current.resetFields();
-    ref?.current.setFieldsValue({
-      ...ref?.current.getFieldsValue(),
-      assetPurchasedDate: dayjs(),
-      createdAt: dayjs(), // 현재 날짜를 dayjs 객체로 설정
-    });
-    setAssetCount(0);
-    setAssetCodes([]);
-    setAssetAccessory([]);
-    form.setFieldValue("assetOwnerCompany", memberSettings.companyName);
-    setIsDetailDescription(false);
+    newValue.editedAt = editedAt;
+    newValue.editedAtConverted = editedAtConverted;
+    newValue.assetRentalPeriod = assetRentalPeriod;
+    newValue.assetRentalPeriodConverted = assetRentalPeriodConverted;
+    console.log({ ...location?.state?.data, ...newValue });
   };
 
   const handleAssetName = (vendor, model, ref) => {
@@ -482,16 +375,10 @@ const NewAsset = () => {
     return childs;
   };
 
-  const SearchOption = () => {};
-
   const handleSearchOptions = (keyword, list, setList) => {
     const filteredList = list.filter((f) => f.value.includes(keyword));
     setList(filteredList);
   };
-
-  useEffect(() => {
-    initFormValue(formRef);
-  }, []);
 
   useEffect(() => {
     if (memberSettings?.assetCategories) {
@@ -506,7 +393,7 @@ const NewAsset = () => {
           memberSettings.companyChildren
         )
       );
-      form.setFieldValue("assetOwnerCompany", memberSettings.companyName);
+      editForm.setFieldValue("assetOwnerCompany", memberSettings.companyName);
     }
   }, [memberSettings]);
 
@@ -518,18 +405,18 @@ const NewAsset = () => {
   useEffect(() => {
     if (currentProductLine !== "") {
       const filteredProductLine = memberSettings.assetCategories.find(
-        (f) => f.name === form.getFieldValue("assetCategory")
+        (f) => f.name === editForm.getFieldValue("assetCategory")
       )?.productLine;
       if (filteredProductLine?.length > 0) {
         const findInfo = filteredProductLine.find(
-          (f) => f.name === form.getFieldValue("assetProductLine")
+          (f) => f.name === editForm.getFieldValue("assetProductLine")
         );
         if (findInfo) {
-          form.setFieldValue(
+          editForm.setFieldValue(
             "assetDepreciationType",
             findInfo.depreciationType
           );
-          form.setFieldValue(
+          editForm.setFieldValue(
             "assetDepreciationPeroid",
             findInfo.depreciationPeriod
           );
@@ -545,6 +432,28 @@ const NewAsset = () => {
       setAssetPurchaseOptions(() => [...grouped.groupedPurchaseName]);
     }
   }, [grouped]);
+
+  useEffect(() => {
+    console.log(location);
+    if (location?.state?.data) {
+      const newData = { ...location.state.data };
+      //delete newData.createdAt;
+      delete newData.assetPurchasedDate;
+
+      console.log({
+        ...newData,
+        assetPurchasedDate: dayjs(
+          location.state.data.assetPurchasedDateConverted
+        ),
+      });
+      editForm.setFieldsValue({
+        ...newData,
+        assetPurchasedDate: dayjs(
+          location.state.data.assetPurchasedDateConverted
+        ),
+      });
+    }
+  }, [location]);
 
   const Inputs = [
     {
@@ -589,7 +498,7 @@ const NewAsset = () => {
               ref={formRef}
               onFinish={handleFinish}
               autoComplete="off"
-              form={form}
+              form={editForm}
             >
               <Form.Item label="분류" required>
                 <Space className="w-full">
@@ -600,7 +509,7 @@ const NewAsset = () => {
                     <Select
                       style={{ width: 160 }}
                       onChange={() => {
-                        form.setFieldValue("assetProductLine", "");
+                        editForm.setFieldValue("assetProductLine", "");
                         formRef?.current &&
                           filterProductLine(
                             formRef?.current.getFieldsValue().assetCategory,
@@ -614,41 +523,40 @@ const NewAsset = () => {
                       }))}
                     />
                   </Form.Item>
-                  {formRef?.current?.getFieldsValue().assetCategory !== "" &&
-                    productLineList.length > 0 && (
-                      <Form.Item name="assetProductLine" noStyle>
-                        <Select
-                          style={{ width: 160 }}
-                          dropdownRender={(menu) => <>{menu}</>}
-                          onChange={(value) => {
-                            setCurrentProductLine({
-                              label: value,
-                              value: value,
-                            });
+                  <Form.Item name="assetProductLine" noStyle>
+                    <Select
+                      style={{ width: 160 }}
+                      dropdownRender={(menu) => <>{menu}</>}
+                      onChange={(value) => {
+                        setCurrentProductLine({
+                          label: value,
+                          value: value,
+                        });
 
-                            setAssetPurchasedType(value === "구독" && "렌탈");
-                            form.setFieldValue(
-                              "assetPuchasedType",
-                              value === "구독" ? "렌탈" : "구매"
-                            );
-                            assetVendorRef?.current.focus({
-                              cursor: "all",
-                            });
-                          }}
-                          value={currentProductLine}
-                          options={productLineList.map((product, pIdx) => ({
-                            label: product.name,
-                            value: product.name,
-                          }))}
-                        />
-                      </Form.Item>
-                    )}
+                        setAssetPurchasedType(value === "구독" && "렌탈");
+                        editForm.setFieldValue(
+                          "assetPuchasedType",
+                          value === "구독" ? "렌탈" : "구매"
+                        );
+                        assetVendorRef?.current.focus({
+                          cursor: "all",
+                        });
+                      }}
+                      value={currentProductLine}
+                      options={productLineList.map((product, pIdx) => ({
+                        label: product.name,
+                        value: product.name,
+                      }))}
+                    />
+                  </Form.Item>
                 </Space>
               </Form.Item>
               <Form.Item label="취득방식">
                 <Space
                   className="w-full"
-                  direction={isDesktopOrLaptop ? "horizontal" : "vertical"}
+                  direction={
+                    media.isDesktopOrLaptop ? "horizontal" : "vertical"
+                  }
                 >
                   <Form.Item name="assetPurchasedType" noStyle>
                     <Select
@@ -666,7 +574,6 @@ const NewAsset = () => {
                     <Form.Item name="assetRentalPeriod" noStyle>
                       <DatePicker.RangePicker
                         locale={locale}
-                        defaultValue={[dayjs(), dayjs()]} // 현재 날짜로 설정
                         format="YYYY-MM-DD"
                       />
                     </Form.Item>
@@ -683,20 +590,6 @@ const NewAsset = () => {
                   },
                 ]}
               >
-                {/* <Input
-                  style={{ width: "100%" }}
-                  ref={assetVendorRef}
-                  value={assetVendor}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    setAssetVendor(() => e.target.value);
-                  }}
-                  onPressEnter={() =>
-                    assetModelRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
-                /> */}
                 <AutoComplete
                   options={assetVendorOptions}
                   ref={assetVendorAutoRef}
@@ -899,7 +792,7 @@ const NewAsset = () => {
                       defaultValue="설정안함"
                       onChange={() => {
                         setAssetDepreciationType(
-                          form.getFieldValue("assetDepreciationType")
+                          editForm.getFieldValue("assetDepreciationType")
                         );
                       }}
                     />
@@ -952,7 +845,7 @@ const NewAsset = () => {
                   onChange={(e) => {
                     console.log(NumberWithComma(e.target.value));
 
-                    form.setFieldValue(
+                    editForm.setFieldValue(
                       "assetCost",
                       NumberWithComma(e.target.value)
                     );
@@ -962,27 +855,6 @@ const NewAsset = () => {
                       cursor: "all",
                     })
                   }
-                />
-              </Form.Item>
-              <Form.Item
-                name="assetCount"
-                label="수량"
-                rules={[
-                  {
-                    required: true,
-                    message: "취득수량을 숫자형태로 입력해주세요.",
-                  },
-                ]}
-                help="100개 이상은 나눠서 등록해주세요."
-              >
-                <InputNumber
-                  ref={assetCountRef}
-                  max={100}
-                  onChange={handleAssetInputs}
-                  onPressEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
                 />
               </Form.Item>
               <Form.Item
@@ -999,7 +871,6 @@ const NewAsset = () => {
                 <DatePicker
                   ref={assetPurchasedDateRef}
                   locale={locale}
-                  defaultValue={dayjs()} // 현재 날짜로 설정
                   format="YYYY-MM-DD" // 필요에 따라 형식 지정
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -1010,21 +881,7 @@ const NewAsset = () => {
                   }}
                 />
               </Form.Item>
-              <Form.Item name="createdAt" label="등록일자">
-                <DatePicker
-                  ref={createAtRef}
-                  locale={locale}
-                  defaultValue={dayjs()} // 현재 날짜로 설정
-                  format="YYYY-MM-DD" // 필요에 따라 형식 지정
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      assetAccessoryNameRef?.current.focus({
-                        cursor: "all",
-                      });
-                    }
-                  }}
-                />
-              </Form.Item>
+
               <Form.Item name="assetMemo" label="비고">
                 <TextArea />
               </Form.Item>
@@ -1168,4 +1025,4 @@ const NewAsset = () => {
   );
 };
 
-export default NewAsset;
+export default EditAsset;

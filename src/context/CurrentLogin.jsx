@@ -13,6 +13,12 @@ export const CurrentLoginProvider = ({ children }) => {
   const [loginInfo, setLoginInfo] = useState({});
   const [memberSettings, setMemberSettings] = useState({});
   const [grouped, setGrouped] = useState({});
+  const [media, setMedia] = useState({
+    isDesktopOrLaptop: true,
+    isTablet: false,
+    isMobile: false,
+    isRetinal: false,
+  });
 
   return (
     <CurrentLoginContext.Provider
@@ -23,6 +29,8 @@ export const CurrentLoginProvider = ({ children }) => {
         setMemberSettings,
         grouped,
         setGrouped,
+        media,
+        setMedia,
       }}
     >
       {children}

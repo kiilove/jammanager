@@ -9,6 +9,7 @@ import { useFirestoreQuery } from "../hooks/useFirestore";
 import Draggable from "react-draggable";
 import {
   Button,
+  Card,
   ConfigProvider,
   Descriptions,
   Dropdown,
@@ -203,7 +204,7 @@ const ListAsset = () => {
       render: (text) => <>{highlightText(text, searchKeyword)}</>,
     },
     {
-      title: "입고일자",
+      title: "구매일자",
       dataIndex: "assetPurchasedDateConverted",
       key: "assetPurchasedDateConverted",
       className: "text-xs",
@@ -290,22 +291,22 @@ const ListAsset = () => {
     },
   ];
 
+  const convertTimestampToDate = (timestamp) => {
+    if (!timestamp || typeof timestamp.seconds !== "number") {
+      return "";
+    }
+
+    try {
+      return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Date conversion error:", error);
+      return "";
+    }
+  };
+
   const formatDatesInArray = (data) => {
-    console.log(data);
     return data.map((item) => {
       // Firestore Timestamp에서 JavaScript Date 객체로 변환
-      const convertTimestampToDate = (timestamp) => {
-        if (!timestamp || typeof timestamp.seconds !== "number") {
-          return "";
-        }
-
-        try {
-          return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
-        } catch (error) {
-          console.error("Date conversion error:", error);
-          return "";
-        }
-      };
 
       const assetPurchasedDateConverted = convertTimestampToDate(
         item.assetPurchasedDate
@@ -345,7 +346,7 @@ const ListAsset = () => {
   const handleRowNavigate = (record) => {
     console.log(record);
     navigate("/8e4314e1-ec72-47b5-84e2-114a5e7a697a", {
-      state: { recordId: record.id },
+      state: { data: record },
     });
   };
 
@@ -658,46 +659,70 @@ const ListAsset = () => {
                 />
               ) : (
                 <List
-                  className="w-full"
-                  bordered
                   dataSource={filteredAssetList}
                   renderItem={(item) => {
+                    const {
+                      assetName,
+                      assetCode,
+                      assetCategory,
+                      assetProductLine,
+                      location,
+                      userInfo,
+                      assetPurchasedDateConverted,
+                    } = item;
                     const descriptionItems = [
-                      { key: 1, label: "자산명", children: item?.assetName },
+                      {
+                        key: 1,
+                        label: "자산명",
+                        children: (
+                          <button onClick={() => handleRowNavigate(item)}>
+                            {assetName}
+                          </button>
+                        ),
+                        span: 4,
+                      },
                       {
                         key: 2,
                         label: <span>자산코드</span>,
+                        span: 4,
                         children: (
-                          <span style={{ fontSize: 12 }}>
-                            {item?.assetCode}
-                          </span>
+                          <span style={{ fontSize: 12 }}>{assetCode}</span>
                         ),
                       },
                       {
                         key: 3,
-                        label: <span>매입처</span>,
-                        children: <span>{item?.assetPurchaseName}</span>,
-                      },
-                      {
-                        key: 4,
-                        label: <span>입고일자</span>,
-                        children: <span>{item?.assetPurchasedDate}</span>,
+                        label: "구입일자",
+                        span: 4,
+                        children: <span>{assetPurchasedDateConverted}</span>,
                       },
                       {
                         key: 5,
-                        label: <span>위치</span>,
-                        children: <span>{item?.location}</span>,
+
+                        children: <span>{assetCategory}</span>,
                       },
                       {
-                        key: 6,
-                        label: <span>사용자</span>,
-                        children: <span>{item?.userInfo}</span>,
+                        key: 7,
+                        children: <span>{assetProductLine}</span>,
                       },
-                      { key: 7, children: <Button>자세히</Button> },
+                      {
+                        key: 9,
+                        children: <span>{userInfo?.userName}</span>,
+                      },
+                      {
+                        key: 11,
+                        children: <span>{location}</span>,
+                      },
                     ];
+
                     return (
                       <List.Item>
-                        <Descriptions items={descriptionItems}></Descriptions>
+                        <Card size="small">
+                          <Descriptions
+                            items={descriptionItems}
+                            size="small"
+                            column={4}
+                          />
+                        </Card>
                       </List.Item>
                     );
                   }}
