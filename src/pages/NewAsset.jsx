@@ -28,6 +28,7 @@ import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
 import {
   NumberWithComma,
+  convertTimestampToDate,
   generateFileName,
   generateUUID,
   removeCommas,
@@ -158,7 +159,8 @@ const NewAsset = () => {
             key={code.assetCode.toUpperCase()} // 고유한 key 추가
             defaultValue={code.assetCode.toUpperCase()}
             style={{ width: "100%" }}
-            onChange={(e) => {
+            //value={assetCodes[index].assetCode}
+            onBlur={(e) => {
               const newAssetCodes = [...assetCodes];
 
               const newCode = e.target.value;
@@ -185,28 +187,6 @@ const NewAsset = () => {
         </div> */}
       </div>
     );
-  };
-
-  const makeUserLabelValueData = (options) => {
-    const newOptions = [...options];
-    let lableValue = [];
-    if (newOptions.length > 0) {
-      lableValue = newOptions.map((option, oIdx) => {
-        const newValue = option.userUID;
-        const newLabel = (
-          <div className="w-full flex flex-col">
-            <div className="flex w-full gap-x-2">
-              <span>{option.userName}</span>
-              <span>{option.userSpot}</span>
-              <span>{option.userRank}</span>
-              <span>{option.userEmail}</span>
-            </div>
-          </div>
-        );
-        return { value: newValue, label: newLabel };
-      });
-    }
-    return lableValue;
   };
 
   const handleAssetAccessoryAdd = () => {
@@ -265,18 +245,41 @@ const NewAsset = () => {
 
     const assetPurchasedDate = values.assetPurchasedDate
       ? Timestamp.fromDate(values.assetPurchasedDate.toDate())
-      : "";
+      : Timestamp.fromDate(new Date());
+
+    const assetPurchasedDateConverted =
+      convertTimestampToDate(assetPurchasedDate);
 
     const createdAtValue = values.createdAt
       ? Timestamp.fromDate(values.createdAt.toDate())
       : Timestamp.fromDate(new Date());
 
+    const createdAtConverted = convertTimestampToDate(createdAtValue);
+
     let assetRentalPeriod = [];
-    if (values.assetRentalPeriod?.length > 0) {
-      const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
-        return Timestamp.fromDate(rent.toDate());
-      });
-      assetRentalPeriod = newPeriod;
+    let assetRentalPeriodConverted = [];
+
+    if (assetPurchasedType === "렌탈") {
+      assetRentalPeriod = [
+        Timestamp.fromDate(new Date()),
+        Timestamp.fromDate(new Date()),
+      ];
+      assetRentalPeriodConverted = [
+        convertTimestampToDate(assetRentalPeriod[0]),
+        convertTimestampToDate(assetRentalPeriod[1]),
+      ];
+      if (values.assetRentalPeriod?.length > 0) {
+        const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
+          return Timestamp.fromDate(rent.toDate());
+        });
+        const newPeriodConverted = values.assetRentalPeriod.map(
+          (rent, rIdx) => {
+            return convertTimestampToDate(Timestamp.fromDate(rent.toDate()));
+          }
+        );
+        assetRentalPeriod = newPeriod;
+        assetRentalPeriodConverted = newPeriodConverted;
+      }
     }
 
     // value 객체의 각 필드를 확인하고 undefined인 경우 빈 문자열로 대체
@@ -292,54 +295,54 @@ const NewAsset = () => {
     });
 
     // userEnteringDate와 createdAt 필드 추가
+    newValue.assetPurchasedType = assetPurchasedType;
     newValue.assetPurchasedDate = assetPurchasedDate;
+    newValue.assetPurchasedDateConverted = assetPurchasedDateConverted;
     newValue.assetCost = removeCommas(values.assetCost);
     newValue.assetAccessory = [...newAccessory];
     newValue.assetRentalPeriod = assetRentalPeriod;
+    newValue.assetRentalPeriodConverted = assetRentalPeriodConverted;
     newValue.createdAt = createdAtValue;
+    newValue.createdAtConverted = createdAtConverted;
     newValue.location = "출고대기";
     newValue.userInfo = { userName: "미지정" };
     //newValue.assetWarranty = assetWarranty;
     delete newValue.assetCount;
-
+    // console.log(assetPurchasedType);
+    // console.log(values);
+    // console.log(newValue);
     if (assetCodes.length > 0) {
       assetCodes.map(async (asset, cIdx) => {
         const codeWithValue = {
+          ...newValue,
           assetUID: generateUUID(),
-          assetCode: asset.assetCode.toUpperCase(),
+          assetCode: asset.assetCode,
           firstPics: [...asset.firstPics],
           assetOwner: memberSettings.userID,
-          ...newValue,
         };
-        //console.log(codeWithValue);
+        // console.log(codeWithValue);
 
         try {
           await assetAdd.addData(
             "assets",
             { ...codeWithValue },
             async (data) => {
-              await assetFeedAdd.addData(
-                "assetFeeds",
-                {
-                  refAssetID: data.id,
-                  refAssetUID: codeWithValue.assetUID,
-                  createBy: "system",
-                  createAt: Timestamp.fromDate(new Date()),
-                  actionAt: assetPurchasedDate,
-                  feedType: "추가",
-                  feedContext: `자산에 추가 되었습니다.`,
-                  feedPics: [...asset.firstPics],
-                },
-                () => {
-                  openNotification(
-                    "success",
-                    "추가 성공",
-                    `${data?.assetName}을 추가했습니다.`,
-                    "topRight",
-                    3,
-                    5
-                  );
-                }
+              await assetFeedAdd.addData("assetFeeds", {
+                refAssetID: data.id,
+                refAssetUID: codeWithValue.assetUID,
+                createBy: "system",
+                createAt: Timestamp.fromDate(new Date()),
+                actionAt: assetPurchasedDate,
+                feedType: "추가",
+                feedContext: `자산에 추가 되었습니다.`,
+                feedPics: [...asset.firstPics],
+              });
+              openNotification(
+                "success",
+                "추가 성공",
+                `자산을 추가했습니다.`,
+                "topRight",
+                3
               );
             }
           );
@@ -361,6 +364,7 @@ const NewAsset = () => {
     setAssetCount(0);
     setAssetCodes([]);
     setAssetAccessory([]);
+    setAssetPurchasedType("구매");
     form.setFieldValue("assetOwnerCompany", memberSettings.companyName);
     setIsDetailDescription(false);
   };
@@ -418,10 +422,18 @@ const NewAsset = () => {
         file,
         newFileName
       );
-      handleAssetPicAdd({
-        newFile: { storageUrl, name: newFileName, url: result.downloadUrl },
-        index,
-      });
+      if (result.success) {
+        handleAssetPicAdd({
+          newFile: {
+            storageUrl,
+            name: newFileName,
+            url: result.downloadUrl,
+            status: "uploaded",
+          },
+          index,
+        });
+      }
+
       onSuccess();
     } catch (error) {
       console.error(error);
@@ -625,12 +637,15 @@ const NewAsset = () => {
                               label: value,
                               value: value,
                             });
+                            if (value === "구독형") {
+                              setAssetPurchasedType("렌탈");
+                              form.setFieldValue("assetPurchasedType", "렌탈");
+                            }
+                            if (value === "라이선스") {
+                              setAssetPurchasedType("구매");
+                              form.setFieldValue("assetPurchasedType", "구매");
+                            }
 
-                            setAssetPurchasedType(value === "구독" && "렌탈");
-                            form.setFieldValue(
-                              "assetPuchasedType",
-                              value === "구독" ? "렌탈" : "구매"
-                            );
                             assetVendorRef?.current.focus({
                               cursor: "all",
                             });
@@ -1048,7 +1063,7 @@ const NewAsset = () => {
             {isDetailDescription && (
               <AssetDescription propProductLine={currentProductLine} />
             )}
-            <Card title="구성품" className="w-full">
+            <Card title="구성품" size="small" className="w-full">
               {assetAccessory.length > 0 && (
                 <>
                   <div className="flex flex-col lg:flex-row mb-2 gap-2">
@@ -1139,7 +1154,7 @@ const NewAsset = () => {
                 </>
               )}
             </Card>
-            <Card title="자산코드" className="w-full">
+            <Card title="자산코드" size="small" className="w-full">
               <div className="flex w-full justify-start items-center flex-col gap-y-2">
                 {assetInputs.length > 0 &&
                   assetInputs.map((input, iIdx) => {

@@ -20,6 +20,7 @@ import ViewAssetClient from "./pages/ViewAssetClient";
 import { ConfigProvider } from "antd";
 import ViewAssetInfo from "./pages/ViewAssetInfo";
 import EditAsset from "./pages/EditAsset";
+import AssetCodePrint from "./components/AssetCodePrint";
 
 function App() {
   return (
@@ -81,6 +82,10 @@ function App() {
             <Route
               path="/337a93f8-ff79-4ce9-95a7-6b041bb418f6"
               element={<Main children={<EditAsset />} />}
+            />
+            <Route
+              path="/261c956d-a9ce-4e22-aec2-8d9398b7af9b"
+              element={<Main children={<AssetCodePrint />} />}
             />
             <Route
               path="/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/:assetCode"

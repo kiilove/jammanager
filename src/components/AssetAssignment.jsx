@@ -23,7 +23,11 @@ import {
   useFirestoreUpdateData,
 } from "../hooks/useFirestore";
 import { Timestamp, where } from "firebase/firestore";
-import { formatPhoneNumber, makeFeedObject } from "../functions";
+import {
+  convertTimestampToDate,
+  formatPhoneNumber,
+  makeFeedObject,
+} from "../functions";
 import { useMediaQuery } from "react-responsive";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
@@ -115,19 +119,28 @@ const AssetAssignment = ({ data, setClose }) => {
   };
 
   const handleUpdateAssetAndFeed = async (data, userInfo, location) => {
+    const assetAssingDate = Timestamp.fromDate(assetAssignDate.toDate());
+    const assetAssingDateConverted = convertTimestampToDate(assetAssignDate);
+    let assetReturnDate = "";
+    let assetReturnDateConverted = "";
+
+    if (isReturnDate) {
+      assetReturnDate = Timestamp.fromDate(currentAssetReturnDate.toDate());
+      assetReturnDateConverted = convertTimestampToDate(assetReturnDate);
+    }
+
     const assetUpdatedValue = {
       ...data,
       userInfo: userInfo,
       location: location,
       assetAssignDate: Timestamp.fromDate(assetAssignDate.toDate()),
       isReturnDate: isReturnDate,
-      assetReturnDate: isReturnDate
-        ? Timestamp.fromDate(currentAssetReturnDate.toDate())
-        : "",
+      assetReturnDate,
+      assetReturnDateConverted,
     };
     console.log(assetUpdatedValue);
-    delete assetUpdatedValue.assetPurchasedDateConverted;
-    delete assetUpdatedValue.assetCreateAtConverted;
+    // delete assetUpdatedValue.assetPurchasedDateConverted;
+    // delete assetUpdatedValue.assetCreateAtConverted;
 
     const feedValue = makeFeedObject(
       data.id,
@@ -136,9 +149,7 @@ const AssetAssignment = ({ data, setClose }) => {
       Timestamp.fromDate(new Date()),
       assetUpdatedValue.assetAssignDate,
       "배정",
-      `${userInfo.userName}에게 ${dayjs(assetAssignDate).format(
-        "YYYY-MM-DD"
-      )}배정하였습니다.`,
+      `${userInfo.userName}에게 배정하였습니다.`,
       []
     );
 
@@ -229,20 +240,7 @@ const AssetAssignment = ({ data, setClose }) => {
         <Row className={isMobile && "w-full"}>
           <Col span={24}>
             <ContentTitle title="자산배정" padding={0} marginBottom={5} />
-            <Form className="w-full" form={assignForm}>
-              <Form.Item name="assetAssign" noStyle>
-                <AutoComplete
-                  onSearch={onUserSearch}
-                  onSelect={onSelectUser}
-                  options={userOptions}
-                  className="w-full"
-                >
-                  <Input.Search placeholder="구성원이름 검색" />
-                </AutoComplete>
-              </Form.Item>
-            </Form>
           </Col>
-          <Divider />
           <Col span={12}>
             <Row justify="start" gutter={[0, 16]}>
               <Col span={24}>
@@ -352,6 +350,28 @@ const AssetAssignment = ({ data, setClose }) => {
             className="w-full"
           />
           <Divider />
+          <Form
+            labelCol={{
+              span: 6,
+            }}
+            style={{
+              width: "100%",
+            }}
+            labelAlign="right"
+            className="w-full"
+            form={assignForm}
+          >
+            <Form.Item name="assetAssign" label="이름 검색">
+              <AutoComplete
+                onSearch={onUserSearch}
+                onSelect={onSelectUser}
+                options={userOptions}
+                className="w-full"
+              >
+                <Input.Search />
+              </AutoComplete>
+            </Form.Item>
+          </Form>
           {currentUserInfo?.userName !== undefined && (
             <div
               className="flex w-full h-full p-2 flex-col"

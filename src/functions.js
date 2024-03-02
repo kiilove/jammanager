@@ -298,9 +298,54 @@ export const convertTimestampToDate = (timestamp) => {
   }
 
   try {
-    return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
+    // 타임스탬프를 로컬 Date 객체로 변환
+    const date = new Date(timestamp.seconds * 1000);
+
+    // 로컬 타임존을 고려하여 날짜 문자열 생성
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // getMonth()는 0부터 시작
+    const day = date.getDate();
+
+    // MM-DD-YYYY 형식으로 반환 (필요에 따라 형식 조정 가능)
+    return `${year}-${month.toString().padStart(2, "0")}-${day
+      .toString()
+      .padStart(2, "0")}`;
   } catch (error) {
     console.error("Date conversion error:", error);
     return "";
   }
+};
+
+export const handlePicAction = (file, list, setList) => {
+  const newList = [...list];
+  console.log(file);
+  if (file.status === "removed") {
+    const listIndex = newList.findIndex((f) => f.name === file.name);
+    const newFileInfo = { ...list[listIndex], status: "removed" };
+    newList.splice(listIndex, 1, { ...newFileInfo });
+  }
+  if (file.status === "uploaded") {
+    newList.push({ ...file });
+  }
+
+  setList(() => [...newList]);
+};
+
+export const makeDrawMenu = (menus = []) => {
+  const newMenus = [...menus];
+  let drawMenus = [];
+  if (newMenus.length > 0) {
+    drawMenus = newMenus.map((menu, mIdx) => {
+      const newMenu = {
+        key: mIdx,
+        icon: menu.icon,
+        label: <span className="text-xs">{menu.label}</span>,
+        onClick: () => {
+          menu.action();
+        },
+      };
+    });
+  }
+
+  return drawMenus;
 };

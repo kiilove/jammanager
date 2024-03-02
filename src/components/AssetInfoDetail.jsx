@@ -53,7 +53,10 @@ const AssetInfoDetail = ({ data }) => {
     return hiddenKeyName;
   };
   const handleDescritionItems = (value) => {
+    const detailField = [...assetInfoFieldName];
+
     const newValue = { ...value };
+
     const transformItems = transformTimestamps(newValue);
     const userInfo = newValue.userInfo;
     const arrayKeys = findArrayKeysAtRoot(transformItems);
@@ -67,22 +70,31 @@ const AssetInfoDetail = ({ data }) => {
     ];
     deleteTargetKeys.map((key, kIdx) => delete transformItems[key]);
 
+    if (value.assetPurchasedType === "렌탈") {
+      transformItems.assetRentalPeriodConverted = `${
+        value.assetRentalPeriodConverted[0] || ""
+      }-${value.assetRentalPeriodConverted[1] || ""}`;
+    }
+
+    if (value.isReturnDate) {
+      transformItems.assetReturnDateConverted = value.assetReturnDateConverted;
+    }
     const items = Object.keys(transformItems).map((key, kIdx) => {
       let children = transformItems[key];
       const value = assetInfoFieldName.find((f) => f.keyName === key);
 
-      if (value.valueType === "number") {
+      if (value?.valueType === "number") {
         children = children.toLocaleString();
       }
 
-      if (value.valueType === "boolean") {
+      if (value?.valueType === "boolean") {
         children = children === true ? "예" : "아니오";
       }
-      if (value.beforeAddon) {
+      if (value?.beforeAddon) {
         children = value.beforeAddon + " " + children;
       }
 
-      if (value.afterAddon) {
+      if (value?.afterAddon) {
         children = children + " " + value.afterAddon;
       }
 
@@ -113,7 +125,7 @@ const AssetInfoDetail = ({ data }) => {
           userInfo?.userName +
             `(${userInfo?.userSpot || ""} ${userInfo?.userRank || ""})` || "",
         index: 101,
-        span: 2,
+        span: 1,
       }
     );
 

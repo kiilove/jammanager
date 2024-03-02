@@ -101,6 +101,7 @@ const AssetView = ({ data }) => {
         });
         setAssetPicList(() => [...picUrls, renderQRCode(data.id)]);
       } else {
+        setCurrentAssetPic("");
         setAssetPicList(() => [renderQRCode(data.id)]);
       }
     }

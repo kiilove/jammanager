@@ -7,6 +7,7 @@ import {
   DatePicker,
   Divider,
   Form,
+  Image,
   Input,
   InputNumber,
   Select,
@@ -31,10 +32,16 @@ import {
   convertTimestampToDate,
   generateFileName,
   generateUUID,
+  handlePicAction,
+  makeFeedObject,
   removeCommas,
 } from "../functions";
 import { Timestamp, where } from "firebase/firestore";
-import { useFirestoreAddData, useFirestoreQuery } from "../hooks/useFirestore";
+import {
+  useFirestoreAddData,
+  useFirestoreQuery,
+  useFirestoreUpdateData,
+} from "../hooks/useFirestore";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import useImageUpload from "../hooks/useFireStorage";
 import {
@@ -54,6 +61,7 @@ const EditAsset = () => {
 
   const [assetInputs, setAssetInputs] = useState([]);
   const [assetCodes, setAssetCodes] = useState([]);
+  const [assetFirstPics, setAssetFirstPics] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [assetPurchasedType, setAssetPurchasedType] = useState("구매");
   const [assetPurchasedDate, setAssetPurchasedDate] = useState();
@@ -77,6 +85,8 @@ const EditAsset = () => {
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
   const assetPicUpload = useImageUpload();
   const assetFeedAdd = useFirestoreAddData();
+  const assetPicDelete = useImageUpload();
+  const assetUpdate = useFirestoreUpdateData();
 
   const { memberSettings, grouped, setGrouped, media } =
     useContext(CurrentLoginContext);
@@ -191,7 +201,57 @@ const EditAsset = () => {
     setAssetAccessory(() => [...newList]);
   };
 
+  const delFiles = (useHook, path) => {
+    useHook.deleteFileFromStorage(path);
+  };
+  const handleUpdateAsset = async (id, value) => {
+    if (!id || !value) {
+      return;
+    }
+    try {
+      await assetUpdate.updateData("assets", id, { ...value }, async (data) => {
+        console.log(data);
+        const feedMessage = `자산정보를 수정하였습니다.`;
+        const editFeed = makeFeedObject(
+          data.id,
+          data.assetUID,
+          "system",
+          Timestamp.fromDate(new Date()),
+          Timestamp.fromDate(new Date()),
+          "자산수정",
+          feedMessage,
+          []
+        );
+        assetFeedAdd.addData("assetFeeds", editFeed);
+        openNotification(
+          "success",
+          "업데이트 완료",
+          "자산정보를 업데이트했습니다.",
+          "top",
+          3
+        );
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleFinish = (values) => {
+    let asyncAssetFirstPics = [...assetFirstPics];
+    const deleteTagetArray = asyncAssetFirstPics.filter(
+      (f) => f.status === "removed"
+    );
+
+    if (deleteTagetArray.length > 0) {
+      deleteTagetArray.map((target, tIdx) => {
+        const fileURI = target.storageUrl + "/" + target.name;
+        delFiles(assetPicDelete, fileURI);
+      });
+
+      asyncAssetFirstPics = [
+        ...assetFirstPics.filter((f) => f.status !== "removed"),
+      ];
+      //
+    }
     // userEnteringDate를 Date 객체로 변환한 후 Firestore Timestamp로 변환
 
     const updateGrouped = (condition, key, value) => {
@@ -222,15 +282,28 @@ const EditAsset = () => {
 
     let assetRentalPeriod = [];
     let assetRentalPeriodConverted = [];
-    if (values.assetRentalPeriod?.length > 0) {
-      const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
-        return Timestamp.fromDate(rent.toDate());
-      });
-      const newPeriodConverted = values.assetRentalPeriod.map((rent, rIdx) => {
-        return convertTimestampToDate(Timestamp.fromDate(rent.toDate()));
-      });
-      assetRentalPeriod = newPeriod;
-      assetRentalPeriodConverted = newPeriodConverted;
+
+    if (assetPurchasedType === "렌탈") {
+      assetRentalPeriod = [
+        Timestamp.fromDate(new Date()),
+        Timestamp.fromDate(new Date()),
+      ];
+      assetRentalPeriodConverted = [
+        convertTimestampToDate(assetRentalPeriod[0]),
+        convertTimestampToDate(assetRentalPeriod[1]),
+      ];
+      if (values.assetRentalPeriod?.length > 0) {
+        const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
+          return Timestamp.fromDate(rent.toDate());
+        });
+        const newPeriodConverted = values.assetRentalPeriod.map(
+          (rent, rIdx) => {
+            return convertTimestampToDate(Timestamp.fromDate(rent.toDate()));
+          }
+        );
+        assetRentalPeriod = newPeriod;
+        assetRentalPeriodConverted = newPeriodConverted;
+      }
     }
 
     // value 객체의 각 필드를 확인하고 undefined인 경우 빈 문자열로 대체
@@ -246,16 +319,21 @@ const EditAsset = () => {
     });
 
     // userEnteringDate와 createdAt 필드 추가
+    newValue.firstPics = asyncAssetFirstPics;
     newValue.assetPurchasedDate = assetPurchasedDate;
     newValue.assetPurchasedDateConverted = assetPurchasedDateConverted;
-    //newValue.assetCost = removeCommas(values.assetCost);
+    newValue.assetCost = parseInt(removeCommas(values.assetCost));
     newValue.assetAccessory = [...newAccessory];
     newValue.assetRentalPeriod = assetRentalPeriod;
     newValue.editedAt = editedAt;
     newValue.editedAtConverted = editedAtConverted;
     newValue.assetRentalPeriod = assetRentalPeriod;
     newValue.assetRentalPeriodConverted = assetRentalPeriodConverted;
-    console.log({ ...location?.state?.data, ...newValue });
+    //console.log({ ...location?.state?.data, ...newValue });
+    handleUpdateAsset(location.state.data.id, {
+      ...location?.state?.data,
+      ...newValue,
+    });
   };
 
   const handleAssetName = (vendor, model, ref) => {
@@ -296,6 +374,8 @@ const EditAsset = () => {
     setAssetCodes(() => [...newAssetCodes]);
   };
 
+  const handleAssetFirstPicsUpdate = ({ newFile }) => {};
+
   const handleAssetPicUploadAdd = async ({
     file,
     onSuccess,
@@ -311,10 +391,16 @@ const EditAsset = () => {
         file,
         newFileName
       );
-      handleAssetPicAdd({
-        newFile: { storageUrl, name: newFileName, url: result.downloadUrl },
-        index,
-      });
+      //const newFirstPics = [...assetFirstPics];
+      if (result.success) {
+        const newFile = {
+          storageUrl,
+          name: newFileName,
+          url: result.downloadUrl,
+          status: "uploaded",
+        };
+        handlePicAction(newFile, assetFirstPics, setAssetFirstPics);
+      }
       onSuccess();
     } catch (error) {
       console.error(error);
@@ -437,38 +523,29 @@ const EditAsset = () => {
     console.log(location);
     if (location?.state?.data) {
       const newData = { ...location.state.data };
+
       //delete newData.createdAt;
       delete newData.assetPurchasedDate;
+      delete newData.assetRentalPeriod;
 
-      console.log({
-        ...newData,
-        assetPurchasedDate: dayjs(
-          location.state.data.assetPurchasedDateConverted
-        ),
-      });
+      setAssetAccessory(() => [...newData.assetAccessory]);
+
       editForm.setFieldsValue({
         ...newData,
+        assetCost: newData.assetCost.toLocaleString(),
         assetPurchasedDate: dayjs(
           location.state.data.assetPurchasedDateConverted
         ),
+        assetRentalPeriod: [
+          dayjs(location.state.data.assetRentalPeriodConverted[0]) || null,
+          dayjs(location.state.data.assetRentalPeriodConverted[1]) || null,
+        ],
       });
+      setAssetPurchasedType(newData.assetPurchasedType);
+      console.log(newData.assetPurchasedType);
+      setAssetFirstPics([...newData.firstPics]);
     }
   }, [location]);
-
-  const Inputs = [
-    {
-      key: 1,
-      children: [
-        {
-          index: 1,
-          type: "select",
-          label: "",
-          name: "assetCategory",
-          style: { width: 160 },
-        },
-      ],
-    },
-  ];
 
   return (
     <div
@@ -479,7 +556,7 @@ const EditAsset = () => {
       }}
     >
       <div className="flex w-full ">
-        <ContentTitle title="자산추가" />
+        <ContentTitle title="자산수정" />
       </div>
       <div className="flex w-full flex-col lg:flex-row gap-2">
         <div className="flex w-full lg:w-1/2 justify-center items-center px-5 ">
@@ -500,6 +577,9 @@ const EditAsset = () => {
               autoComplete="off"
               form={editForm}
             >
+              <Form.Item label="자산코드" name="assetCode">
+                <Input />
+              </Form.Item>
               <Form.Item label="분류" required>
                 <Space className="w-full">
                   <Form.Item name="assetCategory" noStyle>
@@ -532,12 +612,15 @@ const EditAsset = () => {
                           label: value,
                           value: value,
                         });
+                        if (value === "구독형") {
+                          setAssetPurchasedType("렌탈");
+                          editForm.setFieldValue("assetPurchasedType", "렌탈");
+                        }
+                        if (value === "라이선스") {
+                          setAssetPurchasedType("구매");
+                          editForm.setFieldValue("assetPurchasedType", "구매");
+                        }
 
-                        setAssetPurchasedType(value === "구독" && "렌탈");
-                        editForm.setFieldValue(
-                          "assetPuchasedType",
-                          value === "구독" ? "렌탈" : "구매"
-                        );
                         assetVendorRef?.current.focus({
                           cursor: "all",
                         });
@@ -905,7 +988,7 @@ const EditAsset = () => {
             {isDetailDescription && (
               <AssetDescription propProductLine={currentProductLine} />
             )}
-            <Card title="구성품" className="w-full">
+            <Card title="구성품" size="small" className="w-full">
               {assetAccessory.length > 0 && (
                 <>
                   <div className="flex flex-col lg:flex-row mb-2 gap-2">
@@ -996,26 +1079,25 @@ const EditAsset = () => {
                 </>
               )}
             </Card>
-            <Card title="자산코드" className="w-full">
-              <div className="flex w-full justify-start items-center flex-col gap-y-2">
-                {assetInputs.length > 0 &&
-                  assetInputs.map((input, iIdx) => {
-                    return (
-                      <div
-                        className="flex w-full h-auto p-2 rounded"
-                        style={{ border: "1px solid #e6e6e6" }}
-                      >
-                        <div
-                          className="flex justify-center items-center"
-                          style={{ width: "50px" }}
-                        >
-                          {iIdx + 1}
-                        </div>
-                        <div className="flex w-full">{input}</div>
-                      </div>
-                    );
-                  })}
-              </div>
+            <Card title="사진" size="small" className="w-full">
+              <Upload
+                listType="picture-card"
+                fileList={assetFirstPics.filter((f) => f.status === "uploaded")}
+                onChange={(value) =>
+                  handlePicAction(value.file, assetFirstPics, setAssetFirstPics)
+                }
+                customRequest={({ file, onSuccess, onError }) =>
+                  handleAssetPicUploadAdd({
+                    file,
+                    onSuccess,
+                    onError,
+                  })
+                }
+              >
+                {assetFirstPics.length <= 1 && (
+                  <Button icon={<UploadOutlined />} />
+                )}
+              </Upload>
             </Card>
           </div>
         </div>

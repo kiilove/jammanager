@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -23,7 +24,17 @@ import {
   Tag,
 } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
+import { FiPrinter } from "react-icons/fi";
+import { GrMultiple } from "react-icons/gr";
+import { IoReturnUpBack } from "react-icons/io5";
+import {
+  MdMoreHoriz,
+  MdMoreVert,
+  MdOutlineViewCompactAlt,
+} from "react-icons/md";
+import { GrOverview } from "react-icons/gr";
 import { BiDetail } from "react-icons/bi";
+import { CiEdit } from "react-icons/ci";
 import { FaUserTag } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ContentTitle } from "../commonstyles/Title";
@@ -32,12 +43,13 @@ import dayjs from "dayjs";
 import "./ListAsset.css";
 import AssetView from "../components/AssetView";
 import AssetAssignment from "../components/AssetAssignment";
-import { useMediaQuery } from "react-responsive";
+import { CurrentLoginContext } from "../context/CurrentLogin";
+import AssetFlex from "../components/AssetFlex";
 
 const ListAsset = () => {
   const [assetList, setAssetList] = useState([]);
+  const [assetMultiList, setAssetMultiList] = useState([]);
   const assetQuery = useFirestoreQuery();
-  const navigate = useNavigate();
   const [assetCategoryList, setAssetCategoryList] = useState([]);
   const [assetVendorList, setAssetVendorList] = useState([]);
   const [assetPurchaseNameList, setAssetPurchaseNameList] = useState([]);
@@ -53,12 +65,10 @@ const ListAsset = () => {
   const [searchParamsList, setSearchParamsList] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isAssetAssignment, setIsAssetAssignment] = useState({
     visible: false,
     assetID: "",
   });
-  const [modalContent, setModalContent] = useState(null); // 모달에 표시될 내용
   const [dragDisabled, setDragDisabled] = useState(true);
   const [bounds, setBounds] = useState({
     left: 0,
@@ -67,17 +77,18 @@ const ListAsset = () => {
     right: 0,
   });
   const [modals, setModals] = useState([]);
-
-  const draggleRef = useRef(null);
-
-  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
-  const isTablet = useMediaQuery({
-    query: "(min-width: 768px) and (max-width: 1223px)",
+  const [modalProp, setModalProp] = useState({
+    open: false,
+    data: null,
   });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
+  const [multiModalProp, setMultiModalProp] = useState({
+    open: false,
+    data: null,
+  });
 
-  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
-  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
+  const navigate = useNavigate();
+  const draggleRef = useRef(null);
+  const { media } = useContext(CurrentLoginContext);
 
   const handleViewDetail = (record) => {
     const newModal = {
@@ -95,22 +106,6 @@ const ListAsset = () => {
     });
   };
 
-  // 모달 제거 함수
-  const removeModal = (id) => {
-    setModals(modals.filter((modal) => modal.id !== id));
-  };
-
-  const onStart = (event, uiData) => {
-    const { clientWidth, clientHeight } = window.document.documentElement;
-    const targetRect = draggleRef.current.getBoundingClientRect();
-    setBounds({
-      left: -targetRect.left + uiData.x,
-      right: clientWidth - (targetRect.right - uiData.x),
-      top: -targetRect.top + uiData.y,
-      bottom: clientHeight - (targetRect.bottom - uiData.y),
-    });
-  };
-
   const rowSelection = {
     selectedRowKeys,
     onChange: (newSelectedRowKeys) => {
@@ -118,34 +113,77 @@ const ListAsset = () => {
     },
   };
 
-  const modalDraggable = (nodeRef) => {
-    return (
-      <Draggable bounds="parent" handle=".draggable-handle">
-        <div ref={nodeRef}>
-          {/* 이 div는 Draggable의 자식으로, Modal을 감싸줍니다. */}
-        </div>
-      </Draggable>
-    );
+  const drawHeaderMenu = () => {
+    let menuArray = [
+      {
+        key: "2",
+        index: 10,
+        icon: <GrMultiple className="text-base" />,
+        label: <span className="text-xs">모아보기</span>,
+        onClick: () => {
+          setMultiModalProp({ open: true, data: assetMultiList });
+        },
+      },
+      {
+        key: "3",
+        index: 11,
+        icon: <FiPrinter className="text-base" />,
+        label: <span className="text-xs">자산코드인쇄</span>,
+        onClick: () => {
+          navigate("/261c956d-a9ce-4e22-aec2-8d9398b7af9b", {
+            state: { data: assetMultiList },
+          });
+        },
+      },
+    ];
+    return menuArray.sort((a, b) => a.index - b.index);
   };
 
-  const drawItem = (record) => [
-    {
-      key: "0",
-      icon: <BiDetail className="text-base" />,
-      label: <span className="text-xs">자세히보기</span>,
-      onClick: () => {
-        handleViewDetail(record); // 여기서 record는 현재 행의 데이터입니다.
+  const drawMenu = (record) => {
+    let menuArray = [
+      {
+        key: "2",
+        index: 10,
+        icon: <MdOutlineViewCompactAlt className="text-base" />,
+        label: <span className="text-xs">간략히보기</span>,
+        onClick: () => {
+          setModalProp({ open: true, data: record });
+        },
       },
-    },
-    {
-      key: "1",
-      icon: <FaUserTag className="text-base" />,
-      label: <span className="text-xs">사용자배정</span>,
-      onClick: () => {
-        handleViewAssetDefined(record);
+      {
+        key: "3",
+        index: 11,
+        icon: <CiEdit className="text-base" />,
+        label: <span className="text-xs">자산수정</span>,
+        onClick: () => {
+          handleViewAssetDefined(record);
+        },
       },
-    },
-  ];
+    ];
+
+    if (record?.userInfo?.userName === "미지정") {
+      menuArray.push({
+        key: "1",
+        index: 20,
+        icon: <FaUserTag className="text-base" />,
+        label: <span className="text-xs">사용자배정</span>,
+        onClick: () => {
+          handleViewAssetDefined(record);
+        },
+      });
+    } else {
+      menuArray.push({
+        key: "1",
+        index: 20,
+        icon: <IoReturnUpBack className="text-base" />,
+        label: <span className="text-xs">자산반납</span>,
+        onClick: () => {
+          handleViewAssetDefined(record);
+        },
+      });
+    }
+    return menuArray.sort((a, b) => a.index - b.index);
+  };
 
   const tableColumns = [
     {
@@ -252,13 +290,13 @@ const ListAsset = () => {
       className: "text-xs",
       showSorterTooltip: false,
       render: (userInfo) => {
-        let color = "green";
+        let color = "blue";
         switch (userInfo?.userName) {
           case "폐기":
             color = "volcano";
             break;
-          case "미배정":
-            color = "geekblue";
+          case "미지정":
+            color = "magenta";
 
           default:
             break;
@@ -272,22 +310,41 @@ const ListAsset = () => {
       },
     },
     {
-      title: "",
-      key: "action",
-      className: "text-xs",
-      render: (_, record) => (
+      title: selectedRowKeys.length > 0 && (
         <Dropdown
           overlay={
             <Menu
-              items={drawItem(record)} // 함수 호출을 통해 record를 전달합니다.
+              items={drawHeaderMenu()} // 함수 호출을 통해 record를 전달합니다.
             />
           }
         >
           <a onClick={(e) => e.preventDefault()}>
-            <EllipsisOutlined style={{ fontSize: "20px" }} />
+            <MdMoreVert
+              className="text-gray-600"
+              style={{ fontSize: "20px", fontWeight: 200 }}
+            />
           </a>
         </Dropdown>
       ),
+      key: "action",
+      className: "text-xs",
+      render: (_, record) =>
+        selectedRowKeys?.length === 0 && (
+          <Dropdown
+            overlay={
+              <Menu
+                items={drawMenu(record)} // 함수 호출을 통해 record를 전달합니다.
+              />
+            }
+          >
+            <a onClick={(e) => e.preventDefault()}>
+              <MdMoreVert
+                className="text-gray-600"
+                style={{ fontSize: "20px", fontWeight: 200 }}
+              />
+            </a>
+          </Dropdown>
+        ),
     },
   ];
 
@@ -322,6 +379,15 @@ const ListAsset = () => {
     });
   };
 
+  useEffect(() => {
+    if (selectedRowKeys.length > 0 && assetList.length > 0) {
+      const filteredAssets = assetList.filter((asset) =>
+        selectedRowKeys.includes(asset.id.toString())
+      );
+      setAssetMultiList(filteredAssets);
+    }
+  }, [selectedRowKeys]);
+
   const fetchAsset = async () => {
     try {
       await assetQuery.getDocuments("assets", (data) => {
@@ -344,7 +410,6 @@ const ListAsset = () => {
   };
 
   const handleRowNavigate = (record) => {
-    console.log(record);
     navigate("/8e4314e1-ec72-47b5-84e2-114a5e7a697a", {
       state: { data: record },
     });
@@ -492,92 +557,52 @@ const ListAsset = () => {
           <div className="flex w-full ">
             <ContentTitle title="자산목록" />
           </div>
-          {modals.map((modal) => {
-            console.log(modal);
-            const {
-              id,
-              assetCategory,
-              assetCode,
-              assetCost,
-              assetDepreciationPeroid,
-              assetDepreciationType,
-              assetDescritionSummay,
-              assetModel,
-              assetName,
-              assetOwner,
-              assetOwnerCompany,
-              assetProductLine,
-              assetPurchaseName,
-              assetPurchasedDate,
-              assetVendor,
-              createdAt,
-              location,
-              userInfo,
-              firstPics,
-            } = modal;
-            return (
-              <Draggable key={modal.id}>
-                <Modal
-                  mask={false}
-                  maskClosable={false}
-                  keyboard={false}
-                  wrapClassName="aaa"
-                  width={500}
-                  style={{
-                    position: "fixed",
-                    // transform: 'translateX(-50%)',
-                    left: (document.body.clientWidth - 500) / 2,
-                  }}
-                  title={
-                    <div
-                      style={{
-                        width: "100%",
-                        cursor: "move",
-                      }}
-                      onMouseOver={() => {
-                        if (dragDisabled) {
-                          setDragDisabled(false);
-                        }
-                      }}
-                      onMouseOut={() => {
-                        setDragDisabled(true);
-                      }}
-                      onFocus={() => {}}
-                      onBlur={() => {}}
-                    >
-                      <div className="flex justify-between items-end">
-                        <div className="flex">
-                          <div className="flex flex-col justify-start ml-4">
-                            <div>자산정보</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                  footer={null}
-                  open={true}
-                  onOk={() => removeModal(modal.id)}
-                  onCancel={() => removeModal(modal.id)}
-                  modalRender={(modal) => (
-                    <Draggable
-                      disabled={dragDisabled}
-                      bounds={bounds}
-                      onStart={(event, uiData) => onStart(event, uiData)}
-                    >
-                      <div ref={draggleRef}>{modal}</div>
-                    </Draggable>
-                  )}
-                >
-                  <AssetView data={modal} />
-                </Modal>
-              </Draggable>
-            );
-          })}
+          <Modal
+            mask={false}
+            maskClosable={false}
+            keyboard={false}
+            className="w-full h-full"
+            style={{
+              minWidth: "800px",
+              maxWidth: "1200px",
+              width: "100%",
+              top: 0,
+            }}
+            title="자산 모아보기"
+            footer={null}
+            open={multiModalProp.open}
+            onOk={() => setMultiModalProp(() => ({ open: false, data: null }))}
+            onCancel={() =>
+              setMultiModalProp(() => ({ open: false, data: null }))
+            }
+          >
+            <AssetFlex data={multiModalProp.data} />
+          </Modal>
+          <Modal
+            mask={false}
+            maskClosable={false}
+            keyboard={false}
+            wrapClassName="aaa"
+            width={500}
+            style={{
+              position: "fixed",
+              // transform: 'translateX(-50%)',
+              left: (document.body.clientWidth - 500) / 2,
+            }}
+            title="자산 요약"
+            footer={null}
+            open={modalProp.open}
+            onOk={() => setModalProp(() => ({ open: false, data: null }))}
+            onCancel={() => setModalProp(() => ({ open: false, data: null }))}
+          >
+            <AssetView data={modalProp.data} />
+          </Modal>
           <Modal
             mask={false}
             maskClosable={false}
             keyboard={false}
             footer={null}
+            style={{ width: "100%", height: "100%", top: 0 }}
             open={isAssetAssignment.visible}
             onCancel={() =>
               setIsAssetAssignment({ ...isAssetAssignment, visible: false })
@@ -634,7 +659,7 @@ const ListAsset = () => {
                 style={{ height: "55px" }}
               >
                 <Input.Search
-                  style={{ width: isMobile ? 230 : 300 }}
+                  style={{ width: media.isMobile ? 230 : 300 }}
                   onChange={(e) =>
                     e.target.value.trim() === "" && setSearchKeyword("")
                   }
@@ -646,7 +671,7 @@ const ListAsset = () => {
 
           <div className="flex w-full px-4 justify-center items-start">
             {assetList.length > 0 ? (
-              !isMobile ? (
+              !media.isMobile ? (
                 <Table
                   rowSelection={rowSelection}
                   size="small"

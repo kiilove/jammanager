@@ -38,6 +38,9 @@ const AssetTimeLine = ({ assetDocuID }) => {
             break;
           case "수리":
             childColor = "red";
+          case "자산수정":
+            childColor = "gray";
+            break;
 
           case "배정":
             childColor = "green";

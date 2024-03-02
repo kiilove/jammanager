@@ -123,7 +123,7 @@ const ViewAssetInfo = () => {
 
   const assetInfo = useMemo(() => {
     if (location?.state) {
-      console.log(location.state.data);
+      console.log(location.state);
       setIsLoading(false);
       return location.state.data;
     } else {
