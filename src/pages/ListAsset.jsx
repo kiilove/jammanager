@@ -21,6 +21,8 @@ import { MdMoreVert, MdOutlineViewCompactAlt } from "react-icons/md";
 
 import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt, FaUserTag } from "react-icons/fa";
+
+import { SlPrinter } from "react-icons/sl";
 import { useNavigate } from "react-router-dom";
 import { ContentTitle } from "../commonstyles/Title";
 import { groupByKey, highlightText } from "../functions";
@@ -31,7 +33,13 @@ import AssetAssignment from "../components/AssetAssignment";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import AssetFlex from "../components/AssetFlex";
 import { where } from "firebase/firestore";
-import { ConvertDateByArray, FilterKeyByArray } from "../utils/Index";
+import {
+  ConvertDateByArray,
+  FilterKeyByArray,
+  setColumnItem,
+  setMenuItem,
+  setSections,
+} from "../utils/Index";
 import { FilterBar } from "../share/Index.js";
 import { TableWithFilterAndSearch } from "../widget/Index.js";
 
@@ -43,11 +51,19 @@ const ListAsset = () => {
   const [filteredAssetList, setFilteredAssetList] = useState([]);
   const [filterItems, setFilterItems] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [modalProp, setModalProp] = useState({
+  const [modalReturn, setModalReturn] = useState({
+    open: false,
+    data: "",
+  });
+  const [modalAssign, setModalAssign] = useState({
+    open: false,
+    data: "",
+  });
+  const [modalView, setModalView] = useState({
     open: false,
     data: null,
   });
-  const [multiModalProp, setMultiModalProp] = useState({
+  const [modalMultiView, setModalMultiView] = useState({
     open: false,
     data: null,
   });
@@ -62,40 +78,11 @@ const ListAsset = () => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
   };
-
-  const setSections = (label, dataIndex, list) => {
-    return { title: label, param: dataIndex, list: list };
-  };
-
-  const setColumnItem = (label, dataIndex, customRender = null) => {
-    return {
-      key: dataIndex,
-      title: label,
-      label: label,
-      dataIndex: dataIndex,
-      className: "text-xs",
-      sorter: (a, b) => a[dataIndex].localeCompare(b.assetCategory),
-      render: (text, record) => (
-        <>
-          {customRender !== null
-            ? customRender(text, record)
-            : highlightText(text, searchKeyword)}
-        </>
-      ),
-    };
-  };
-
-  const setMenuItem = (disabled, label, icon, index, action, value) => {
-    return {
-      key: index.toString(),
-      disabled: disabled,
-      index: index,
-      icon: icon,
-      label: <span className="text-xs">{label}</span>,
-      onClick: () => {
-        action(value);
-      },
-    };
+  const handleViewAssetDefined = (record) => {
+    setModalAssign({
+      visible: true,
+      data: record,
+    });
   };
 
   const setActionColumnItem = () => {
@@ -113,7 +100,17 @@ const ListAsset = () => {
                     <GrMultiple className="text-base" />,
                     1,
                     (value) => {
-                      setMultiModalProp({ open: true, data: assetMultiList });
+                      setModalMultiView({ open: true, data: assetMultiList });
+                    },
+                    selectedRowKeys
+                  ),
+                  setMenuItem(
+                    selectedRowKeys.length > 0 ? false : true,
+                    "자산인쇄",
+                    <SlPrinter className="text-base" />,
+                    2,
+                    (value) => {
+                      console.log(value);
                     },
                     selectedRowKeys
                   ),
@@ -121,7 +118,7 @@ const ListAsset = () => {
                     selectedRowKeys.length > 0 ? false : true,
                     "선택삭제",
                     <FaRegTrashAlt className="text-base" />,
-                    2,
+                    3,
                     (value) => {
                       console.log(value);
                     },
@@ -154,19 +151,60 @@ const ListAsset = () => {
                       <MdOutlineViewCompactAlt className="text-base" />,
                       1,
                       (value) => {
-                        setModalProp({ open: true, data: value });
+                        setModalView({ open: true, data: value });
                       },
                       record
                     ),
+                    record?.userInfo?.userName === "미지정"
+                      ? setMenuItem(
+                          false,
+                          "자산배정",
+                          <FaUserTag className="text-base" />,
+                          2,
+                          (value) => {
+                            setModalAssign({ open: true, data: record });
+                          },
+                          record
+                        )
+                      : setMenuItem(
+                          false,
+                          "자산반납",
+                          <IoReturnUpBack className="text-base" />,
+                          2,
+                          (value) => {
+                            setModalReturn({ open: true, data: record });
+                          },
+                          record
+                        ),
                     setMenuItem(
-                      true,
-                      "구성원수정",
+                      false,
+                      "자산수정",
                       <CiEdit className="text-base" />,
-                      2,
+                      3,
                       (value) => {
                         console.log(value);
                       },
                       record
+                    ),
+                    setMenuItem(
+                      false,
+                      "자산인쇄",
+                      <SlPrinter className="text-base" />,
+                      4,
+                      (value) => {
+                        console.log(value);
+                      },
+                      selectedRowKeys
+                    ),
+                    setMenuItem(
+                      false,
+                      "삭제",
+                      <FaRegTrashAlt className="text-base" />,
+                      5,
+                      (value) => {
+                        console.log(value);
+                      },
+                      selectedRowKeys
                     ),
                   ]}
                 />
@@ -183,6 +221,7 @@ const ListAsset = () => {
         ),
     };
   };
+
   const fetchAsset = async (id) => {
     const condition = [where("assetOwner", "==", id)];
     const filterKeys = [
@@ -200,8 +239,16 @@ const ListAsset = () => {
           const convertDate = [...ConvertDateByArray(data)];
           const grouped = FilterKeyByArray(data, filterKeys);
 
-          setAssetList(() => [...convertDate]);
-          setFilteredAssetList(() => [...convertDate]);
+          setAssetList(() => [
+            ...convertDate.sort((a, b) =>
+              a.assetCategory.localeCompare(b.assetCategory)
+            ),
+          ]);
+          setFilteredAssetList(() => [
+            ...convertDate.sort((a, b) =>
+              a.assetCategory.localeCompare(b.assetCategory)
+            ),
+          ]);
           setFilterItems(() => [
             setSections("분류", filterKeys[0], grouped.assetCategoryGrouped),
             setSections("품목", filterKeys[1], grouped.assetProductLineGrouped),
@@ -232,8 +279,8 @@ const ListAsset = () => {
   };
 
   const assetColumn = [
-    setColumnItem("분류", "assetCategory"),
-    setColumnItem("자산명", "assetName", (text, record) => (
+    setColumnItem("분류", "assetCategory", searchKeyword),
+    setColumnItem("자산명", "assetName", searchKeyword, (text, record) => (
       <button
         className="flex justify-start items-start flex-col"
         onClick={() => handleRowNavigate(record)}
@@ -244,14 +291,12 @@ const ListAsset = () => {
         </span>
       </button>
     )),
-    setColumnItem("제조사", "assetVendor"),
-    setColumnItem("모델명", "assetModel"),
-    setColumnItem("구매처", "assetPurchaseName"),
-    setColumnItem("구매일자", "assetPurchasedDateConverted"),
-    setColumnItem("위치", "location"),
-    setColumnItem("사용자", null, (text, record) => {
-      return <span>{record?.userInfo?.userName}</span>;
-    }),
+    setColumnItem("제조사", "assetVendor", searchKeyword),
+    setColumnItem("모델명", "assetModel", searchKeyword),
+    setColumnItem("구매처", "assetPurchaseName", searchKeyword),
+    setColumnItem("구매일자", "assetPurchasedDateConverted", searchKeyword),
+    setColumnItem("위치", "location", searchKeyword),
+    setColumnItem("사용자", "currentUser", searchKeyword),
     setActionColumnItem(),
   ];
 
@@ -293,7 +338,6 @@ const ListAsset = () => {
         mask={false}
         maskClosable={false}
         keyboard={false}
-        className="w-full h-full"
         style={{
           minWidth: "800px",
           maxWidth: "1200px",
@@ -302,30 +346,37 @@ const ListAsset = () => {
         }}
         title="자산 모아보기"
         footer={null}
-        open={multiModalProp.open}
-        onOk={() => setMultiModalProp(() => ({ open: false, data: null }))}
-        onCancel={() => setMultiModalProp(() => ({ open: false, data: null }))}
+        open={modalMultiView.open}
+        onOk={() => setModalMultiView(() => ({ open: false, data: null }))}
+        onCancel={() => setModalMultiView(() => ({ open: false, data: null }))}
       >
-        <AssetFlex data={multiModalProp.data} />
+        <AssetFlex data={modalMultiView.data} />
       </Modal>
       <Modal
         mask={false}
         maskClosable={false}
         keyboard={false}
-        wrapClassName="aaa"
         width={500}
-        style={{
-          position: "fixed",
-          // transform: 'translateX(-50%)',
-          left: (document.body.clientWidth - 500) / 2,
-        }}
         title="자산 요약"
         footer={null}
-        open={modalProp.open}
-        onOk={() => setModalProp(() => ({ open: false, data: null }))}
-        onCancel={() => setModalProp(() => ({ open: false, data: null }))}
+        open={modalView.open}
+        onOk={() => setModalView(() => ({ open: false, data: null }))}
+        onCancel={() => setModalView(() => ({ open: false, data: null }))}
       >
-        <AssetView data={modalProp.data} />
+        <AssetView data={modalView.data} />
+      </Modal>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        width={500}
+        title="자산 배정"
+        footer={null}
+        open={modalAssign.open}
+        onOk={() => setModalAssign(() => ({ open: false, data: null }))}
+        onCancel={() => setModalAssign(() => ({ open: false, data: null }))}
+      >
+        <AssetAssignment data={modalAssign.data} />
       </Modal>
     </div>
   );

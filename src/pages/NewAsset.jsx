@@ -306,21 +306,19 @@ const NewAsset = () => {
     newValue.createdAtConverted = createdAtConverted;
     newValue.location = "출고대기";
     newValue.userInfo = { userName: "미지정" };
-    //newValue.assetWarranty = assetWarranty;
+    newValue.currentUser = "미지정";
+
     delete newValue.assetCount;
-    // console.log(assetPurchasedType);
-    // console.log(values);
-    // console.log(newValue);
+
     if (assetCodes.length > 0) {
       assetCodes.map(async (asset, cIdx) => {
         const codeWithValue = {
           ...newValue,
           assetUID: generateUUID(),
-          assetCode: asset.assetCode,
+          assetCode: asset.assetCode.toUpperCase(),
           firstPics: [...asset.firstPics],
           assetOwner: memberSettings.userID,
         };
-        // console.log(codeWithValue);
 
         try {
           await assetAdd.addData(

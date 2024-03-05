@@ -25,10 +25,10 @@ const Success = () => {
           <Result
             status="success"
             title="화원가입 완료!"
-            subTitle="로그인이 필요합니다. 아래 로그인 버튼을 클릭해주세요."
+            subTitle="첫 화면으로 이동합니다."
             extra={[
-              <Button key="login" onClick={() => navigate("/login")}>
-                로그인
+              <Button key="login" onClick={() => navigate("/")}>
+                확인
               </Button>,
             ]}
           />

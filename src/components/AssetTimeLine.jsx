@@ -7,30 +7,18 @@ import {
 } from "../hooks/useFirestore";
 import { where } from "firebase/firestore";
 import { orderBy } from "lodash";
+import { convertTimestampToDate } from "../functions";
 
 const AssetTimeLine = ({ assetDocuID }) => {
   const [timelineItems, setTimelineItems] = useState([]);
   const feedQuery = useFirestoreQuery();
-
-  const convertTimestampToDate = (timestamp) => {
-    if (!timestamp || typeof timestamp.seconds !== "number") {
-      return "";
-    }
-
-    try {
-      return new Date(timestamp.seconds * 1000).toISOString().split("T")[0];
-    } catch (error) {
-      console.error("Date conversion error:", error);
-      return "";
-    }
-  };
 
   const makeFeedItem = (list = []) => {
     if (list.length > 0) {
       const items = list.map((item, iIdx) => {
         const { feedType, feedContext, pics, createAt, createBy, actionAt } =
           item;
-        console.log(convertTimestampToDate(actionAt));
+
         let childColor = "blue";
         switch (feedType) {
           case "입고":
@@ -87,7 +75,6 @@ const AssetTimeLine = ({ assetDocuID }) => {
     } catch (error) {}
   };
   useEffect(() => {
-    console.log(assetDocuID);
     if (assetDocuID) {
       fetchFeeds(assetDocuID);
     }

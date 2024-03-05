@@ -1,4 +1,4 @@
-import { Input } from "antd";
+import { Button, Input } from "antd";
 import React, { useState, useEffect, useContext } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 
@@ -11,6 +11,7 @@ export const FilterBar = ({
 }) => {
   const [searchParams, setSearchParams] = useState({});
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [isFilterView, setIsFilterView] = useState(false);
   const { media } = useContext(CurrentLoginContext);
 
   const buttonUnCheckStyle = "bg-gray-100 text-xs p-2 cursor-pointer";
@@ -73,6 +74,7 @@ export const FilterBar = ({
   return (
     <div className="flex w-full px-4 flex-col mb-5 ">
       {sections?.length > 0 &&
+        isFilterView &&
         sections.map((section, sIdx) => {
           return (
             <div className="flex w-full " key={section.title}>
@@ -81,9 +83,7 @@ export const FilterBar = ({
                 className="flex h-atuo bg-gray-500 pl-4 justify-start items-center"
                 style={{ width: "130px", minHeight: "45px" }}
               >
-                <span className="font-semibold text-gray-100 text-xs">
-                  {section.title}
-                </span>
+                <span className=" text-gray-100 text-xs">{section.title}</span>
               </div>
               <div className="flex bg-gray-100 flex-wrap gap-2 px-4 justify-start items-center w-full">
                 {section?.list?.length > 0 &&
@@ -111,7 +111,7 @@ export const FilterBar = ({
           className="flex bg-gray-500 pl-4 justify-start items-center"
           style={{ width: "130px", height: "55px" }}
         >
-          <span className="font-semibold text-gray-100 text-xs">검색어</span>
+          <span className=" text-gray-100 text-xs">검색어</span>
         </div>
         <div
           className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full"
@@ -122,6 +122,16 @@ export const FilterBar = ({
             onChange={(e) => setSearchKeyword(e.target.value)}
             onSearch={(value) => setSearchKeyword(value)}
           />
+          <Button
+            type="default"
+            size={media.isMobile && "small"}
+            className="bg-white"
+            onClick={() => {
+              setIsFilterView(!isFilterView);
+            }}
+          >
+            {isFilterView ? "상세검색 감추기" : "상세검색 펼치기"}
+          </Button>
         </div>
       </div>
     </div>

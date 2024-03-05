@@ -15,7 +15,7 @@ import {
   Typography,
   notification,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { ContentTitle } from "../commonstyles/Title";
 import {
   useFirestoreAddData,
@@ -31,6 +31,7 @@ import {
 import { useMediaQuery } from "react-responsive";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
+import { CurrentLoginContext } from "../context/CurrentLogin";
 
 const AssetAssignment = ({ data, setClose }) => {
   const [currentAssetPic, setCurrentAssetPic] = useState();
@@ -45,6 +46,7 @@ const AssetAssignment = ({ data, setClose }) => {
   const [assetPicList, setAssetPicList] = useState([]);
   const [userList, setUserList] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
+  const { media } = useContext(CurrentLoginContext);
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
     apiType,
@@ -67,15 +69,6 @@ const AssetAssignment = ({ data, setClose }) => {
   const userQuery = useFirestoreQuery();
   const assetUpdate = useFirestoreUpdateData();
   const assetFeedAdd = useFirestoreAddData();
-
-  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
-  const isTablet = useMediaQuery({
-    query: "(min-width: 768px) and (max-width: 1223px)",
-  });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
-
-  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
-  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
 
   const makeUserLabelValueData = (options) => {
     const newOptions = [...options];
@@ -101,19 +94,12 @@ const AssetAssignment = ({ data, setClose }) => {
 
   const onUserSearch = (value) => {
     const filtered = userList.filter((f) => f.userName.includes(value));
-    console.log(filtered);
     setUserOptions(filtered.length > 0 ? makeUserLabelValueData(filtered) : []);
   };
 
   const onSelectUser = (value) => {
-    // 여기서 value는 선택된 사용자의 userUID입니다.
-    // 필요한 로직을 추가하여 userUID를 사용하십시오.
-
-    // 현재 선택된 사용자 정보를 설정
     const selectedUserInfo = userList.find((user) => user.userUID === value);
-
     setCurrentUserInfo(selectedUserInfo);
-    // 선택된 사용자 이름을 Input에 표시
     assignForm.setFieldValue("assetAssign", "");
     setUserOptions([]);
   };
@@ -131,6 +117,7 @@ const AssetAssignment = ({ data, setClose }) => {
 
     const assetUpdatedValue = {
       ...data,
+      currentUser: userInfo.userName,
       userInfo: userInfo,
       location: location,
       assetAssignDate: Timestamp.fromDate(assetAssignDate.toDate()),
@@ -138,9 +125,6 @@ const AssetAssignment = ({ data, setClose }) => {
       assetReturnDate,
       assetReturnDateConverted,
     };
-    console.log(assetUpdatedValue);
-    // delete assetUpdatedValue.assetPurchasedDateConverted;
-    // delete assetUpdatedValue.assetCreateAtConverted;
 
     const feedValue = makeFeedObject(
       data.id,
@@ -152,8 +136,6 @@ const AssetAssignment = ({ data, setClose }) => {
       `${userInfo.userName}에게 배정하였습니다.`,
       []
     );
-
-    //console.log(feedValue);
 
     try {
       await assetUpdate.updateData(
@@ -218,14 +200,6 @@ const AssetAssignment = ({ data, setClose }) => {
     }
   }, [data]);
 
-  useEffect(() => {
-    //setCurrentUserInfo({});
-  }, []);
-
-  useEffect(() => {
-    console.log(assetUpdate.error);
-  }, [assetUpdate.error]);
-
   return (
     <>
       <ConfigProvider
@@ -237,10 +211,7 @@ const AssetAssignment = ({ data, setClose }) => {
           },
         }}
       >
-        <Row className={isMobile && "w-full"}>
-          <Col span={24}>
-            <ContentTitle title="자산배정" padding={0} marginBottom={5} />
-          </Col>
+        <Row className={media.isMobile && "w-full"}>
           <Col span={12}>
             <Row justify="start" gutter={[0, 16]}>
               <Col span={24}>
