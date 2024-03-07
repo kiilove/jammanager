@@ -67,6 +67,38 @@ const useImageUpload = () => {
   });
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const uploadFile = async (path, file, filename) => {
+    return new Promise(async (resolve, reject) => {
+      const newFile = file;
+
+      if (!filename) {
+        setUploadResult({ success: false, error: "filename is Undefined" });
+        return;
+      }
+      const storageRef = ref(storage, `${path}/${filename}`);
+      const uploadTask = uploadBytesResumable(storageRef, newFile);
+
+      uploadTask.on("state_changed", (snapshot) => {
+        const progress = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setUploadProgress(progress);
+      });
+
+      try {
+        await uploadTask;
+        // 업로드 성공한 경우 다운로드 URL 가져오기
+        const url = await getDownloadURL(storageRef);
+
+        setUploadResult({ success: true, downloadUrl: url, filename });
+        resolve({ success: true, downloadUrl: url, filename });
+      } catch (error) {
+        setUploadResult({ success: false, error });
+        reject({ success: false, error });
+      }
+    });
+  };
+
   const uploadImage = async (
     path,
     file,
@@ -120,7 +152,13 @@ const useImageUpload = () => {
     }
   };
 
-  return { uploadImage, deleteFileFromStorage, uploadProgress, uploadResult };
+  return {
+    uploadImage,
+    uploadFile,
+    deleteFileFromStorage,
+    uploadProgress,
+    uploadResult,
+  };
 };
 
 export default useImageUpload;

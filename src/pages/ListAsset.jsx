@@ -1,32 +1,18 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 
-import {
-  Card,
-  ConfigProvider,
-  Descriptions,
-  Dropdown,
-  Empty,
-  Input,
-  List,
-  Menu,
-  Modal,
-  Table,
-  Tag,
-} from "antd";
-import { FiPrinter } from "react-icons/fi";
+import { Dropdown, Menu, Modal } from "antd";
 import { GrMultiple } from "react-icons/gr";
 import { IoReturnUpBack } from "react-icons/io5";
-import { MdMoreVert, MdOutlineViewCompactAlt } from "react-icons/md";
+import { MdMoreVert, MdOutlineViewCompactAlt, MdSend } from "react-icons/md";
 
 import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt, FaUserTag } from "react-icons/fa";
 
 import { SlPrinter } from "react-icons/sl";
 import { useNavigate } from "react-router-dom";
-import { ContentTitle } from "../commonstyles/Title";
-import { groupByKey, highlightText } from "../functions";
-import dayjs from "dayjs";
+import { highlightText } from "../functions";
+
 import "./ListAsset.css";
 import AssetView from "../components/AssetView";
 import AssetAssignment from "../components/AssetAssignment";
@@ -42,6 +28,7 @@ import {
 } from "../utils/Index";
 import { FilterBar } from "../share/Index.js";
 import { TableWithFilterAndSearch } from "../widget/Index.js";
+import AssetFeedAdd from "../components/AssetFeedAdd.jsx";
 
 const ListAsset = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +54,7 @@ const ListAsset = () => {
     open: false,
     data: null,
   });
+  const [modalFeed, setModalFeed] = useState({ open: false, data: null });
 
   const assetQuery = useFirestoreQuery();
   const navigate = useNavigate();
@@ -104,13 +92,16 @@ const ListAsset = () => {
                     },
                     selectedRowKeys
                   ),
+
                   setMenuItem(
                     selectedRowKeys.length > 0 ? false : true,
                     "자산인쇄",
                     <SlPrinter className="text-base" />,
-                    2,
+                    5,
                     (value) => {
-                      console.log(value);
+                      navigate("/261c956d-a9ce-4e22-aec2-8d9398b7af9b", {
+                        state: { data: assetMultiList },
+                      });
                     },
                     selectedRowKeys
                   ),
@@ -118,7 +109,7 @@ const ListAsset = () => {
                     selectedRowKeys.length > 0 ? false : true,
                     "선택삭제",
                     <FaRegTrashAlt className="text-base" />,
-                    3,
+                    7,
                     (value) => {
                       console.log(value);
                     },
@@ -155,12 +146,22 @@ const ListAsset = () => {
                       },
                       record
                     ),
+                    setMenuItem(
+                      false,
+                      "이력남기기",
+                      <MdSend className="text-base" />,
+                      3,
+                      (value) => {
+                        setModalFeed({ open: true, data: record });
+                      },
+                      selectedRowKeys
+                    ),
                     record?.userInfo?.userName === "미지정"
                       ? setMenuItem(
                           false,
                           "자산배정",
                           <FaUserTag className="text-base" />,
-                          2,
+                          5,
                           (value) => {
                             setModalAssign({ open: true, data: record });
                           },
@@ -170,7 +171,7 @@ const ListAsset = () => {
                           false,
                           "자산반납",
                           <IoReturnUpBack className="text-base" />,
-                          2,
+                          5,
                           (value) => {
                             setModalReturn({ open: true, data: record });
                           },
@@ -180,7 +181,7 @@ const ListAsset = () => {
                       false,
                       "자산수정",
                       <CiEdit className="text-base" />,
-                      3,
+                      7,
                       (value) => {
                         console.log(value);
                       },
@@ -190,7 +191,7 @@ const ListAsset = () => {
                       false,
                       "자산인쇄",
                       <SlPrinter className="text-base" />,
-                      4,
+                      9,
                       (value) => {
                         console.log(value);
                       },
@@ -200,7 +201,7 @@ const ListAsset = () => {
                       false,
                       "삭제",
                       <FaRegTrashAlt className="text-base" />,
-                      5,
+                      11,
                       (value) => {
                         console.log(value);
                       },
@@ -280,6 +281,7 @@ const ListAsset = () => {
 
   const assetColumn = [
     setColumnItem("분류", "assetCategory", searchKeyword),
+    setColumnItem("품목", "assetProductLine", searchKeyword),
     setColumnItem("자산명", "assetName", searchKeyword, (text, record) => (
       <button
         className="flex justify-start items-start flex-col"
@@ -377,6 +379,19 @@ const ListAsset = () => {
         onCancel={() => setModalAssign(() => ({ open: false, data: null }))}
       >
         <AssetAssignment data={modalAssign.data} />
+      </Modal>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        width={500}
+        title="이력 남기기"
+        footer={null}
+        open={modalFeed.open}
+        onOk={() => setModalFeed(() => ({ open: false, data: null }))}
+        onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
+      >
+        <AssetFeedAdd data={modalFeed.data} />
       </Modal>
     </div>
   );
