@@ -4,41 +4,42 @@ import {
   VideoCameraOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Segmented, Space } from "antd";
+import { LiaPhotoVideoSolid } from "react-icons/lia";
+import { Button, Card, Modal, Segmented, Space } from "antd";
 const iconBoxSize = { width: 45, height: 45 };
 const iconFontSize = { fontSize: 20 };
-export const FeedActionBar = ({ actions, setActions }) => {
+export const FeedActionBar = ({
+  actions,
+  setActions,
+  feedType,
+  setFeedType,
+  attached,
+}) => {
   return (
     <div className="w-full flex justify-start items-center border rounded p-2 border-gray-200">
       <Space>
         <button
           className={`flex justify-center items-center rounded ${
-            actions.pic ? "bg-green-100" : "bg-white"
+            actions.medias ? "bg-green-100" : "bg-white"
           }`}
           style={iconBoxSize}
-          onClick={() => setActions(() => ({ ...actions, pic: !actions.pic }))}
+          onClick={() => {
+            if (!attached) {
+              setActions(() => ({ ...actions, medias: !actions.medias }));
+            }
+          }}
         >
-          <PictureOutlined
+          <LiaPhotoVideoSolid
             style={iconFontSize}
-            className={actions.pic ? "text-green-800" : "text-gray-500"}
-          />
-        </button>
-        <button
-          className={`flex justify-center items-center rounded ${
-            actions.video ? "bg-red-100" : "bg-white"
-          }`}
-          style={iconBoxSize}
-          onClick={() =>
-            setActions(() => ({ ...actions, video: !actions.video }))
-          }
-        >
-          <VideoCameraOutlined
-            style={iconFontSize}
-            className={actions.video ? "text-red-800" : "text-gray-500"}
+            className={actions.medias ? "text-green-800" : "text-gray-500"}
           />
         </button>
 
-        <Segmented defaultValue="일반" options={["일반", "수리", "반납"]} />
+        <Segmented
+          defaultValue="일반"
+          options={["일반", "수리", "반납"]}
+          onChange={(value) => setFeedType(value)}
+        />
       </Space>
     </div>
   );

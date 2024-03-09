@@ -29,6 +29,7 @@ import {
 import { FilterBar } from "../share/Index.js";
 import { TableWithFilterAndSearch } from "../widget/Index.js";
 import AssetFeedAdd from "../components/AssetFeedAdd.jsx";
+import { navigateMenus } from "../navigate.js";
 
 const ListAsset = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -162,8 +163,13 @@ const ListAsset = () => {
                           "자산배정",
                           <FaUserTag className="text-base" />,
                           5,
-                          (value) => {
-                            setModalAssign({ open: true, data: record });
+                          () => {
+                            //setModalAssign({ open: true, data: record });
+                            navigate(
+                              navigateMenus.find((f) => f.label === "자산배정")
+                                .link,
+                              { state: { data: record } }
+                            );
                           },
                           record
                         )
@@ -391,7 +397,7 @@ const ListAsset = () => {
         onOk={() => setModalFeed(() => ({ open: false, data: null }))}
         onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
       >
-        <AssetFeedAdd data={modalFeed.data} />
+        <AssetFeedAdd data={modalFeed.data} setClose={setModalFeed} />
       </Modal>
     </div>
   );

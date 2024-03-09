@@ -270,20 +270,24 @@ export const generateUniqueCompanyID = (existingNumbers) => {
 
 export const makeFeedObject = (
   refAssetID,
-  refAssetUID,
-  createBy,
-  createAt,
+  refAssetCode,
+  createdBy,
+  createdAt,
+  createdAtConverted,
   actionAt,
+  actionAtConverted,
   feedType,
   feedContext,
   feedPics
 ) => {
   const newFeed = {
     refAssetID,
-    refAssetUID,
-    createBy,
-    createAt,
+    refAssetCode,
+    createdBy,
+    createdAt,
+    createdAtConverted,
     actionAt,
+    actionAtConverted,
     feedType,
     feedContext,
     feedPics,

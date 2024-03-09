@@ -70,6 +70,7 @@ const useImageUpload = () => {
   const uploadFile = async (path, file, filename) => {
     return new Promise(async (resolve, reject) => {
       const newFile = file;
+      const fileType = file.type;
 
       if (!filename) {
         setUploadResult({ success: false, error: "filename is Undefined" });
@@ -90,11 +91,23 @@ const useImageUpload = () => {
         // 업로드 성공한 경우 다운로드 URL 가져오기
         const url = await getDownloadURL(storageRef);
 
-        setUploadResult({ success: true, downloadUrl: url, filename });
-        resolve({ success: true, downloadUrl: url, filename });
+        setUploadResult({
+          success: true,
+          downloadUrl: url,
+          filename,
+          fileType: fileType,
+          status: "uploaded",
+        });
+        resolve({
+          success: true,
+          downloadUrl: url,
+          filename,
+          fileType: fileType,
+          status: "uploaded",
+        });
       } catch (error) {
-        setUploadResult({ success: false, error });
-        reject({ success: false, error });
+        setUploadResult({ success: false, status: "error" });
+        reject({ success: false, status: "error" });
       }
     });
   };

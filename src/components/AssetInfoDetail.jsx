@@ -122,8 +122,11 @@ const AssetInfoDetail = ({ data }) => {
         key: items.length + 1,
         label: "사용자",
         children:
-          userInfo?.userName +
-            `(${userInfo?.userSpot || ""} ${userInfo?.userRank || ""})` || "",
+          userInfo?.userName === "미지정"
+            ? "미지정"
+            : userInfo?.userName +
+                `(${userInfo?.userSpot || ""} ${userInfo?.userRank || ""})` ||
+              "",
         index: 101,
         span: 1,
       }
@@ -141,6 +144,8 @@ const AssetInfoDetail = ({ data }) => {
 
   return (
     <Descriptions
+      labelStyle={{ fontWeight: 200, fontSize: 13 }}
+      contentStyle={{ fontSize: 13 }}
       items={descriptionItems}
       column={3}
       size="small"

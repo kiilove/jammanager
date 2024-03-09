@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { UploadOutlined, CloseOutlined } from "@ant-design/icons";
 import { Button, Popconfirm } from "antd";
 
-export const UploadImage = ({
+export const UploadMedias = ({
   uploadTargetFileList = [],
   setUploadTargetFileList,
   setUploadState,
@@ -41,7 +41,7 @@ export const UploadImage = ({
             showUploadList={false}
           >
             <Button size="large" className="bg-white" icon={<UploadOutlined />}>
-              사진추가
+              사진/동영상 추가
             </Button>
           </Upload>
         </div>
@@ -69,7 +69,7 @@ export const UploadImage = ({
                           className="bg-white"
                           icon={<UploadOutlined />}
                         >
-                          사진추가
+                          사진/동영상 추가
                         </Button>
                       </Upload>
                       <Popconfirm

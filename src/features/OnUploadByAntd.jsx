@@ -1,15 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import useImageUpload from "../hooks/useFireStorage";
+import { generateFileName, generateUUID } from "../functions";
 
-export const OnUploadByAntd = async ({
-  storageURI,
-  file,
-  onSuccess,
-  onError,
-}) => {
+export const OnUploadByAntd = async (storageURI, file) => {
+  const [uploadState, setUploadState] = useState();
   const uploadFile = useImageUpload();
   const newFileName = generateFileName(file.name, generateUUID());
   const storageUrl = storageURI;
+  let uploadResult = {};
 
   try {
     const result = await uploadFile.uploadFile(storageUrl, file, newFileName);
@@ -21,13 +19,15 @@ export const OnUploadByAntd = async ({
         url: result.downloadUrl,
         status: "uploaded",
       };
+      uploadResult = { ...newFile };
       setUploadState(() => ({ ...newFile }));
-      onSuccess();
     } else {
+      uploadResult = { status: "error" };
       setUploadState(() => ({ status: "error" }));
-      onError();
     }
   } catch (error) {
     console.error(error);
   }
+
+  return uploadResult;
 };

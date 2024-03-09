@@ -86,7 +86,7 @@ const NewAsset = () => {
   const assetAdd = useFirestoreAddData();
   const assetFeedAdd = useFirestoreAddData();
 
-  const { loginInfo, memberSettings, grouped, setGrouped } =
+  const { loginInfo, memberSettings, grouped, setGrouped, media } =
     useContext(CurrentLoginContext);
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
@@ -105,14 +105,6 @@ const NewAsset = () => {
       maxCount,
     });
   };
-  const isDesktopOrLaptop = useMediaQuery({ query: "(min-width: 1224px)" });
-  const isTablet = useMediaQuery({
-    query: "(min-width: 768px) and (max-width: 1223px)",
-  });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
-
-  const isPortrait = useMediaQuery({ query: "(orientation: portrait)" });
-  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
 
   const [form] = Form.useForm();
   const assetVendorRef = useRef();
@@ -250,11 +242,11 @@ const NewAsset = () => {
     const assetPurchasedDateConverted =
       convertTimestampToDate(assetPurchasedDate);
 
-    const createdAtValue = values.createdAt
+    const createdAt = values.createdAt
       ? Timestamp.fromDate(values.createdAt.toDate())
       : Timestamp.fromDate(new Date());
 
-    const createdAtConverted = convertTimestampToDate(createdAtValue);
+    const createdAtConverted = convertTimestampToDate(createdAt);
 
     let assetRentalPeriod = [];
     let assetRentalPeriodConverted = [];
@@ -302,7 +294,7 @@ const NewAsset = () => {
     newValue.assetAccessory = [...newAccessory];
     newValue.assetRentalPeriod = assetRentalPeriod;
     newValue.assetRentalPeriodConverted = assetRentalPeriodConverted;
-    newValue.createdAt = createdAtValue;
+    newValue.createdAt = createdAt;
     newValue.createdAtConverted = createdAtConverted;
     newValue.location = "출고대기";
     newValue.userInfo = { userName: "미지정" };
@@ -327,10 +319,12 @@ const NewAsset = () => {
             async (data) => {
               await assetFeedAdd.addData("assetFeeds", {
                 refAssetID: data.id,
-                refAssetUID: codeWithValue.assetUID,
-                createBy: "system",
-                createAt: Timestamp.fromDate(new Date()),
+                refAssetCode: codeWithValue.assetCode,
+                createdBy: "system",
+                createdAt,
+                createdAtConverted,
                 actionAt: assetPurchasedDate,
+                actionAtConverted: convertTimestampToDate(assetPurchasedDate),
                 feedType: "추가",
                 feedContext: `자산에 추가 되었습니다.`,
                 feedPics: [...asset.firstPics],
@@ -661,7 +655,9 @@ const NewAsset = () => {
               <Form.Item label="취득방식">
                 <Space
                   className="w-full"
-                  direction={isDesktopOrLaptop ? "horizontal" : "vertical"}
+                  direction={
+                    media.isDesktopOrLaptop ? "horizontal" : "vertical"
+                  }
                 >
                   <Form.Item name="assetPurchasedType" noStyle>
                     <Select
