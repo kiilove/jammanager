@@ -21,6 +21,8 @@ import { ConfigProvider } from "antd";
 import ViewAssetInfo from "./pages/ViewAssetInfo";
 import EditAsset from "./pages/EditAsset";
 import AssetCodePrint from "./components/AssetCodePrint";
+import AssetAssignment from "./pages/AssetAssignment";
+import { navigateMenus } from "./navigate";
 
 function App() {
   return (
@@ -84,8 +86,12 @@ function App() {
               element={<Main children={<EditAsset />} />}
             />
             <Route
-              path="/261c956d-a9ce-4e22-aec2-8d9398b7af9b"
+              path={navigateMenus.find((f) => f.label === "자산인쇄").link}
               element={<Main children={<AssetCodePrint />} />}
+            />{" "}
+            <Route
+              path={navigateMenus.find((f) => f.label === "자산배정").link}
+              element={<Main children={<AssetAssignment />} />}
             />
             <Route
               path="/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/:assetCode"

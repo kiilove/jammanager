@@ -126,12 +126,15 @@ const AssetAssignment = ({ data, setClose }) => {
       assetReturnDateConverted,
     };
 
+    const createdAt = Timestamp.fromDate(new Date());
     const feedValue = makeFeedObject(
       data.id,
-      data.assetUID,
+      data.assetCode,
       "system",
-      Timestamp.fromDate(new Date()),
+      createdAt,
+      convertTimestampToDate(createdAt),
       assetUpdatedValue.assetAssignDate,
+      convertTimestampToDate(assetUpdatedValue.assetAssignDate),
       "배정",
       `${userInfo.userName}에게 배정하였습니다.`,
       []

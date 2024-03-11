@@ -91,7 +91,6 @@ const Register = () => {
   const open = useDaumPostcodePopup(scriptUrl);
 
   const handleAddressComplete = (data) => {
-    console.log(data.zonecode);
     let fullAddress = data.address;
     let extraAddress = "";
 

@@ -16,8 +16,14 @@ const AssetTimeLine = ({ assetDocuID }) => {
   const makeFeedItem = (list = []) => {
     if (list.length > 0) {
       const items = list.map((item, iIdx) => {
-        const { feedType, feedContext, pics, createAt, createBy, actionAt } =
-          item;
+        const {
+          feedType,
+          feedContext,
+          pics,
+          createdAtConverted,
+          createdBy,
+          actionAtConverted,
+        } = item;
 
         let childColor = "blue";
         switch (feedType) {
@@ -35,7 +41,7 @@ const AssetTimeLine = ({ assetDocuID }) => {
           default:
             break;
         }
-        const label = convertTimestampToDate(actionAt);
+        const label = actionAtConverted;
         const children = feedContext;
 
         const newItem = {
@@ -67,7 +73,7 @@ const AssetTimeLine = ({ assetDocuID }) => {
         (data) => {
           console.log(data);
           makeFeedItem(
-            data.sort((a, b) => b.createAt.seconds - a.createAt.seconds)
+            data.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
           );
         },
         condition

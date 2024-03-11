@@ -18,6 +18,7 @@ export const setColumnItem = (
     label: label,
     dataIndex: dataIndex,
     className: "text-xs",
+    showSorterTooltip: false,
     render: (text, record) => (
       <>
         {customRender !== null

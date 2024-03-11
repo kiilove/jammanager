@@ -6,6 +6,7 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { ConfigProvider, Menu } from "antd";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/logo/jam_blank.png";
+import { navigateMenus } from "../navigate";
 
 const MainSide = ({ theme = "dark", setDrawer, isDrawer = false }) => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const MainSide = ({ theme = "dark", setDrawer, isDrawer = false }) => {
       type,
     };
   }
+
   const menus = [
     getItem("자산관리", "title1", undefined, <RiBookletLine />, [
       getItem("자산등록", "sub1", "/eff179b5-a575-4046-99f3-ca0dc465af3e"),

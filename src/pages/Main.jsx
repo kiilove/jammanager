@@ -84,7 +84,6 @@ const Main = ({ children }) => {
       await membersQuery.getDocuments(
         "members",
         (data) => {
-          console.log(data);
           if (data.length > 0) {
             const decryptObj = {
               companyExtraAddress: data[0].companyExtraAddress,

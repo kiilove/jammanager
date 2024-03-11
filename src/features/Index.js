@@ -1,0 +1,1 @@
+export { OnUploadByAntd } from "./OnUploadByAntd";

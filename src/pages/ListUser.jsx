@@ -7,6 +7,8 @@ import {
   ConvertDateByArray,
   ConvertPhoneNumberByArray,
   FilterKeyByArray,
+  setColumnItem,
+  setMenuItem,
 } from "../utils/Index.js";
 import { highlightText } from "../functions.js";
 import { FilterBar } from "../share/Index.js";
@@ -28,31 +30,6 @@ const ListUser = () => {
 
   const setSections = (label, dataIndex, list) => {
     return { title: label, param: dataIndex, list: list };
-  };
-
-  const setColumnItem = (label, dataIndex) => {
-    return {
-      key: dataIndex,
-      title: label,
-      label: label,
-      dataIndex: dataIndex,
-      className: "text-xs",
-      sorter: (a, b) => a[dataIndex].localeCompare(b.assetCategory),
-      render: (text) => <>{highlightText(text, searchKeyword)}</>,
-    };
-  };
-
-  const setMenuItem = (disabled, label, icon, index, action, value) => {
-    return {
-      key: index.toString(),
-      disabled: disabled,
-      index: index,
-      icon: icon,
-      label: <span className="text-xs">{label}</span>,
-      onClick: () => {
-        action(value);
-      },
-    };
   };
 
   const setActionColumnItem = () => {
@@ -172,14 +149,14 @@ const ListUser = () => {
   };
 
   const userColumn = [
-    setColumnItem("이름", "userName"),
-    setColumnItem("부서", "userDepartment"),
-    setColumnItem("직위", "userSpot"),
-    setColumnItem("직급", "userRank"),
-    setColumnItem("상태", "userStatus"),
-    setColumnItem("이메일", "userEmail"),
-    setColumnItem("휴대전화", "userMobileNumberConverted"),
-    setColumnItem("회사전화", "userCompanyPhoneNumberConverted"),
+    setColumnItem("이름", "userName", searchKeyword),
+    setColumnItem("부서", "userDepartment", searchKeyword),
+    setColumnItem("직위", "userSpot", searchKeyword),
+    setColumnItem("직급", "userRank", searchKeyword),
+    setColumnItem("상태", "userStatus", searchKeyword),
+    setColumnItem("이메일", "userEmail", searchKeyword),
+    setColumnItem("휴대전화", "userMobileNumberConverted", searchKeyword),
+    setColumnItem("회사전화", "userCompanyPhoneNumberConverted", searchKeyword),
     setActionColumnItem(),
   ];
 
