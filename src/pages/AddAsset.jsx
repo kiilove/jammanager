@@ -443,9 +443,10 @@ const AddAsset = () => {
               <div
                 className="flex "
                 style={{
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "#fff",
+                  border: "1px solid #f5f5f5",
                   height: "100%",
-                  minHeight: 100,
+                  minHeight: 80,
                   borderRadius: 5,
                 }}
               ></div>
