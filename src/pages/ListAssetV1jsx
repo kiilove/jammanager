@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useFirestoreQuery } from "../hooks/useFirestore";
+import { useFirestoreQuery } from "../hooks/useFirestore.js";
 
-import { Col, Dropdown, Menu, Modal } from "antd";
+import { Dropdown, Menu, Modal } from "antd";
 import { GrMultiple } from "react-icons/gr";
 import { IoReturnUpBack } from "react-icons/io5";
 import { MdMoreVert, MdOutlineViewCompactAlt, MdSend } from "react-icons/md";
@@ -10,14 +10,14 @@ import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt, FaUserTag } from "react-icons/fa";
 
 import { SlPrinter } from "react-icons/sl";
-import { useLocation, useNavigate } from "react-router-dom";
-import { highlightText } from "../functions";
+import { useNavigate } from "react-router-dom";
+import { highlightText } from "../functions.js";
 
 import "./ListAsset.css";
-import AssetView from "../components/AssetView";
-import AssetAssignment from "../components/AssetAssignment";
-import { CurrentLoginContext } from "../context/CurrentLogin";
-import AssetFlex from "../components/AssetFlex";
+import AssetView from "../components/AssetView.jsx";
+import AssetAssignment from "../components/AssetAssignment.jsx";
+import { CurrentLoginContext } from "../context/CurrentLogin.jsx";
+import AssetFlex from "../components/AssetFlex.jsx";
 import { where } from "firebase/firestore";
 import {
   ConvertDateByArray,
@@ -25,12 +25,11 @@ import {
   setColumnItem,
   setMenuItem,
   setSections,
-} from "../utils/Index";
+} from "../utils/Index.js";
 import { FilterBar } from "../share/Index.js";
 import { TableWithFilterAndSearch } from "../widget/Index.js";
 import AssetFeedAdd from "../components/AssetFeedAdd.jsx";
 import { navigateMenus } from "../navigate.js";
-import PageContainer from "../layout/PageContainer.jsx";
 
 const ListAsset = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +59,6 @@ const ListAsset = () => {
 
   const assetQuery = useFirestoreQuery();
   const navigate = useNavigate();
-  const location = useLocation();
   const { memberSettings, media } = useContext(CurrentLoginContext);
 
   const rowSelection = {
@@ -324,100 +322,84 @@ const ListAsset = () => {
     }
   }, [memberSettings]);
 
-  useEffect(() => {
-    if (location.pathname) {
-      setIsLoading(false);
-    }
-  }, [location]);
-
   return (
-    <PageContainer
-      isLoading={isLoading}
-      pathname={location?.pathname}
-      title={navigateMenus.find((f) => f.link === location.pathname).label}
-    >
-      <Col span={24}>
-        <div className="flex w-full h-full justify-start items-start flex-wrap flex-col">
-          {filterItems?.length > 0 && (
-            <FilterBar
-              sections={filterItems}
-              originData={assetList}
-              data={filteredAssetList}
-              setData={setFilteredAssetList}
-              setKeyword={setSearchKeyword}
-            />
-          )}
-          <div className="flex w-full">
-            <TableWithFilterAndSearch
-              columns={assetColumn}
-              data={filteredAssetList}
-              rowSelection={rowSelection}
-              rowKey="id"
-              size="small"
-            />
-          </div>
-          <Modal
-            mask={false}
-            maskClosable={false}
-            keyboard={false}
-            style={{
-              minWidth: "800px",
-              maxWidth: "1200px",
-              width: "100%",
-              top: 0,
-            }}
-            title="자산 모아보기"
-            footer={null}
-            open={modalMultiView.open}
-            onOk={() => setModalMultiView(() => ({ open: false, data: null }))}
-            onCancel={() =>
-              setModalMultiView(() => ({ open: false, data: null }))
-            }
-          >
-            <AssetFlex data={modalMultiView.data} />
-          </Modal>
-          <Modal
-            mask={false}
-            maskClosable={false}
-            keyboard={false}
-            width={500}
-            title="자산 요약"
-            footer={null}
-            open={modalView.open}
-            onOk={() => setModalView(() => ({ open: false, data: null }))}
-            onCancel={() => setModalView(() => ({ open: false, data: null }))}
-          >
-            <AssetView data={modalView.data} />
-          </Modal>
-          <Modal
-            mask={false}
-            maskClosable={false}
-            keyboard={false}
-            width={500}
-            title="자산 배정"
-            footer={null}
-            open={modalAssign.open}
-            onOk={() => setModalAssign(() => ({ open: false, data: null }))}
-            onCancel={() => setModalAssign(() => ({ open: false, data: null }))}
-          >
-            <AssetAssignment data={modalAssign.data} />
-          </Modal>
-          <Modal
-            mask={false}
-            maskClosable={false}
-            keyboard={false}
-            width={500}
-            title="이력 남기기"
-            footer={null}
-            open={modalFeed.open}
-            onOk={() => setModalFeed(() => ({ open: false, data: null }))}
-            onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
-          >
-            <AssetFeedAdd data={modalFeed.data} setClose={setModalFeed} />
-          </Modal>
-        </div>
-      </Col>
-    </PageContainer>
+    <div className="flex w-full h-full justify-start items-start flex-wrap flex-col">
+      {filterItems?.length > 0 && (
+        <FilterBar
+          sections={filterItems}
+          originData={assetList}
+          data={filteredAssetList}
+          setData={setFilteredAssetList}
+          setKeyword={setSearchKeyword}
+        />
+      )}
+      <div className="flex w-full px-5">
+        <TableWithFilterAndSearch
+          columns={assetColumn}
+          data={filteredAssetList}
+          rowSelection={rowSelection}
+          rowKey="id"
+          size="small"
+        />
+      </div>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        style={{
+          minWidth: "800px",
+          maxWidth: "1200px",
+          width: "100%",
+          top: 0,
+        }}
+        title="자산 모아보기"
+        footer={null}
+        open={modalMultiView.open}
+        onOk={() => setModalMultiView(() => ({ open: false, data: null }))}
+        onCancel={() => setModalMultiView(() => ({ open: false, data: null }))}
+      >
+        <AssetFlex data={modalMultiView.data} />
+      </Modal>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        width={500}
+        title="자산 요약"
+        footer={null}
+        open={modalView.open}
+        onOk={() => setModalView(() => ({ open: false, data: null }))}
+        onCancel={() => setModalView(() => ({ open: false, data: null }))}
+      >
+        <AssetView data={modalView.data} />
+      </Modal>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        width={500}
+        title="자산 배정"
+        footer={null}
+        open={modalAssign.open}
+        onOk={() => setModalAssign(() => ({ open: false, data: null }))}
+        onCancel={() => setModalAssign(() => ({ open: false, data: null }))}
+      >
+        <AssetAssignment data={modalAssign.data} />
+      </Modal>
+      <Modal
+        mask={false}
+        maskClosable={false}
+        keyboard={false}
+        width={500}
+        title="이력 남기기"
+        footer={null}
+        open={modalFeed.open}
+        onOk={() => setModalFeed(() => ({ open: false, data: null }))}
+        onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
+      >
+        <AssetFeedAdd data={modalFeed.data} setClose={setModalFeed} />
+      </Modal>
+    </div>
   );
 };
 

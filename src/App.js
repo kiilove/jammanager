@@ -23,6 +23,7 @@ import EditAsset from "./pages/EditAsset";
 import AssetCodePrint from "./components/AssetCodePrint";
 import AssetAssignment from "./pages/AssetAssignment";
 import { navigateMenus } from "./navigate";
+import AddAsset from "./pages/AddAsset";
 
 function App() {
   return (
@@ -59,7 +60,7 @@ function App() {
             <Route path="/" element={<Main />} />
             <Route
               path="/eff179b5-a575-4046-99f3-ca0dc465af3e"
-              element={<Main children={<NewAsset />} />}
+              element={<Main children={<AddAsset />} />}
             />
             <Route
               path="/ed4599ce-5808-462c-b10f-3eee0df54dd1"

@@ -72,7 +72,7 @@ export const FilterBar = ({
   }, [searchKeyword]);
 
   return (
-    <div className="flex w-full px-4 flex-col mb-5 ">
+    <div className="flex w-full flex-col mb-5 ">
       {sections?.length > 0 &&
         isFilterView &&
         sections.map((section, sIdx) => {

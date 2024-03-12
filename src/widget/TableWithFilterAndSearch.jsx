@@ -25,7 +25,7 @@ export const TableWithFilterAndSearch = ({
         columns={columns}
         size={size}
         dataSource={data}
-        className="w-full "
+        className="w-full  "
         rowKey={rowKey}
         rowSelection={rowSelection}
       />

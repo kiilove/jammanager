@@ -13,20 +13,25 @@ import {
 import { highlightText } from "../functions.js";
 import { FilterBar } from "../share/Index.js";
 import { TableWithFilterAndSearch } from "../widget/Index.js";
-import { Dropdown, Menu } from "antd";
+import { Col, Dropdown, Menu } from "antd";
 import { GrMultiple } from "react-icons/gr";
 import { FiPrinter } from "react-icons/fi";
 import { MdMoreVert, MdOutlineViewCompactAlt } from "react-icons/md";
 import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
+import PageContainer from "../layout/PageContainer.jsx";
+import { useLocation } from "react-router";
+import { navigateMenus } from "../navigate.js";
 const ListUser = () => {
   const { memberSettings, media } = useContext(CurrentLoginContext);
+  const [isLoading, setIsLoading] = useState(true);
   const [userList, setUserList] = useState([]);
   const [filteredUserList, setFilteredUserList] = useState([]);
   const [filterItems, setFilterItems] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const userQuery = useFirestoreQuery();
+  const location = useLocation();
 
   const setSections = (label, dataIndex, list) => {
     return { title: label, param: dataIndex, list: list };
@@ -173,27 +178,41 @@ const ListUser = () => {
     }
   }, [memberSettings]);
 
+  useEffect(() => {
+    if (location.pathname) {
+      setIsLoading(false);
+    }
+  }, [location]);
+
   return (
-    <div className="flex w-full h-full justify-start items-start flex-wrap flex-col">
-      {filterItems?.length > 0 && (
-        <FilterBar
-          sections={filterItems}
-          originData={userList}
-          data={filteredUserList}
-          setData={setFilteredUserList}
-          setKeyword={setSearchKeyword}
-        />
-      )}
-      <div className="flex w-full px-5">
-        <TableWithFilterAndSearch
-          columns={userColumn}
-          data={filteredUserList}
-          rowSelection={rowSelection}
-          rowKey="id"
-          size="small"
-        />
-      </div>
-    </div>
+    <PageContainer
+      isLoading={isLoading}
+      pathname={location?.pathname}
+      title={navigateMenus.find((f) => f.link === location.pathname).label}
+    >
+      <Col span={24}>
+        <div className="flex w-full h-full justify-start items-start flex-wrap flex-col">
+          {filterItems?.length > 0 && (
+            <FilterBar
+              sections={filterItems}
+              originData={userList}
+              data={filteredUserList}
+              setData={setFilteredUserList}
+              setKeyword={setSearchKeyword}
+            />
+          )}
+          <div className="flex w-full">
+            <TableWithFilterAndSearch
+              columns={userColumn}
+              data={filteredUserList}
+              rowSelection={rowSelection}
+              rowKey="id"
+              size="small"
+            />
+          </div>
+        </div>
+      </Col>
+    </PageContainer>
   );
 };
 
