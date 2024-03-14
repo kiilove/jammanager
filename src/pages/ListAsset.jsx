@@ -20,7 +20,7 @@ import { CurrentLoginContext } from "../context/CurrentLogin";
 import AssetFlex from "../components/AssetFlex";
 import { where } from "firebase/firestore";
 import {
-  ConvertDateByArray,
+  ConvertTimestampToDateByArray,
   FilterKeyByArray,
   setColumnItem,
   setMenuItem,
@@ -245,7 +245,7 @@ const ListAsset = () => {
       await assetQuery.getDocuments(
         "assets",
         (data) => {
-          const convertDate = [...ConvertDateByArray(data)];
+          const convertDate = [...ConvertTimestampToDateByArray(data)];
           const grouped = FilterKeyByArray(data, filterKeys);
 
           setAssetList(() => [

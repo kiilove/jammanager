@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore";
 import React from "react";
 
 const convertTimestampToDate = (timestamp) => {
@@ -19,7 +20,14 @@ const convertTimestampToDate = (timestamp) => {
   }
 };
 
-export const ConvertDateByArray = (data = []) => {
+export const ConvertDateToTimestampAndConverted = (date) => {
+  const dateToTimestamp = Timestamp.fromDate(date.toDate());
+  const dateToConverted = convertTimestampToDate(dateToTimestamp);
+
+  return { dateToTimestamp, dateToConverted };
+};
+
+export const ConvertTimestampToDateByArray = (data = []) => {
   return data.map((item) => {
     const newItem = { ...item };
 

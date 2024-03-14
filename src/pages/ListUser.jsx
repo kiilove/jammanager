@@ -4,7 +4,7 @@ import { where } from "firebase/firestore";
 import { useEffect } from "react";
 import { useFirestoreQuery } from "../hooks/useFirestore.js";
 import {
-  ConvertDateByArray,
+  ConvertTimestampToDateByArray,
   ConvertPhoneNumberByArray,
   FilterKeyByArray,
   setColumnItem,
@@ -131,7 +131,7 @@ const ListUser = () => {
       await userQuery.getDocuments(
         "users",
         (data) => {
-          const convertDate = [...ConvertDateByArray(data)];
+          const convertDate = [...ConvertTimestampToDateByArray(data)];
           const convertPhoneNumber = [
             ...ConvertPhoneNumberByArray(convertDate, phoneNumberKeys),
           ];
