@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import { useLocation } from "react-router";
 import PageContainer from "../layout/PageContainer";
@@ -19,6 +19,7 @@ import {
   Button,
   Upload,
   Table,
+  Row,
 } from "antd";
 
 import {
@@ -35,6 +36,14 @@ import dayjs from "dayjs";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 import { limit, where } from "firebase/firestore";
 import { orderBy } from "lodash";
+import {
+  ConvertDateToTimestampAndConverted,
+  ConvertDateToTimestampByObject,
+  ConvertTimestampToDateByArray,
+} from "../utils/Index";
+import { initDepreciationPeriod, initDepreciationRate } from "../InitValues";
+import { UploadImageWithCompress } from "../share/Index";
+import { NumberWithComma, generateUUID, removeCommas } from "../functions";
 
 const AddAsset = () => {
   const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
@@ -55,9 +64,11 @@ const AddAsset = () => {
   const [assetPurchaseOptions, setAssetPurchaseOptions] = useState([]);
   const [assetModel, setAssetModel] = useState("");
   const [assetName, setAssetName] = useState("");
-  const [assetAccessory, setAssetAccessory] = useState([
-    { name: "test", count: 1, action: null },
-  ]);
+  const [assetCount, setAssetCount] = useState(0);
+  const [assetCost, setAssetCost] = useState("");
+  const [assetList, setAssetList] = useState([]);
+  const [uploadTargetFileList, setUploadTargetFileList] = useState([]);
+  const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
 
   const { memberSettings, media, grouped } = useContext(CurrentLoginContext);
@@ -65,11 +76,61 @@ const AddAsset = () => {
   const [isUploading, setIsUploading] = useState(false);
   const location = useLocation();
 
-  const [addStep1Form] = Form.useForm();
-  const [addStep2Form] = Form.useForm();
+  const [addForm] = Form.useForm();
 
   const assetDescriptionQuery = useFirestoreQuery();
+  const inputRefs = useRef([]);
 
+  const beforeUpload = (file, filelist, index, onSuccess) => {
+    console.log({ index: index, files: file, filelist });
+    onSuccess();
+  };
+
+  const handleUploadTarget = (index, filelist, list, setList) => {
+    const newFilelist = [...filelist];
+    let newList = [...list];
+    const newValue = { ...list[index], fileList: newFilelist };
+    newList.splice(index, 1, newValue);
+    setList(newList);
+  };
+
+  const handleFocus = (index) => {
+    // Input에 포커스가 되면 전체 텍스트를 선택합니다.
+    const input = inputRefs.current[index];
+    if (input) {
+      input.select();
+    }
+  };
+
+  const randomAssetCode = (length = 0) => {
+    if (length > 0) {
+      const codes = Array.from({ length }, (_, index) => {
+        const newAssetCode = {
+          index,
+          assetCode: generateUUID().toUpperCase(),
+          assetMeno: "",
+        };
+        return newAssetCode;
+      });
+
+      setAssetList(() => [...codes]);
+    }
+  };
+
+  const resetAssetCode = (length = 0) => {
+    if (length > 0) {
+      const codes = Array.from({ length }, (_, index) => {
+        const newAssetCode = {
+          index,
+          assetCode: "",
+          assetMeno: "",
+        };
+        return newAssetCode;
+      });
+
+      setAssetList(() => [...codes]);
+    }
+  };
   const uploadButton = (
     <button
       style={{
@@ -83,8 +144,69 @@ const AddAsset = () => {
     </button>
   );
 
+  const assetListRender = (index) => {
+    //console.log(uploadTargetFileList[index]);
+    return (
+      <div
+        className={`flex w-full border-b box-border py-2 ${
+          media.isMobile ? " flex-col " : " flex-row "
+        }`}
+        style={{ minHeight: "120px" }}
+      >
+        <div
+          className="flex justify-center items-center "
+          style={{ minHeight: "120px", width: 40 }}
+        >
+          {index + 1}
+        </div>
+        <div
+          className="flex justify-center items-center"
+          style={{ minHeight: "120px" }}
+        >
+          <Upload
+            listType="picture-card"
+            onChange={(file) => {
+              handleUploadTarget(
+                index,
+                file.fileList,
+                uploadTargetFileList,
+                setUploadTargetFileList
+              );
+            }}
+            className=" align-middle"
+            style={{ height: "120px" }}
+            maxCount={1}
+          >
+            {uploadTargetFileList[index]?.fileList?.length === 0 &&
+              uploadButton}
+          </Upload>
+        </div>
+        <div
+          className="flex w-full flex-col gap-y-2"
+          style={{ minHeight: "120px" }}
+        >
+          <div className="flex w-full">
+            <Input
+              placeholder="일련번호"
+              value={assetList[index]?.assetCode}
+              ref={(el) => (inputRefs.current[index] = el)}
+              onFocus={() => handleFocus(index)}
+            />
+          </div>
+          <div className="flex w-full">
+            <TextArea
+              rows={3}
+              style={{ resize: "none" }}
+              placeholder="비고"
+              value={assetList[index]?.assetMemo}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
   const fetchAssetDescriptionQuery = async (model, ownerId) => {
-    console.log(model);
+    //console.log(model);
     const condition = [
       where("assetModel", "==", model),
       where("assetOwner", "==", ownerId),
@@ -99,9 +221,9 @@ const AddAsset = () => {
           (data) => {
             console.log(data);
             if (data.length > 0 && data[0]?.assetDescritionSummay) {
-              addStep1Form.setFieldValue(
+              addForm.setFieldValue(
                 "assetDescritionSummay",
-                data[0].assetDescritionSummay
+                data[0]?.assetDescritionSummay
               );
             }
           },
@@ -113,55 +235,50 @@ const AddAsset = () => {
     }
   };
 
-  // const handleAssetAccessoryAdd = () => {
-  //   const newIndex = assetAccessory.length + 1;
-  //   const newValue = {
-  //     ...currentAssetAccessory,
-  //     index: newIndex,
-  //     action: (
-  //       <Button
-  //         icon={<MinusOutlined />}
-  //         onClick={() =>
-  //           handleAssetAccessory(assetAccessory, "remove", newIndex)
-  //         }
-  //       />
-  //     ),
-  //   };
+  const handleAssetAccessoryAdd = () => {
+    const newIndex = assetAccessory.length + 1;
+    const newValue = {
+      index: newIndex,
+      ...currentAssetAccessory,
+    };
 
-  //   handleAssetAccessory(assetAccessory, "add", newIndex, { ...newValue });
-  //   setCurrentAssetAccessory({});
-  //   // assetAccessoryNameRef.current.focus({
-  //   //   cursor: "all",
-  //   // });
-  // };
-  // const handleAssetAccessory = (list, action, index, value) => {
-  //   const newList = [...list];
+    handleAssetAccessory(assetAccessory, "add", newIndex, { ...newValue });
+    setCurrentAssetAccessory({ name: "", count: "" });
+    // assetAccessoryNameRef.current.focus({
+    //   cursor: "all",
+    // });
+  };
+  const handleAssetAccessory = (list, action, index, value) => {
+    const newList = [...list];
 
-  //   if (action === "add") {
-  //     newList.push({ ...value });
-  //   } else if (action === "remove") {
-  //     newList.splice(index, 1);
-  //   }
+    if (action === "add") {
+      newList.push({ ...value });
+    } else if (action === "remove") {
+      newList.splice(index, 1);
+    }
 
-  //   setAssetAccessory(() => [...newList]);
-  // };
+    setAssetAccessory(() => [...newList]);
+  };
+
+  const handleInitAssetAccessory = (name, list, setList) => {
+    const initValue = { name, count: 1 };
+    const newList = [...list];
+    newList.splice(0, 1, { ...initValue });
+    setList(newList);
+  };
 
   const handleInitAssetModelName = () => {
-    const assetModel = addStep1Form.getFieldValue("assetModel");
+    const assetModel = addForm.getFieldValue("assetModel");
     // console.log(assetModel);
-    const assetVendor = addStep1Form.getFieldValue("assetVendor");
+    const assetVendor = addForm.getFieldValue("assetVendor");
     if (assetModel !== undefined && assetVendor !== undefined) {
       setAssetName(() => assetVendor + " " + assetModel);
-      addStep1Form.setFieldValue("assetName", assetVendor + " " + assetModel);
+      addForm.setFieldValue("assetName", assetVendor + " " + assetModel);
     }
     //console.log(assetName);
   };
-  const onFinish = (forms = []) => {
-    let unionValue = {};
-    forms.map((form, fIdx) => {
-      unionValue = { ...unionValue, ...form?.getFieldsValue() };
-    });
-    console.log(unionValue);
+  const onFinish = (value) => {
+    console.log(value);
   };
 
   const initForm = () => {
@@ -169,11 +286,11 @@ const AddAsset = () => {
     setCreatedAt(dayjs());
     setAssetRentalPeriod([]);
 
-    addStep1Form.setFieldValue("assetPurchasedType", "구매");
+    addForm.setFieldValue("assetPurchasedType", "구매");
 
-    addStep2Form.setFieldValue("createdAt", dayjs());
-    addStep2Form.setFieldValue("assetPurchasedDate", dayjs());
-    addStep2Form.setFieldValue("assetRentalPeriod", []);
+    addForm.setFieldValue("createdAt", dayjs());
+    addForm.setFieldValue("assetPurchasedDate", dayjs());
+    addForm.setFieldValue("assetRentalPeriod", []);
   };
 
   const handleAssetOptions = (childrenArray) => {
@@ -204,6 +321,7 @@ const AddAsset = () => {
   };
 
   useEffect(() => {
+    console.log(memberSettings);
     if (memberSettings?.assetCategories) {
       setAssetCategoriesList(() => [...memberSettings.assetCategories]);
 
@@ -231,13 +349,51 @@ const AddAsset = () => {
     if (currentCategory === "소프트웨어" && currentProductLine === "구독형") {
       setAssetPurchasedType("렌탈");
       setAssetRentalPeriod([dayjs(), dayjs()]);
-      addStep1Form.setFieldValue("assetPurchasedType", "렌탈");
-      addStep2Form.setFieldValue("assetRentalPeriod", [dayjs(), dayjs()]);
+      addForm.setFieldValue("assetPurchasedType", "렌탈");
+      addForm.setFieldValue("assetRentalPeriod", [dayjs(), dayjs()]);
     } else {
-      addStep1Form.setFieldValue("assetPurchasedType", "구매");
+      addForm.setFieldValue("assetPurchasedType", "구매");
       setAssetPurchasedType("구매");
       setAssetRentalPeriod([]);
-      addStep2Form.setFieldValue("assetRentalPeriod", []);
+      addForm.setFieldValue("assetRentalPeriod", []);
+    }
+
+    if (currentCategory && currentProductLine) {
+      const findCategory = memberSettings?.assetCategories.find(
+        (f) => f.name === currentCategory
+      );
+      console.log(findCategory);
+      const findProductLine = findCategory.productLine.find(
+        (f) => f.name === currentProductLine
+      );
+      console.log(findProductLine);
+
+      if (
+        findProductLine?.length > 0 &&
+        findProductLine.assetDepreciationType
+      ) {
+        setAssetDepreciationType(findProductLine.depreciationType);
+        setAssetDepreciationPeriod(findProductLine.depreciationPeriod);
+        addForm.setFieldValue(
+          "assetDepreciationType",
+          findProductLine.depreciationType
+        );
+        addForm.setFieldValue(
+          "assetDepreciationPeriod",
+          findProductLine.depreciationPeriod
+        );
+      } else {
+        setAssetDepreciationType(findCategory.depreciationType || "설정안함");
+        setAssetDepreciationPeriod(findCategory.depreciationPeriod || 0);
+        addForm.setFieldValue(
+          "assetDepreciationType",
+          findCategory.depreciationType
+        );
+        addForm.setFieldValue(
+          "assetDepreciationPeriod",
+          findCategory.depreciationPeriod
+        );
+      }
     }
   }, [currentCategory, currentProductLine]);
 
@@ -253,8 +409,27 @@ const AddAsset = () => {
   }, [assetModel]);
 
   useEffect(() => {
+    if (assetName !== "") {
+      handleInitAssetAccessory(assetName, assetAccessory, setAssetAccessory);
+    }
+  }, [assetName]);
+
+  useEffect(() => {
+    const initUploadTarget = Array.from({ length: assetCount }, (_, index) => {
+      const newValue = { index, fileList: [] };
+      return newValue;
+    });
+    inputRefs.current = inputRefs.current.slice(0, assetCount);
+    setUploadTargetFileList(initUploadTarget);
+  }, [assetCount]);
+
+  useEffect(() => {
     initForm();
   }, []);
+
+  useEffect(() => {
+    console.log(uploadTargetFileList);
+  }, [uploadTargetFileList]);
 
   return (
     <PageContainer
@@ -271,7 +446,7 @@ const AddAsset = () => {
             colorPrimary: "#f5f5f5",
             colorPrimaryHover: "#f5f5f5",
             colorBorder: "#f5f5f5",
-            fontSizeIcon: 14,
+            fontSizeIcon: 0,
             colorBgContainer: "#f5f5f5",
           },
           components: {
@@ -287,318 +462,445 @@ const AddAsset = () => {
             Form: {
               labelFontSize: 13,
               labelColor: "#888888",
-              itemMarginBottom: 0,
+              itemMarginBottom: 5,
+            },
+            Button: {
+              colorBorder: "#d9d9d9",
+              colorPrimary: "#000",
+              colorPrimaryHover: "#d9d9d",
+            },
+            Divider: {
+              colorSplit: "#d8d8d8",
             },
           },
         }}
       >
-        <Col span={media.isDesktopOrLaptop ? 12 : 24}>
-          <Form
-            labelCol={{
-              span: 6,
-            }}
-            colon={false}
-            style={{
-              width: "100%",
-            }}
-            labelAlign="left"
-            form={addStep1Form}
-            layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
-          >
-            <Divider orientation="left" orientationMargin="0">
-              <span className="font-semibold"> 1. 분류 및 취득방식</span>
-            </Divider>
+        <Form
+          className="w-full"
+          labelCol={{
+            span: 6,
+          }}
+          colon={false}
+          style={{
+            width: "100%",
+          }}
+          labelAlign="left"
+          form={addForm}
+          onFinish={onFinish}
+          layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
+        >
+          <Row gutter={[24, 24]}>
+            <Col span={media.isDesktopOrLaptop ? 12 : 24}>
+              <Divider orientation="left" orientationMargin="0">
+                <span className="font-semibold"> 1. 분류 및 취득방식</span>
+              </Divider>
 
-            <Form.Item
-              name="assetCategory"
-              required
-              label={<span className="font-semibold">분류선택</span>}
-              className="bg-white p-2"
-            >
-              <Select
-                allowClear
-                placeholder="분류"
-                className="w-full"
-                options={assetCategoriesList.map((category, cIdx) => ({
-                  label: category.name,
-                  value: category.name,
-                }))}
-                onChange={(value) => {
-                  setCurrentCategory(value);
-                  filterProductLine(value, memberSettings);
-                }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="assetProductLine"
-              required
-              label={<span className="font-semibold">품목선택</span>}
-              className="bg-white p-2"
-            >
-              <Select
-                allowClear
-                placeholder="품목"
-                className="w-full"
-                options={productLineList.map((product, pIdx) => ({
-                  label: product.name,
-                  value: product.name,
-                }))}
-                onChange={(value) => setCurrentProductLine(value)}
-              />
-            </Form.Item>
-            <Form.Item
-              name="assetPurchasedType"
-              required
-              className={
-                currentCategory === "소프트웨어" &&
-                currentProductLine === "구독형"
-                  ? "hidden"
-                  : "bg-white p-2"
-              }
-              label={<span className="font-semibold">취득방식</span>}
-            >
-              <Segmented
-                options={
-                  currentCategory === "소프트웨어" &&
-                  currentProductLine === "구독형"
-                    ? [{ label: "렌탈/구독", value: "렌탈" }]
-                    : [
-                        { label: "구매", value: "구매" },
-                        { label: "렌탈/구독", value: "렌탈" },
-                        { label: "무상", value: "무상" },
-                      ]
-                }
-                onChange={(value) => setAssetPurchasedType(value)}
-              />
-            </Form.Item>
-            <Divider orientation="left" orientationMargin="0">
-              <span className="font-semibold">2. 제품 정보</span>
-            </Divider>
-
-            <Form.Item
-              required
-              label={<span className="font-semibold">제조사/모델명</span>}
-              className="bg-white p-2"
-            >
-              <Space
-                className="w-full"
-                direction={media.isMobile ? "vertical" : "horizontal"}
-              >
-                <Form.Item name="assetVendor" noStyle>
-                  <AutoComplete options={assetVendorOptions}>
-                    <Input
-                      style={{
-                        width: media.isMobile ? "100%" : 250,
-                        minWidth: 200,
-                      }}
-                      placeholder="제조사"
-                    />
-                  </AutoComplete>
-                </Form.Item>
-                {media.isMobile ? null : (
-                  <span className="font-semibold text-gray-400">/</span>
-                )}
-                <Form.Item name="assetModel" noStyle>
-                  <AutoComplete
-                    options={assetModelOptions}
-                    onChange={(value) => setAssetModel(value)}
-                  >
-                    <Input
-                      style={{
-                        width: media.isMobile ? "100%" : 250,
-                        minWidth: 200,
-                      }}
-                      placeholder="모델명"
-                    />
-                  </AutoComplete>
-                </Form.Item>
-              </Space>
-            </Form.Item>
-
-            <Form.Item
-              name="assetName"
-              required
-              label={<span className="font-semibold">자산명</span>}
-              className="bg-white p-2"
-            >
-              <Input
-                value={assetName}
-                onFocus={handleInitAssetModelName}
-                onChange={(e) => setAssetName(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item
-              name="assetWarranty"
-              required
-              label={<span className="font-semibold">보증기간</span>}
-              className="bg-white p-2"
-              help="＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요."
-            >
-              <InputNumber
-                style={{ width: 110 }}
-                addonAfter={<span>개월</span>}
-              />
-            </Form.Item>
-            {assetAccessory.length > 0 && (
               <Form.Item
-                required
-                label={<span className="font-semibold">구성품</span>}
-                className="bg-white p-2 border-d"
+                name="assetCategory"
+                label={<span className="font-semibold">분류선택</span>}
+                className="bg-white p-2"
+                rules={[{ required: true, message: "분류를 선택해주세요." }]}
               >
-                <Space className="w-full mb-2">
-                  <Input placeholder="품목" />
-                  <InputNumber placeholder="수량" />
-                  <Button>추가</Button>
-                </Space>
-                <Table
-                  size="small"
-                  columns={[
-                    {
-                      title: <span className="font-normal">품목</span>,
-                      width: 500,
-                      dataIndex: "name",
-                    },
-                    {
-                      title: <span className="font-normal">수량</span>,
-
-                      width: 200,
-                      dataIndex: "count",
-                    },
-                  ]}
-                  dataSource={assetAccessory}
-                  pagination={false}
-                  style={{
-                    width: "100%",
-                    backgroundColor: "#f5f5f5",
-                    borderRadius: 5,
+                <Select
+                  allowClear
+                  placeholder="분류"
+                  className="w-full"
+                  options={assetCategoriesList.map((category, cIdx) => ({
+                    label: category.name,
+                    value: category.name,
+                  }))}
+                  onChange={(value) => {
+                    setCurrentCategory(value);
+                    filterProductLine(value, memberSettings);
                   }}
                 />
               </Form.Item>
-            )}
 
-            <Form.Item
-              name="assetDescritionSummay"
-              required
-              label={<span className="font-semibold">제품스펙</span>}
-              className="bg-white p-2"
-            >
-              <TextArea rows={3} style={{ resize: "none" }} />
-            </Form.Item>
-          </Form>
-        </Col>
-        <Col span={media.isDesktopOrLaptop ? 12 : 24}>
-          <Form
-            labelCol={{
-              span: 6,
-            }}
-            colon={false}
-            style={{
-              width: "100%",
-            }}
-            labelAlign="left"
-            form={addStep2Form}
-            layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
-          >
-            <Divider orientation="left" orientationMargin="0">
-              <span className="font-semibold"> 3. 거래 정보</span>
-            </Divider>
-            <Form.Item
-              name="assetRentalPeriod"
-              required
-              label={<span className="font-semibold">계약기간</span>}
-              className={
-                assetPurchasedType === "렌탈" ? "bg-white p-2" : "hidden"
-              }
-            >
-              <DatePicker.RangePicker
-                locale={locale}
-                value={assetRentalPeriod}
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-            <Form.Item
-              name="assetPurchasedDate"
-              required
-              label={<span className="font-semibold">거래일자/등록일자</span>}
-              className="bg-white p-2"
-            >
-              <Form.Item name="assetPurchasedDate" noStyle>
-                <DatePicker locale={locale} />
-              </Form.Item>
-              <span className="font-semibold mx-2 text-gray-400">/</span>
-              <Form.Item name="createdAt" noStyle>
-                <DatePicker locale={locale} />
-              </Form.Item>
-            </Form.Item>
-            <Form.Item
-              name="assetPurchaseName"
-              required
-              label={<span className="font-semibold">구매처</span>}
-              className="bg-white p-2"
-            >
-              <AutoComplete options={assetPurchaseOptions}>
-                <Input />
-              </AutoComplete>
-            </Form.Item>
-            <Form.Item
-              name="assetOwnerCompany"
-              required
-              label={<span className="font-semibold">자산소유</span>}
-              className="bg-white p-2"
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              required
-              label={<span className="font-semibold">취득원가/수량</span>}
-              className="bg-white p-2"
-            >
-              <Form.Item name="assetCost" noStyle>
-                <InputNumber
-                  placeholder="취득원가"
-                  style={{ width: 200 }}
-                  addonAfter={<span>원</span>}
+              <Form.Item
+                name="assetProductLine"
+                required
+                label={<span className="font-semibold">품목선택</span>}
+                className="bg-white p-2"
+                rules={[{ required: true, message: "품목을 선택해주세요." }]}
+              >
+                <Select
+                  allowClear
+                  placeholder="품목"
+                  className="w-full"
+                  options={productLineList.map((product, pIdx) => ({
+                    label: product.name,
+                    value: product.name,
+                  }))}
+                  onChange={(value) => setCurrentProductLine(value)}
                 />
               </Form.Item>
-              <span className="font-semibold mx-2 text-gray-400">/</span>
-              <Form.Item name="assetCount" noStyle>
-                <InputNumber placeholder="수량" style={{ width: 80 }} />
+              <Form.Item
+                name="assetPurchasedType"
+                required
+                rules={[
+                  {
+                    required: true,
+                    message: "취득방식을 다시한번 확인해주세요.",
+                  },
+                ]}
+                className={
+                  currentCategory === "소프트웨어" &&
+                  currentProductLine === "구독형"
+                    ? "hidden"
+                    : "bg-white p-2"
+                }
+                label={<span className="font-semibold">취득방식</span>}
+              >
+                <Segmented
+                  options={
+                    currentCategory === "소프트웨어" &&
+                    currentProductLine === "구독형"
+                      ? [{ label: "렌탈/구독", value: "렌탈" }]
+                      : [
+                          { label: "구매", value: "구매" },
+                          { label: "렌탈/구독", value: "렌탈" },
+                          { label: "무상", value: "무상" },
+                        ]
+                  }
+                  onChange={(value) => setAssetPurchasedType(value)}
+                />
               </Form.Item>
-            </Form.Item>
-            <Form.Item
-              name="assetDepreciationType"
-              required
-              label={<span className="font-semibold">감가설정</span>}
-              className="bg-white p-2"
-            >
-              <Space>
-                <Form.Item noStyle>
-                  <Segmented
-                    options={[
-                      { key: 1, label: "설정안함", value: "설정안함" },
-                      { key: 2, label: "정액법", value: "정액법" },
-                      { key: 3, label: "정률법", value: "정률법" },
+              <Divider orientation="left" orientationMargin="0">
+                <span className="font-semibold">2. 제품 정보</span>
+              </Divider>
+
+              <Form.Item
+                required
+                label={<span className="font-semibold">제조사/모델명</span>}
+                className="bg-white p-2"
+              >
+                <Space
+                  className="w-full"
+                  direction={media.isMobile ? "vertical" : "horizontal"}
+                >
+                  <Form.Item
+                    name="assetVendor"
+                    noStyle
+                    rules={[
+                      {
+                        required: true,
+                        message:
+                          "제조사를 특정하기 어렵다면 구매처를 입력해주세요.",
+                      },
                     ]}
+                  >
+                    <AutoComplete options={assetVendorOptions}>
+                      <Input
+                        style={{
+                          width: media.isMobile ? "100%" : 220,
+                        }}
+                        placeholder="제조사"
+                      />
+                    </AutoComplete>
+                  </Form.Item>
+                  {media.isMobile ? null : (
+                    <span className="font-semibold text-gray-400">/</span>
+                  )}
+                  <Form.Item
+                    name="assetModel"
+                    noStyle
+                    rules={[
+                      {
+                        required: true,
+                        message:
+                          "모델명을 특정하기 어렵다면 품목을 입력해주세요.",
+                      },
+                    ]}
+                  >
+                    <AutoComplete
+                      options={assetModelOptions}
+                      onChange={(value) => setAssetModel(value)}
+                    >
+                      <Input
+                        style={{
+                          width: media.isMobile ? "100%" : 220,
+                        }}
+                        placeholder="모델명"
+                      />
+                    </AutoComplete>
+                  </Form.Item>
+                </Space>
+              </Form.Item>
+
+              <Form.Item
+                name="assetName"
+                required
+                label={<span className="font-semibold">자산명</span>}
+                rules={[
+                  {
+                    required: true,
+                    message:
+                      "자산명은 제조사와 모델명을 입력하신후에 자산명 필드에 클릭하세요.",
+                  },
+                ]}
+                className="bg-white p-2"
+              >
+                <Input
+                  value={assetName}
+                  onFocus={handleInitAssetModelName}
+                  onChange={(e) => setAssetName(e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item
+                name="assetWarranty"
+                label={<span className="font-semibold">보증기간</span>}
+                className="bg-white p-2"
+                help="＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요."
+              >
+                <InputNumber
+                  defaultValue={0}
+                  style={{ width: 110 }}
+                  addonAfter={<span>개월</span>}
+                />
+              </Form.Item>
+              {assetAccessory.length > 0 && (
+                <Form.Item
+                  required
+                  label={<span className="font-semibold">구성품</span>}
+                  className="bg-white p-2 border-d"
+                >
+                  <Space className="w-full mb-2">
+                    <Input
+                      placeholder="품목"
+                      value={currentAssetAccessory.name}
+                      onChange={(e) =>
+                        setCurrentAssetAccessory({
+                          ...currentAssetAccessory,
+                          name: e.target.value,
+                        })
+                      }
+                    />
+                    <InputNumber
+                      placeholder="수량"
+                      value={currentAssetAccessory.count}
+                      onChange={(value) =>
+                        setCurrentAssetAccessory({
+                          ...currentAssetAccessory,
+                          count: value,
+                        })
+                      }
+                    />
+                    <Button
+                      onClick={() => {
+                        handleAssetAccessoryAdd();
+                      }}
+                    >
+                      추가
+                    </Button>
+                  </Space>
+                  <Table
+                    size="small"
+                    columns={[
+                      {
+                        title: <span className="font-normal">품목</span>,
+                        width: 500,
+                        dataIndex: "name",
+                      },
+                      {
+                        title: <span className="font-normal">수량</span>,
+
+                        width: 200,
+                        dataIndex: "count",
+                      },
+                    ]}
+                    dataSource={assetAccessory}
+                    pagination={false}
+                    style={{
+                      width: "100%",
+                      backgroundColor: "#f5f5f5",
+                      borderRadius: 5,
+                    }}
                   />
                 </Form.Item>
-                <Form.Item noStyle>
-                  <Select style={{ width: 150 }} />
+              )}
+
+              <Form.Item
+                name="assetDescritionSummay"
+                label={<span className="font-semibold">제품스펙</span>}
+                className="bg-white p-2"
+              >
+                <TextArea rows={3} style={{ resize: "none" }} />
+              </Form.Item>
+            </Col>
+            <Col span={media.isDesktopOrLaptop ? 12 : 24}>
+              <Divider orientation="left" orientationMargin="0">
+                <span className="font-semibold"> 3. 거래 정보</span>
+              </Divider>
+              <Form.Item
+                name="assetRentalPeriod"
+                required
+                label={<span className="font-semibold">계약기간</span>}
+                className={
+                  assetPurchasedType === "렌탈" ? "bg-white p-2" : "hidden"
+                }
+                rules={[
+                  {
+                    required: true,
+                    message: "계약기간을 선택해주세요.",
+                  },
+                ]}
+              >
+                <DatePicker.RangePicker
+                  locale={locale}
+                  value={assetRentalPeriod}
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+              <Form.Item
+                name="assetPurchasedDate"
+                label={<span className="font-semibold">거래일자/등록일자</span>}
+                className="bg-white p-2"
+              >
+                <Form.Item name="assetPurchasedDate" noStyle>
+                  <DatePicker locale={locale} />
                 </Form.Item>
-              </Space>
-            </Form.Item>
-            <Divider orientation="left" orientationMargin="0">
-              <span className="font-semibold"> 4. 사진/일련번호</span>
-            </Divider>
-            <Button
-              type="default"
-              className="bg-blue-500"
-              onClick={() => onFinish([addStep1Form, addStep2Form])}
-            >
-              저장
-            </Button>
-          </Form>
-        </Col>
+                <span className="font-semibold mx-2 text-gray-400">/</span>
+                <Form.Item name="createdAt" noStyle>
+                  <DatePicker locale={locale} />
+                </Form.Item>
+              </Form.Item>
+              <Form.Item
+                name="assetPurchaseName"
+                required
+                label={<span className="font-semibold">구매처</span>}
+                rules={[
+                  {
+                    required: true,
+                    message: "구매처를 입력해주세요.",
+                  },
+                ]}
+                className="bg-white p-2"
+              >
+                <AutoComplete options={assetPurchaseOptions}>
+                  <Input />
+                </AutoComplete>
+              </Form.Item>
+              <Form.Item
+                name="assetOwnerCompany"
+                required
+                label={<span className="font-semibold">자산소유</span>}
+                className="bg-white p-2"
+                rules={[
+                  {
+                    required: true,
+                    message: "자회사 보유시 소유사를 선택해주세요.",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item
+                required
+                label={<span className="font-semibold">취득원가/수량</span>}
+                className="bg-white p-2"
+              >
+                <Form.Item
+                  name="assetCost"
+                  rules={[
+                    {
+                      required: true,
+                      message: "무상이라면 0을 입력해주세요.",
+                    },
+                  ]}
+                  noStyle
+                >
+                  <Input
+                    placeholder="취득원가"
+                    style={{ textAlign: "right", marginRight: 1, width: 200 }}
+                    onChange={(e) => {
+                      addForm.setFieldValue(
+                        "assetCost",
+                        NumberWithComma(e.target.value)
+                      );
+                    }}
+                    addonAfter={<span>원</span>}
+                  />
+                </Form.Item>
+                <span className="font-semibold mx-2 text-gray-400">/</span>
+                <Form.Item name="assetCount" noStyle>
+                  <InputNumber
+                    placeholder="수량"
+                    value={assetCount}
+                    onChange={(value) => setAssetCount(value)}
+                    style={{ width: 80 }}
+                  />
+                </Form.Item>
+              </Form.Item>
+              <Form.Item
+                label={<span className="font-semibold">감가설정</span>}
+                className="bg-white p-2"
+              >
+                <Space>
+                  <Form.Item name="assetDepreciationType" noStyle>
+                    <Segmented
+                      options={["설정안함", "정액법", "정률법"]}
+                      onChange={(value) => {
+                        setAssetDepreciationType(value);
+                        addForm.setFieldValue("assetDepreciationPeriod", "");
+                      }}
+                    />
+                  </Form.Item>
+                  <Form.Item name="assetDepreciationPeriod" noStyle>
+                    <Select
+                      style={{ width: 150 }}
+                      options={
+                        assetDepreciationType === "정액법"
+                          ? [...initDepreciationPeriod]
+                          : [...initDepreciationRate]
+                      }
+                      className={
+                        assetDepreciationType === "설정안함" && "hidden"
+                      }
+                    />
+                  </Form.Item>
+                </Space>
+              </Form.Item>
+              <Divider orientation="left" orientationMargin="0">
+                <div className="flex w-full justify-between items-center ">
+                  <span className="font-semibold"> 4. 사진/일련번호</span>
+                  <div className="flex ml-8" style={{ fontSize: 12 }}>
+                    <button
+                      type="button"
+                      className="border rounded p-1"
+                      onClick={() => randomAssetCode(assetCount)}
+                    >
+                      일련번호생성
+                    </button>
+                  </div>
+                  <div className="flex ml-2" style={{ fontSize: 12 }}>
+                    <button
+                      type="button"
+                      className="border rounded p-1"
+                      onClick={() => resetAssetCode(assetCount)}
+                    >
+                      일련번호초기화
+                    </button>
+                  </div>
+                </div>
+              </Divider>
+              <Form.Item noStyle>
+                {assetCount > 0 &&
+                  Array.from({ length: assetCount }, (_, index) => {
+                    return assetListRender(index);
+                  })}
+              </Form.Item>
+              <Form.Item noStyle>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="bg-blue-500"
+                >
+                  저장
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </ConfigProvider>
     </PageContainer>
   );

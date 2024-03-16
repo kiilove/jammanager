@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { Timestamp } from "firebase/firestore";
 import React from "react";
 
@@ -28,7 +29,8 @@ export const ConvertDateToTimestampAndConverted = (date) => {
 };
 
 export const ConvertTimestampToDateByArray = (data = []) => {
-  return data.map((item) => {
+  const processedData = [...data];
+  return processedData.map((item) => {
     const newItem = { ...item };
 
     Object.keys(item).forEach((key) => {
@@ -46,4 +48,31 @@ export const ConvertTimestampToDateByArray = (data = []) => {
 
     return newItem;
   });
+};
+
+export const ConvertDateToTimestampByObject = (data = {}) => {
+  //함수 오류있는듯 아직 사용하지 마시오.
+  const processedData = { ...data };
+  const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+
+  Object.keys(processedData).forEach((key) => {
+    const value = processedData[key];
+    console.log(key, iso8601Regex.test(value));
+    if (Array.isArray(value) && value.length > 0 && dayjs(value[0]).isValid()) {
+      // 배열 내 날짜 데이터를 처리합니다. 배열의 모든 항목이 날짜 데이터인지 확인하지 않습니다.
+      processedData[key] = value.map((dateStr) =>
+        Timestamp.fromDate(new Date(dateStr))
+      );
+      processedData[`${key}Converted`] = value.map((dateStr) =>
+        dayjs(dateStr).format("YYYY-MM-DD")
+      );
+    } else if (typeof value === "string" && dayjs(value).isValid()) {
+      // 문자열 날짜 데이터를 처리합니다.
+      processedData[key] = Timestamp.fromDate(new Date(value));
+      processedData[`${key}Converted`] = dayjs(value).format("YYYY-MM-DD");
+    }
+    // 날짜 형식이 아닌 데이터는 변환하지 않고 그대로 유지합니다.
+  });
+
+  return processedData;
 };
