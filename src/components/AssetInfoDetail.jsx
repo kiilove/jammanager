@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { convertTimestampToDate } from "../functions";
 import { assetInfoFieldName, initDescription } from "../InitValues";
-import { Col, Descriptions, Row } from "antd";
+import { Col, ConfigProvider, Descriptions, Row } from "antd";
 import { transform } from "lodash";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 
@@ -110,6 +110,15 @@ const AssetInfoDetail = ({ data }) => {
       return item;
     });
 
+    if (value.assetPurchasedType === "렌탈") {
+      items.push({
+        key: items.length + 1,
+        label: "",
+        children: "",
+        index: 2000,
+        span: 1,
+      });
+    }
     items.push(
       {
         key: items.length + 1,
@@ -143,15 +152,22 @@ const AssetInfoDetail = ({ data }) => {
   }, [data]);
 
   return (
-    <Descriptions
-      labelStyle={{ fontWeight: 200, fontSize: 13 }}
-      contentStyle={{ fontSize: 13 }}
-      items={descriptionItems}
-      column={3}
-      size="small"
-      bordered={media.isDesktopOrLaptop}
-      layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
-    />
+    <ConfigProvider
+      theme={{
+        token: {
+          fontSize: 12,
+          fontSizeLG: 14,
+        },
+      }}
+    >
+      <Descriptions
+        items={descriptionItems}
+        column={3}
+        size="small"
+        bordered={media.isDesktopOrLaptop}
+        layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
+      />
+    </ConfigProvider>
   );
 };
 

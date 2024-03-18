@@ -124,6 +124,14 @@ const AddAsset = () => {
     }
     return isJpgOrPng || Upload.LIST_IGNORE; // 파일이 jpg 또는 png가 아니면 업로드 목록에서 제외
   };
+
+  const handleAssetListUpdate = (index, key, value, list, setList) => {
+    const newValue = { ...list[index], [key]: value };
+    const newList = [...list];
+    newList.splice(index, 1, newValue);
+    setList(newList);
+  };
+
   const handleUploadTarget = (index, filelist, list, setList) => {
     const newFilelist = [...filelist];
     let newList = [...list];
@@ -231,6 +239,15 @@ const AddAsset = () => {
               value={assetList[index]?.assetCode}
               ref={(el) => (inputRefs.current[index] = el)}
               onFocus={() => handleFocus(index)}
+              onChange={(e) => {
+                handleAssetListUpdate(
+                  index,
+                  "assetCode",
+                  e.target.value,
+                  assetList,
+                  setAssetList
+                );
+              }}
             />
           </div>
           <div className="flex w-full">
@@ -239,6 +256,15 @@ const AddAsset = () => {
               style={{ resize: "none" }}
               placeholder="비고"
               value={assetList[index]?.assetMemo}
+              onChange={(e) => {
+                handleAssetListUpdate(
+                  index,
+                  "assetMemo",
+                  e.target.value,
+                  assetList,
+                  setAssetList
+                );
+              }}
             />
           </div>
         </div>
@@ -471,9 +497,12 @@ const AddAsset = () => {
           assetUID: generateUUID(),
           assetCode: asset.assetCode.toUpperCase(),
           assetMemo: asset.assetMemo,
-          firstPics: [...asset.firstPics],
+          firstPics:
+            asset?.firstPics === undefined ? [] : [...asset?.firstPics],
           assetOwner: memberSettings.userID,
         };
+
+        console.log(codeWithValue);
 
         try {
           await assetAdd.addData(
@@ -490,7 +519,8 @@ const AddAsset = () => {
                 actionAtConverted: convertTimestampToDate(assetPurchasedDate),
                 feedType: "추가",
                 feedContext: `자산에 추가 되었습니다.`,
-                feedPics: [...asset.firstPics],
+                feedPics:
+                  asset?.firstPics === undefined ? [] : [...asset?.firstPics],
               });
               openNotification(
                 "success",

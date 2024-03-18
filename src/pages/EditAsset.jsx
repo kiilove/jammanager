@@ -503,7 +503,7 @@ const EditAsset = () => {
             findInfo.depreciationType
           );
           editForm.setFieldValue(
-            "assetDepreciationPeroid",
+            "assetDepreciationPeriod",
             findInfo.depreciationPeriod
           );
         }
@@ -881,7 +881,7 @@ const EditAsset = () => {
                     />
                   </Form.Item>
                   {assetDepreciationType === "정액법" && (
-                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                    <Form.Item name="assetDepreciationPeriod" noStyle>
                       <Select
                         options={[...initDepreciationPeriod]}
                         defaultValue={0}
@@ -889,7 +889,7 @@ const EditAsset = () => {
                     </Form.Item>
                   )}
                   {assetDepreciationType === "정률법" && (
-                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                    <Form.Item name="assetDepreciationPeriod" noStyle>
                       <Select
                         options={[...initDepreciationRate]}
                         defaultValue={0}
@@ -897,7 +897,7 @@ const EditAsset = () => {
                     </Form.Item>
                   )}
                   {assetDepreciationType === "설정안함" && (
-                    <Form.Item name="assetDepreciationPeroid" noStyle>
+                    <Form.Item name="assetDepreciationPeriod" noStyle>
                       <Select
                         options={[
                           { key: "설정안함", value: 0, label: "설정안함" },
