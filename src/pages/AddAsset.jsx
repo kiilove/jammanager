@@ -20,6 +20,8 @@ import {
   Upload,
   Table,
   Row,
+  message,
+  notification,
 } from "antd";
 
 import {
@@ -33,8 +35,8 @@ import TextArea from "antd/es/input/TextArea";
 import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
-import { useFirestoreQuery } from "../hooks/useFirestore";
-import { limit, where } from "firebase/firestore";
+import { useFirestoreAddData, useFirestoreQuery } from "../hooks/useFirestore";
+import { Timestamp, limit, where } from "firebase/firestore";
 import { orderBy } from "lodash";
 import {
   ConvertDateToTimestampAndConverted,
@@ -43,7 +45,14 @@ import {
 } from "../utils/Index";
 import { initDepreciationPeriod, initDepreciationRate } from "../InitValues";
 import { UploadImageWithCompress } from "../share/Index";
-import { NumberWithComma, generateUUID, removeCommas } from "../functions";
+import {
+  NumberWithComma,
+  convertTimestampToDate,
+  generateFileName,
+  generateUUID,
+  removeCommas,
+} from "../functions";
+import useImageUpload from "../hooks/useFireStorage";
 
 const AddAsset = () => {
   const [assetDepreciationPeriod, setAssetDepreciationPeriod] = useState(0);
@@ -71,21 +80,50 @@ const AddAsset = () => {
   const [assetAccessory, setAssetAccessory] = useState([]);
   const [currentAssetAccessory, setCurrentAssetAccessory] = useState({});
 
-  const { memberSettings, media, grouped } = useContext(CurrentLoginContext);
+  const { memberSettings, media, grouped, setGrouped } =
+    useContext(CurrentLoginContext);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const location = useLocation();
 
   const [addForm] = Form.useForm();
 
+  const assetAdd = useFirestoreAddData();
+  const assetFeedAdd = useFirestoreAddData();
   const assetDescriptionQuery = useFirestoreQuery();
+  const assetImageUpload = useImageUpload();
   const inputRefs = useRef([]);
 
-  const beforeUpload = (file, filelist, index, onSuccess) => {
-    console.log({ index: index, files: file, filelist });
-    onSuccess();
+  const [api, contextHolder] = notification.useNotification();
+  const openNotification = (
+    apiType,
+    title,
+    message,
+    placement,
+    duration,
+    maxCount
+  ) => {
+    api[apiType]({
+      message: title,
+      description: message,
+      placement,
+      duration,
+      maxCount,
+    });
   };
 
+  // const beforeUpload = (file, filelist, index, onSuccess) => {
+  //   console.log({ index: index, files: file, filelist });
+  //   onSuccess();
+  // };
+
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
+    if (!isJpgOrPng) {
+      message.error("사진 파일만 업로드해주세요!");
+    }
+    return isJpgOrPng || Upload.LIST_IGNORE; // 파일이 jpg 또는 png가 아니면 업로드 목록에서 제외
+  };
   const handleUploadTarget = (index, filelist, list, setList) => {
     const newFilelist = [...filelist];
     let newList = [...list];
@@ -108,7 +146,7 @@ const AddAsset = () => {
         const newAssetCode = {
           index,
           assetCode: generateUUID().toUpperCase(),
-          assetMeno: "",
+          assetMemo: "",
         };
         return newAssetCode;
       });
@@ -123,7 +161,7 @@ const AddAsset = () => {
         const newAssetCode = {
           index,
           assetCode: "",
-          assetMeno: "",
+          assetMemo: "",
         };
         return newAssetCode;
       });
@@ -166,6 +204,7 @@ const AddAsset = () => {
           <Upload
             listType="picture-card"
             onChange={(file) => {
+              console.log(file.file);
               handleUploadTarget(
                 index,
                 file.fileList,
@@ -173,6 +212,7 @@ const AddAsset = () => {
                 setUploadTargetFileList
               );
             }}
+            beforeUpload={beforeUpload}
             className=" align-middle"
             style={{ height: "120px" }}
             maxCount={1}
@@ -277,8 +317,199 @@ const AddAsset = () => {
     }
     //console.log(assetName);
   };
-  const onFinish = (value) => {
-    console.log(value);
+
+  const handleImageUpload = async ({ file, index }) => {
+    const newFileName = generateFileName(file.name, generateUUID());
+    const storageUrl = `/assetPics/${memberSettings.userID}`;
+    let result = {};
+    try {
+      const upload = await assetImageUpload.uploadImage(
+        storageUrl,
+        file,
+        newFileName
+      );
+      if (upload.success) {
+        result = {
+          index,
+          storageUrl,
+          name: newFileName,
+          url: upload.downloadUrl,
+          status: "uploaded",
+        };
+      }
+    } catch (error) {
+      result = { index, status: error };
+    }
+
+    return result;
+  };
+
+  const handleImageUploadAndStateUpdate = async (list) => {
+    let files = [];
+    for (const { fileList, index } of list) {
+      const targetFile = fileList[0]?.originFileObj;
+      if (targetFile) {
+        // 파일이 존재할 경우에만 배열에 추가
+        files.push({ targetFile, targetIndex: index });
+      }
+    }
+
+    let results = [];
+    for (const item of files) {
+      const uploadResult = await handleImageUpload({
+        file: item.targetFile,
+        index: item.targetIndex,
+      });
+      results.push(uploadResult);
+    }
+
+    const newAssetList = [...assetList];
+    results.forEach((uploaded, idx) => {
+      if (uploaded) {
+        // 업로드 결과가 존재할 경우에만 처리
+        const newValue = { ...newAssetList[idx], firstPics: [uploaded] };
+        newAssetList.splice(idx, 1, newValue);
+      }
+    });
+
+    return newAssetList;
+  };
+
+  const onFinish = async (values) => {
+    const updateGrouped = (condition, key, value) => {
+      if (condition?.length === 0) {
+        setGrouped((prevGrouped) => ({
+          ...prevGrouped,
+          [key]: [...prevGrouped[key], { value, label: value }],
+        }));
+      }
+    };
+
+    // 사용 예:
+    updateGrouped(assetModelOptions, "groupedModel", values.assetModel);
+    updateGrouped(assetVendorOptions, "groupedVendor", values.assetVendor);
+    updateGrouped(
+      assetPurchaseOptions,
+      "groupedPurchaseName",
+      values.assetPurchaseName
+    );
+
+    const newValue = Object.keys(values).reduce((acc, key) => {
+      acc[key] = values[key] === undefined ? "" : values[key];
+      return acc;
+    }, {});
+
+    const assetPurchasedDate = values.assetPurchasedDate
+      ? Timestamp.fromDate(values.assetPurchasedDate.toDate())
+      : Timestamp.fromDate(new Date());
+
+    const assetPurchasedDateConverted =
+      convertTimestampToDate(assetPurchasedDate);
+
+    const createdAt = values.createdAt
+      ? Timestamp.fromDate(values.createdAt.toDate())
+      : Timestamp.fromDate(new Date());
+
+    const createdAtConverted = convertTimestampToDate(createdAt);
+
+    let assetRentalPeriod = [];
+    let assetRentalPeriodConverted = [];
+
+    if (assetPurchasedType === "렌탈") {
+      assetRentalPeriod = [
+        Timestamp.fromDate(new Date()),
+        Timestamp.fromDate(new Date()),
+      ];
+      assetRentalPeriodConverted = [
+        convertTimestampToDate(assetRentalPeriod[0]),
+        convertTimestampToDate(assetRentalPeriod[1]),
+      ];
+      if (values.assetRentalPeriod?.length > 0) {
+        const newPeriod = values.assetRentalPeriod.map((rent, rIdx) => {
+          return Timestamp.fromDate(rent.toDate());
+        });
+        const newPeriodConverted = values.assetRentalPeriod.map(
+          (rent, rIdx) => {
+            return convertTimestampToDate(Timestamp.fromDate(rent.toDate()));
+          }
+        );
+        assetRentalPeriod = newPeriod;
+        assetRentalPeriodConverted = newPeriodConverted;
+      }
+    }
+
+    const newAccessory = assetAccessory.map((accessory, aIdx) => {
+      const newAcc = { ...accessory };
+      delete newAcc.action;
+      return newAcc;
+    });
+
+    // userEnteringDate와 createdAt 필드 추가
+    newValue.assetPurchasedType = assetPurchasedType;
+    newValue.assetPurchasedDate = assetPurchasedDate;
+    newValue.assetPurchasedDateConverted = assetPurchasedDateConverted;
+    newValue.assetCost = removeCommas(values.assetCost);
+    newValue.assetAccessory = [...newAccessory];
+    newValue.assetRentalPeriod = assetRentalPeriod;
+    newValue.assetRentalPeriodConverted = assetRentalPeriodConverted;
+    newValue.createdAt = createdAt;
+    newValue.createdAtConverted = createdAtConverted;
+    newValue.location = "출고대기";
+    newValue.userInfo = { userName: "미지정" };
+    newValue.currentUser = "미지정";
+
+    delete newValue.assetCount;
+
+    console.log(newValue);
+    const assets = await handleImageUploadAndStateUpdate(uploadTargetFileList);
+    console.log(assets);
+
+    if (assets.length > 0) {
+      assets.map(async (asset, cIdx) => {
+        const codeWithValue = {
+          ...newValue,
+          assetUID: generateUUID(),
+          assetCode: asset.assetCode.toUpperCase(),
+          assetMemo: asset.assetMemo,
+          firstPics: [...asset.firstPics],
+          assetOwner: memberSettings.userID,
+        };
+
+        try {
+          await assetAdd.addData(
+            "assets",
+            { ...codeWithValue },
+            async (data) => {
+              await assetFeedAdd.addData("assetFeeds", {
+                refAssetID: data.id,
+                refAssetCode: codeWithValue.assetCode,
+                createdBy: "system",
+                createdAt,
+                createdAtConverted,
+                actionAt: assetPurchasedDate,
+                actionAtConverted: convertTimestampToDate(assetPurchasedDate),
+                feedType: "추가",
+                feedContext: `자산에 추가 되었습니다.`,
+                feedPics: [...asset.firstPics],
+              });
+              openNotification(
+                "success",
+                "추가 성공",
+                `자산을 추가했습니다.`,
+                "topRight",
+                3
+              );
+            }
+          );
+        } catch (error) {
+          console.log(error);
+        }
+      });
+    }
+  };
+
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
   };
 
   const initForm = () => {
@@ -487,6 +718,7 @@ const AddAsset = () => {
           labelAlign="left"
           form={addForm}
           onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
           layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
         >
           <Row gutter={[24, 24]}>
@@ -629,7 +861,6 @@ const AddAsset = () => {
 
               <Form.Item
                 name="assetName"
-                required
                 label={<span className="font-semibold">자산명</span>}
                 rules={[
                   {
@@ -733,17 +964,10 @@ const AddAsset = () => {
               </Divider>
               <Form.Item
                 name="assetRentalPeriod"
-                required
                 label={<span className="font-semibold">계약기간</span>}
                 className={
                   assetPurchasedType === "렌탈" ? "bg-white p-2" : "hidden"
                 }
-                rules={[
-                  {
-                    required: true,
-                    message: "계약기간을 선택해주세요.",
-                  },
-                ]}
               >
                 <DatePicker.RangePicker
                   locale={locale}
@@ -901,6 +1125,7 @@ const AddAsset = () => {
             </Col>
           </Row>
         </Form>
+        {contextHolder}
       </ConfigProvider>
     </PageContainer>
   );

@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { ContentTitle } from "../commonstyles/Title";
-import { Button, Form, Input, Radio, Slider, Space, Switch, Tag } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Radio,
+  Slider,
+  Space,
+  Switch,
+  Tag,
+} from "antd";
 import {
   CloseCircleOutlined,
   UpOutlined,
@@ -15,11 +25,14 @@ const AssetCodePrint = () => {
   const [tags, setTags] = useState([]);
   const [printType, setPrintType] = useState("tiny");
   const [paperSize, setPaperSize] = useState("A4");
+  const [paperMarginX, setPaperMarginX] = useState(5);
+  const [paperMarginY, setPaperMarginY] = useState(5);
+  const [paperGap, setPaperGap] = useState(1);
   const [paperCustomSizeHorizontal, setPaperCustomHorizontal] = useState("");
   const [paperCustomSizeVertical, setPaperCustomVertical] = useState("");
   const [paperDirection, setPaperDirection] = useState("vertical");
   const [printBorder, setPrintBorder] = useState(true);
-  const [scaleValue, setScaleValue] = useState(1); // 초기 스케일 값을 0.5로 설정
+  const [scaleValue, setScaleValue] = useState(3); // 초기 스케일 값을 0.5로 설정
   const [showSettings, setShowSettings] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const location = useLocation();
@@ -49,8 +62,8 @@ const AssetCodePrint = () => {
     const scaledHeight = height * scaleValue + "mm";
 
     return {
-      width: scaledWidth,
-      height: scaledHeight,
+      width: `${originalWidthMM}mm`,
+      height: `${originalHeightMM}mm`,
       overflow: "auto",
       backgroundColor: "white",
     };
@@ -70,16 +83,6 @@ const AssetCodePrint = () => {
   const toggleSettings = () => {
     setShowSettings(!showSettings);
   };
-
-  useEffect(() => {
-    if (isPrinting) {
-      // 인쇄 프로세스 시작
-      setTimeout(() => {
-        setScaleValue(1); // 2초 딜레이 후 scaleValue를 1로 설정
-        // 필요한 경우 여기서 ReactToPrint의 content를 인쇄하기 위한 트리거 함수를 호출할 수 있습니다.
-      }, 2000);
-    }
-  }, [isPrinting]);
 
   const handlePrintClick = () => {
     setIsPrinting(true); // 인쇄 버튼 클릭 시 isPrinting 상태를 true로 설정
@@ -156,7 +159,7 @@ const AssetCodePrint = () => {
                     optionType="button"
                     buttonStyle="solid"
                   />
-                  <Radio.Group
+                  {/* <Radio.Group
                     value={paperSize}
                     onChange={(e) => {
                       setPaperSize(e.target.value);
@@ -192,14 +195,52 @@ const AssetCodePrint = () => {
                     ]}
                     optionType="button"
                     buttonStyle="solid"
-                  />
+                  /> */}
                   <Space className="ml-2">
                     <span>칼선인쇄</span>
                     <Switch checked={printBorder} onChange={setPrintBorder} />
                   </Space>
+                  <Space className="ml-2">
+                    <span>좌우여백(㎜)</span>
+                    <InputNumber
+                      min={0}
+                      max={20}
+                      step={"0.1"}
+                      value={paperMarginX}
+                      style={{ width: 65 }}
+                      onChange={(value) => setPaperMarginX(value)}
+                    />
+                    <span>상하여백(㎜)</span>
+                    <InputNumber
+                      min={0}
+                      max={20}
+                      step={"0.1"}
+                      style={{ width: 65 }}
+                      value={paperMarginY}
+                      onChange={(value) => setPaperMarginY(value)}
+                    />
+                    <span>간격(㎜)</span>
+                    <InputNumber
+                      min={0.1}
+                      max={20}
+                      step={"0.1"}
+                      style={{ width: 65 }}
+                      value={paperGap}
+                      onChange={(value) => setPaperGap(value)}
+                    />
+                    <span>QR박스크기(㎝)</span>
+                    <InputNumber
+                      min={3}
+                      max={10}
+                      style={{ width: 65 }}
+                      step={"0.1"}
+                      value={scaleValue}
+                      onChange={(value) => setScaleValue(value)}
+                    />
+                  </Space>
                 </div>
               </div>
-              <div className="flex h-full w-full bg-gray-500">
+              {/* <div className="flex h-full w-full bg-gray-500">
                 <div
                   className="flex bg-gray-500 pl-4 justify-start items-center"
                   style={{ width: "130px", height: "100%", minHeight: 55 }}
@@ -231,7 +272,7 @@ const AssetCodePrint = () => {
                       );
                     })}
                 </div>
-              </div>
+              </div> */}
             </>
           )}
 
@@ -240,22 +281,35 @@ const AssetCodePrint = () => {
             <div className="flex w-full h-full justify-start items-center flex-col bg-gray-100 p-5">
               <div
                 className="flex justify-center items-start p-0"
-                style={{ overflow: "auto", width: "100%", height: "500px" }}
+                style={{ overflow: "auto", width: "100%", height: "650px" }}
               >
                 <div
                   ref={printRef}
                   style={paperStyle}
                   className="flex flex-wrap justify-center items-start"
                 >
-                  <div className="flex w-full flex-wrap gap-2 justify-center items-start">
+                  <div
+                    className={`flex w-full flex-wrap  justify-center items-start `}
+                    style={{
+                      marginTop: `${paperMarginY}mm`,
+                      marginBottom: `${paperMarginY}mm`,
+                      marginLeft: `${paperMarginX}mm`,
+                      marginRight: `${paperMarginX}mm`,
+                      gap: paperGap * 3.77,
+                    }}
+                  >
                     {printType === "tiny" &&
                       tags.map((tag, tIdx) =>
                         printBorder ? (
                           <div
-                            className="flex p-2"
+                            className="flex"
                             style={{ border: "1px dashed #8a8a8a" }}
                           >
-                            <AssetPrintTiny data={tag} scale={scaleValue} />
+                            <AssetPrintTiny
+                              data={tag}
+                              scale={scaleValue}
+                              printBorder={printBorder}
+                            />
                           </div>
                         ) : (
                           <AssetPrintTiny data={tag} scale={scaleValue} />
