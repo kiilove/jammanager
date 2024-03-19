@@ -15,7 +15,7 @@ const defaultTemplate = {
   documentTitle: "자산 사용 동의서",
   documentDate: today,
 };
-const AssetUserAgreement = () => {
+const AssetUserAgreement = ({ data }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [documentID, setDocumentID] = useState();
   const [documentTemplate, setDocumentTemplate] = useState({});
@@ -24,6 +24,14 @@ const AssetUserAgreement = () => {
   const documentQuery = useFirestoreQuery();
   const [form] = Form.useForm();
 
+  const initFormValue = (value) => {
+    form.setFieldsValue({
+      docuType: "assetUserAgreement",
+      ownerID: value.id,
+      docuIssuerCompany: value.assetOwnerCompany,
+      docuIssuerManager: "관리부 담당자",
+    });
+  };
   const fetchDocumentsLength = async (ownerID, documentType, documentDate) => {
     const condidtions = [
       where("ownerID", "==", ownerID),
@@ -59,9 +67,24 @@ const AssetUserAgreement = () => {
       setDocumentTemplate({ ...memberSettings.assetUserAgreement });
     } else {
       setDocumentTemplate(() => ({ ...initAssetUserAgreement }));
-      console.log(initAssetUserAgreement);
+      //console.log(initAssetUserAgreement);
+    }
+
+    if (memberSettings?.userID) {
+      fetchDocumentsLength(
+        memberSettings.userID,
+        "assetUserAgreement",
+        dayjs().format("YYYY-MM-DD")
+      );
     }
   }, [memberSettings]);
+
+  useEffect(() => {
+    if (data) {
+      initFormValue(data);
+    }
+    console.log(data);
+  }, [data]);
 
   return (
     <>
@@ -87,11 +110,7 @@ const AssetUserAgreement = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {
-                    initAssetUserAgreement.find(
-                      (f) => f.fieldName === "docuTitle"
-                    ).label
-                  }
+                  자산 사용 동의서
                 </span>
               </div>
               <div
@@ -147,7 +166,7 @@ const AssetUserAgreement = () => {
                     회사명
                   </div>
                   <div className="flex w-full bg-white px-3">
-                    <Form.Item name="docuIssuer" noStyle>
+                    <Form.Item name="docuIssuerCompany" noStyle>
                       <Input size="small" />
                     </Form.Item>
                   </div>
@@ -163,92 +182,106 @@ const AssetUserAgreement = () => {
                     담당자
                   </div>
                   <div className="flex w-full bg-white px-3">
-                    <Form.Item name="docuIssuer" noStyle>
+                    <Form.Item name="docuIssuerManager" noStyle>
                       <Input size="small" />
                     </Form.Item>
                   </div>
                 </div>
               </div>
+
+              <div className="flex w-full justify-start items-center">
+                자산정보 :
+              </div>
               <div
-                className="flex w-full flex-col justify-center items-center"
+                className="flex w-full flex-col border border-gray-400 justify-center items-center"
                 style={{ height: "auto", fontSize: 13 }}
               >
-                <div className="flex w-full justify-start items-center">
-                  자산정보 :
-                </div>
-                <div
-                  className="flex w-full flex-col justify-center items-center border border-gray-400"
-                  style={{ height: "auto", fontSize: 13 }}
-                >
-                  <div className="flex w-full h-full justify-start items-center border-b border-b-gray-300">
-                    <div
-                      className="flex h-full bg-gray-200 px-3 justify-start items-center"
-                      style={{
-                        width: "100px",
-                        minWidth: "100px",
-                        maxWidth: "100px",
-                        height: 35,
-                      }}
-                    >
-                      작성일자
-                    </div>
-                    <div className="flex w-full bg-white px-3">
-                      <DatePicker
-                        size="small"
-                        locale={locale}
-                        defaultValue={dayjs(new Date())}
-                      />
-                    </div>
-                    <div
-                      className="flex h-full bg-gray-200 px-3 justify-start items-center"
-                      style={{
-                        width: "100px",
-                        minWidth: "100px",
-                        maxWidth: "100px",
-                        height: 35,
-                      }}
-                    >
-                      문서번호
-                    </div>
-                    <div className="flex w-full bg-white px-3">
-                      <Form.Item name="docuID" noStyle>
-                        <Input size="small" />
-                      </Form.Item>
-                    </div>
+                <div className="flex w-full h-full justify-start items-center border-b border-b-gray-300">
+                  <div
+                    className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                    style={{
+                      width: "100px",
+                      minWidth: "100px",
+                      maxWidth: "100px",
+                      height: 35,
+                    }}
+                  >
+                    분류
                   </div>
-                  <div className="flex w-full h-full justify-start items-center">
-                    <div
-                      className="flex h-full bg-gray-200 px-3 justify-start items-center"
-                      style={{
-                        width: "100px",
-                        minWidth: "100px",
-                        maxWidth: "100px",
-                        height: 35,
-                      }}
-                    >
-                      회사명
-                    </div>
-                    <div className="flex w-full bg-white px-3">
-                      <Form.Item name="docuIssuer" noStyle>
-                        <Input size="small" />
-                      </Form.Item>
-                    </div>
-                    <div
-                      className="flex h-full bg-gray-200 px-3 justify-start items-center"
-                      style={{
-                        width: "100px",
-                        minWidth: "100px",
-                        maxWidth: "100px",
-                        height: 35,
-                      }}
-                    >
-                      담당자
-                    </div>
-                    <div className="flex w-full bg-white px-3">
-                      <Form.Item name="docuIssuer" noStyle>
-                        <Input size="small" />
-                      </Form.Item>
-                    </div>
+                  <div className="flex w-full bg-white px-3">
+                    <Form.Item name="assetCategory" noStyle>
+                      <Input size="small" />
+                    </Form.Item>
+                  </div>
+                  <div
+                    className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                    style={{
+                      width: "100px",
+                      minWidth: "100px",
+                      maxWidth: "100px",
+                      height: 35,
+                    }}
+                  >
+                    품목
+                  </div>
+                  <div className="flex w-full bg-white px-3">
+                    <Form.Item name="assetProductLine" noStyle>
+                      <Input size="small" />
+                    </Form.Item>
+                  </div>
+                </div>
+                <div className="flex w-full h-full justify-start items-center border-b border-b-gray-300">
+                  <div
+                    className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                    style={{
+                      width: "100px",
+                      minWidth: "100px",
+                      maxWidth: "100px",
+                      height: 35,
+                    }}
+                  >
+                    자산명
+                  </div>
+                  <div className="flex w-full bg-white px-3">
+                    <Form.Item name="assetName" noStyle>
+                      <Input size="small" />
+                    </Form.Item>
+                  </div>
+                </div>
+                <div className="flex w-full h-full justify-start items-center border-b border-b-gray-300">
+                  <div
+                    className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                    style={{
+                      width: "100px",
+                      minWidth: "100px",
+                      maxWidth: "100px",
+                      height: 35,
+                    }}
+                  >
+                    자산코드
+                  </div>
+                  <div className="flex w-full bg-white px-3">
+                    <Form.Item name="assetName" noStyle>
+                      <Input size="small" />
+                    </Form.Item>
+                  </div>
+                </div>
+                <div className="flex w-full h-full justify-start items-center border-b border-b-gray-300">
+                  <div
+                    className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                    style={{
+                      width: "100px",
+                      minWidth: "100px",
+                      maxWidth: "100px",
+                      height: 35,
+                    }}
+                  >
+                    자산코드
+                  </div>
+                  <div className="flex w-full bg-white px-3">
+                    <Form.Item name="assetName" noStyle>
+                      <Input size="small" />
+                    </Form.Item>
                   </div>
                 </div>
               </div>
