@@ -8,6 +8,7 @@ import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
 import Title from "antd/es/typography/Title";
+import { GenerateDocumentID } from "../utils/GenerateDocumentID";
 const today = new Date();
 const borderColor = "bg-gray-600";
 const defaultTemplate = {
@@ -16,10 +17,12 @@ const defaultTemplate = {
 };
 const AssetUserAgreement = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [documentID, setDocumentID] = useState();
   const [documentTemplate, setDocumentTemplate] = useState({});
   const [IDLength, setIDLength] = useState(0);
   const { memberSettings } = useContext(CurrentLoginContext);
   const documentQuery = useFirestoreQuery();
+  const [form] = Form.useForm();
 
   const fetchDocumentsLength = async (ownerID, documentType, documentDate) => {
     const condidtions = [
@@ -44,6 +47,14 @@ const AssetUserAgreement = () => {
   };
 
   useEffect(() => {
+    const docuID = GenerateDocumentID({
+      beforeString: "JNC",
+      personalNumber: IDLength,
+    });
+    form.setFieldValue("docuID", docuID);
+  }, [IDLength]);
+
+  useEffect(() => {
     if (memberSettings?.assetUserAgreement) {
       setDocumentTemplate({ ...memberSettings.assetUserAgreement });
     } else {
@@ -59,12 +70,12 @@ const AssetUserAgreement = () => {
           <Spin />
         </div>
       )}
-      {!isLoading && documentTemplate?.docuTitle?.label && (
+      {!isLoading && (
         <div
           className="flex w-full h-full p-2"
           style={{ fontFamily: "맑은 고딕, 돋움, 굴림" }}
         >
-          <Form style={{ width: "100%" }}>
+          <Form form={form} style={{ width: "100%" }}>
             <div className="flex w-full h-full justify-start items-center flex-col gap-y-2">
               <div
                 className="flex w-full border border-gray-700 justify-center items-center"
@@ -76,7 +87,11 @@ const AssetUserAgreement = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {documentTemplate?.docuTitle?.label}
+                  {
+                    initAssetUserAgreement.find(
+                      (f) => f.fieldName === "docuTitle"
+                    ).label
+                  }
                 </span>
               </div>
               <div

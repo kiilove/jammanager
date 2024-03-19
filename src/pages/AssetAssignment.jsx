@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { navigateMenus } from "../navigate";
 import PageBreadCrumb from "../utils/PageBreadCrumb";
-import { Card, Col, Row, Space, Typography } from "antd";
+import { Card, Col, Divider, Row, Space, Typography } from "antd";
 import {
   IsLoadingDiv,
   pageContentContainerTailWind,
@@ -14,6 +14,8 @@ import { CurrentLoginContext } from "../context/CurrentLogin";
 import AssetInfoDetail from "../components/AssetInfoDetail";
 import AssetUserAgreement from "../documents/AssetUserAgreement";
 import PageContainer from "../layout/PageContainer";
+import ProductInfoDetail from "../components/ProductInfoDetail";
+import AddAssignment from "../components/AddAssignment";
 const { Title, Text } = Typography;
 const AssetAssignment = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,13 +45,18 @@ const AssetAssignment = () => {
       title={navigateMenus.find((f) => f.link === location.pathname).label}
     >
       <Col span={media.isDesktopOrLaptop ? 12 : 24}>
-        <Card
-          title={<span style={{ fontWeight: 600 }}>자산정보</span>}
-          size="small"
-          classNames="w-full"
-        >
-          <AssetInfoDetail data={location.state.data} />
-        </Card>
+        <Divider orientation="left" orientationMargin="0">
+          <h1 className="font-semibold" style={{ fontSize: 13 }}>
+            1. 자산정보
+          </h1>
+        </Divider>
+        <AssetInfoDetail data={location.state.data} />
+        <Divider orientation="left" orientationMargin="0">
+          <h1 className="font-semibold" style={{ fontSize: 13 }}>
+            2. 배정
+          </h1>
+        </Divider>
+        <AddAssignment data={location.state.data} />
       </Col>
       <Col span={media.isDesktopOrLaptop ? 12 : 24}>
         <Card

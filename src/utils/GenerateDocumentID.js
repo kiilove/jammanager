@@ -12,7 +12,7 @@ export const GenerateDocumentID = ({
   const extra = extraString === "" ? "" : `${extraString}-`;
   const family =
     familyString === ""
-      ? `${dayjs(new Date()).format("YYYY-MM-DD")}-`
+      ? `${dayjs(new Date()).format("YYYYMMDD")}-`
       : `${familyString}-`;
   const personal = (personalNumber + 1).toString().padStart(4, "0");
 

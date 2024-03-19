@@ -120,11 +120,13 @@ const Main = ({ children }) => {
           const groupedModel = groupByKey(data, "assetModel");
           const groupedVendor = groupByKey(data, "assetVendor");
           const groupedPurchaseName = groupByKey(data, "assetPurchaseName");
+          const groupedLocation = groupByKey(data, "location");
 
           setGrouped(() => ({
             groupedModel,
             groupedVendor,
             groupedPurchaseName,
+            groupedLocation,
           }));
         },
         condition

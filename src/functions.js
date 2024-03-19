@@ -140,7 +140,7 @@ export function formatPhoneNumber(phoneNumber) {
   // 모든 "-"와 빈칸 제거
   let cleanNumber = phoneNumber.replace(/-|\s/g, "");
   if (cleanNumber.length < 7) {
-    return;
+    return cleanNumber;
   }
   // 휴대전화 번호 형식 확인 (010으로 시작하고 총 11자리)
   if (cleanNumber.startsWith("010") && cleanNumber.length === 11) {

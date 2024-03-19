@@ -31,17 +31,28 @@ function App() {
       <ConfigProvider
         theme={{
           token: {
-            fontSize: 14,
+            fontSize: 13,
             fontFamily: `"Nanum Gothic", "Nanum Gothic Coding", "Nanum Myeongjo", "Apple SD Gothic", sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
           },
           components: {
             Form: {
-              itemMarginBottom: 15,
               labelFontSize: 13,
               verticalLabelPadding: 2,
+
+              labelColor: "#888888",
+              itemMarginBottom: 5,
             },
-            Input: { inputFontSize: 13 },
+            Input: {
+              inputFontSize: 13,
+              activeBg: "#f5f5f5",
+              hoverBg: "#f5f5f5",
+              addonBg: "#f5f5f5",
+              activeShadow: "#f5f5f5",
+            },
             Drawer: { paddingLG: 0 },
+            Select: {
+              selectorBg: "#f5f5f5",
+            },
             Menu: {
               iconSize: 20,
               activeBarBorderWidth: 0,
@@ -51,7 +62,12 @@ function App() {
               darkSubMenuItemBg: "#002030",
               darkItemSelectedBg: "#0d70a1",
             },
-            List: {},
+            Divider: {
+              colorSplit: "#d8d8d8",
+            },
+            Table: {
+              cellFontSizeSM: 12,
+            },
           },
         }}
       >

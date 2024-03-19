@@ -160,6 +160,8 @@ const AddAsset = () => {
       });
 
       setAssetList(() => [...codes]);
+    } else if (length <= 0) {
+      setAssetList([]);
     }
   };
 
@@ -327,7 +329,7 @@ const AddAsset = () => {
   };
 
   const handleInitAssetAccessory = (name, list, setList) => {
-    const initValue = { name, count: 1 };
+    const initValue = { index: 1, name, count: 1 };
     const newList = [...list];
     newList.splice(0, 1, { ...initValue });
     setList(newList);
@@ -335,13 +337,12 @@ const AddAsset = () => {
 
   const handleInitAssetModelName = () => {
     const assetModel = addForm.getFieldValue("assetModel");
-    // console.log(assetModel);
+
     const assetVendor = addForm.getFieldValue("assetVendor");
     if (assetModel !== undefined && assetVendor !== undefined) {
       setAssetName(() => assetVendor + " " + assetModel);
       addForm.setFieldValue("assetName", assetVendor + " " + assetModel);
     }
-    //console.log(assetName);
   };
 
   const handleImageUpload = async ({ file, index }) => {
@@ -403,12 +404,16 @@ const AddAsset = () => {
 
   const onFinish = async (values) => {
     const updateGrouped = (condition, key, value) => {
-      if (condition?.length === 0) {
-        setGrouped((prevGrouped) => ({
-          ...prevGrouped,
-          [key]: [...prevGrouped[key], { value, label: value }],
-        }));
-      }
+      // if (condition?.length === 0) {
+      //   setGrouped((prevGrouped) => ({
+      //     ...prevGrouped,
+      //     [key]: [...prevGrouped[key], { value, label: value }],
+      //   }));
+      // }
+      setGrouped((prevGrouped) => ({
+        ...prevGrouped,
+        [key]: [...prevGrouped[key], { value, label: value }],
+      }));
     };
 
     // 사용 예:
@@ -486,28 +491,26 @@ const AddAsset = () => {
 
     delete newValue.assetCount;
 
-    console.log(newValue);
     const assets = await handleImageUploadAndStateUpdate(uploadTargetFileList);
-    console.log(assets);
 
     if (assets.length > 0) {
       assets.map(async (asset, cIdx) => {
         const codeWithValue = {
           ...newValue,
           assetUID: generateUUID(),
-          assetCode: asset.assetCode.toUpperCase(),
+          assetCode: asset?.assetCode.toUpperCase() || "",
           assetMemo: asset.assetMemo,
           firstPics:
             asset?.firstPics === undefined ? [] : [...asset?.firstPics],
           assetOwner: memberSettings.userID,
         };
-
         console.log(codeWithValue);
 
         try {
           await assetAdd.addData(
             "assets",
             { ...codeWithValue },
+
             async (data) => {
               await assetFeedAdd.addData("assetFeeds", {
                 refAssetID: data.id,
@@ -529,6 +532,7 @@ const AddAsset = () => {
                 "topRight",
                 3
               );
+              initForm();
             }
           );
         } catch (error) {
@@ -546,12 +550,19 @@ const AddAsset = () => {
     setAssetPurchasedDate(dayjs());
     setCreatedAt(dayjs());
     setAssetRentalPeriod([]);
+    setAssetAccessory([]);
+    setAssetList([]);
+    setUploadTargetFileList([]);
+    setAssetCount(0);
+    addForm.resetFields();
 
     addForm.setFieldValue("assetPurchasedType", "구매");
-
+    addForm.setFieldValue("assetDescritionSummay", "");
     addForm.setFieldValue("createdAt", dayjs());
     addForm.setFieldValue("assetPurchasedDate", dayjs());
     addForm.setFieldValue("assetRentalPeriod", []);
+    addForm.setFieldValue("assetDepreciationType", "설정안함");
+    addForm.setFieldValue("assetDepreciationPeriod", 0);
   };
 
   const handleAssetOptions = (childrenArray) => {
@@ -582,7 +593,6 @@ const AddAsset = () => {
   };
 
   useEffect(() => {
-    console.log(memberSettings);
     if (memberSettings?.assetCategories) {
       setAssetCategoriesList(() => [...memberSettings.assetCategories]);
 
@@ -623,11 +633,10 @@ const AddAsset = () => {
       const findCategory = memberSettings?.assetCategories.find(
         (f) => f.name === currentCategory
       );
-      console.log(findCategory);
+
       const findProductLine = findCategory.productLine.find(
         (f) => f.name === currentProductLine
       );
-      console.log(findProductLine);
 
       if (
         findProductLine?.length > 0 &&
@@ -659,7 +668,6 @@ const AddAsset = () => {
   }, [currentCategory, currentProductLine]);
 
   useEffect(() => {
-    console.log(assetModel);
     if (
       (memberSettings.userID && assetModel !== undefined) ||
       assetModel !== null ||
@@ -681,6 +689,8 @@ const AddAsset = () => {
       return newValue;
     });
     inputRefs.current = inputRefs.current.slice(0, assetCount);
+
+    randomAssetCode(assetCount);
     setUploadTargetFileList(initUploadTarget);
   }, [assetCount]);
 
@@ -707,7 +717,7 @@ const AddAsset = () => {
             colorPrimary: "#f5f5f5",
             colorPrimaryHover: "#f5f5f5",
             colorBorder: "#f5f5f5",
-            fontSizeIcon: 0,
+            //fontSizeIcon: 0,
             colorBgContainer: "#f5f5f5",
           },
           components: {
@@ -947,6 +957,12 @@ const AddAsset = () => {
                       }
                     />
                     <Button
+                      disabled={
+                        currentAssetAccessory.name === "" ||
+                        currentAssetAccessory.count === "" ||
+                        currentAssetAccessory.name === undefined ||
+                        currentAssetAccessory.count === undefined
+                      }
                       onClick={() => {
                         handleAssetAccessoryAdd();
                       }}
