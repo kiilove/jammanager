@@ -1,8 +1,10 @@
 import {
   AutoComplete,
+  Card,
   DatePicker,
   Form,
   Input,
+  Rate,
   Segmented,
   Select,
   Space,
@@ -23,7 +25,7 @@ import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
 
-const AddAssignment = () => {
+const AddAssignment = ({ data, userInfo, setUserInfo }) => {
   const [userList, setUserList] = useState([]);
   const [filteredUserList, setFilteredUserList] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
@@ -116,6 +118,11 @@ const AddAssignment = () => {
 
     if (findUser) {
       setList(() => ({ ...findUser }));
+      setUserInfo(() => ({
+        ...userInfo,
+        currentUser: findUser.userName,
+        userInfo: { ...findUser },
+      }));
     }
   };
 
@@ -176,12 +183,7 @@ const AddAssignment = () => {
   };
 
   useEffect(() => {
-    console.log(currentUser);
-  }, [currentUser]);
-
-  useEffect(() => {
     reduceUserOptions(filteredUserList);
-    console.log(filteredUserList);
   }, [filteredUserList]);
 
   useEffect(() => {
@@ -203,7 +205,15 @@ const AddAssignment = () => {
     >
       <Form.Item label="배정형태">
         <Segmented
-          onChange={(value) => setCurrentAssignmentType(value)}
+          onChange={(value) => {
+            setCurrentAssignmentType(value);
+            setCurrentUser({});
+            setUserInfo({
+              assetAssignmentDate: dayjs(),
+              isReturnDate: false,
+              assetReturnDate: "",
+            });
+          }}
           options={[
             { key: "개인배정", label: "개인배정", value: "개인배정" },
             { key: "공용배정", label: "공용배정", value: "공용배정" },
@@ -214,14 +224,15 @@ const AddAssignment = () => {
         <Form.Item label="사용자">
           <AutoComplete
             options={[...userOptions]}
-            onChange={(value) =>
-              currentUserStateUpdate(value, userList, setCurrentUser)
-            }
+            onChange={(value) => {
+              currentUserStateUpdate(value, userList, setCurrentUser);
+            }}
             value={currentUser?.userName}
           >
             <Input.Search
               onChange={(e) => {
                 setCurrentUser({ userName: e.target.value });
+
                 filterUser(e.target.value);
               }}
             />
@@ -235,13 +246,101 @@ const AddAssignment = () => {
           </AutoComplete>
         </Form.Item>
       )}
+      {currentUser?.userName && (
+        <Card size="small" className="mb-2">
+          <Form.Item label="부서명">
+            <Input
+              value={currentUser.userDepartment}
+              onChange={(e) => {
+                setCurrentUser(() => ({
+                  ...currentUser,
+                  userDepartment: e.target.value,
+                }));
+                setUserInfo(() => ({
+                  ...userInfo,
+                  userInfo: {
+                    ...userInfo.userInfo,
+                    userDepartment: e.target.value,
+                  },
+                }));
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="직위">
+            <Input
+              value={currentUser.userSpot}
+              onChange={(e) => {
+                setCurrentUser(() => ({
+                  ...currentUser,
+                  userSpot: e.target.value,
+                }));
+                setUserInfo(() => ({
+                  ...userInfo,
+                  userInfo: {
+                    ...userInfo.userInfo,
+                    userSpot: e.target.value,
+                  },
+                }));
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="직급">
+            <Input
+              value={currentUser.userRank}
+              onChange={(e) => {
+                setCurrentUser(() => ({
+                  ...currentUser,
+                  userRank: e.target.value,
+                }));
+                setUserInfo(() => ({
+                  ...userInfo,
+                  userInfo: {
+                    ...userInfo.userInfo,
+                    userRank: e.target.value,
+                  },
+                }));
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="이름">
+            <Input
+              value={currentUser.userName}
+              onChange={(e) => {
+                setCurrentUser(() => ({
+                  ...currentUser,
+                  userName: e.target.value,
+                }));
+                setUserInfo(() => ({
+                  ...userInfo,
+                  userInfo: {
+                    ...userInfo.userInfo,
+                    currentUser: e.target.value,
+                    userName: e.target.value,
+                  },
+                }));
+              }}
+            />
+          </Form.Item>
+        </Card>
+      )}
+
       <Form.Item label="회수일자지정">
         <Space size="large">
           <Switch
-            checked={currentIsReturnDate}
-            onChange={(value) => setCurrentIsReturnDate(value)}
+            checked={userInfo?.isReturnDate}
+            onChange={(value) =>
+              setUserInfo(() => ({ ...userInfo, isReturnDate: value }))
+            }
           />
-          {currentIsReturnDate && <DatePicker locale={locale} />}
+          {userInfo.isReturnDate && (
+            <DatePicker
+              locale={locale}
+              value={userInfo.assetReturnDate}
+              onChange={(value) =>
+                setUserInfo(() => ({ ...userInfo, assetReturnDate: value }))
+              }
+            />
+          )}
         </Space>
       </Form.Item>
     </Form>

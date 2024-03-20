@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 
 export const GenerateDocumentID = ({
   personalNumber = 0,
+  dateString = dayjs(new Date()).format("YYYYMMDD"),
   familyString = "",
   beforeString = "",
   afterString = "",
@@ -10,10 +11,7 @@ export const GenerateDocumentID = ({
   const before = beforeString === "" ? "" : `${beforeString}-`;
   const after = afterString === "" ? "" : `${afterString}-`;
   const extra = extraString === "" ? "" : `${extraString}-`;
-  const family =
-    familyString === ""
-      ? `${dayjs(new Date()).format("YYYYMMDD")}-`
-      : `${familyString}-`;
+  const family = familyString === "" ? `${dateString}-` : `${familyString}-`;
   const personal = (personalNumber + 1).toString().padStart(4, "0");
 
   const documentID = before + family + extra + personal + after;

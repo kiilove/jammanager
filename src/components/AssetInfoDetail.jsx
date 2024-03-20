@@ -5,7 +5,7 @@ import { Col, ConfigProvider, Descriptions, Row } from "antd";
 import { transform } from "lodash";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 
-const AssetInfoDetail = ({ data }) => {
+const AssetInfoDetail = ({ data, info, setInfo }) => {
   const [detailInfo, setDetailInfo] = useState({});
   const [descriptionItems, setDescriptionItems] = useState([]);
   const { media } = useContext(CurrentLoginContext);
