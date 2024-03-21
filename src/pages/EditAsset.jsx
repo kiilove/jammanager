@@ -4,6 +4,7 @@ import {
   AutoComplete,
   Button,
   Card,
+  ConfigProvider,
   DatePicker,
   Divider,
   Form,
@@ -55,11 +56,14 @@ import TextArea from "antd/es/input/TextArea";
 import { useMediaQuery } from "react-responsive";
 import "./NewAsset.css";
 import { useLocation } from "react-router-dom";
+import PageContainer from "../layout/PageContainer";
+import { navigateMenus } from "../navigate";
 
 const EditAsset = () => {
   const formRef = useRef();
 
   const [assetInputs, setAssetInputs] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [assetCodes, setAssetCodes] = useState([]);
   const [assetFirstPics, setAssetFirstPics] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -542,444 +546,472 @@ const EditAsset = () => {
         ],
       });
       setAssetPurchasedType(newData.assetPurchasedType);
-      console.log(newData.assetPurchasedType);
+
       setAssetFirstPics([...newData.firstPics]);
     }
   }, [location]);
 
   return (
-    <div
-      className="flex w-full h-full flex-col rounded-lg"
-      style={{
-        backgroundColor: "#fff",
-        minHeight: "100%",
-      }}
+    <PageContainer
+      isLoading={isLoading}
+      pathname={location?.pathname}
+      title={navigateMenus.find((f) => f.link === location.pathname).label}
+      gutter={[16, 16]}
     >
-      <div className="flex w-full ">
-        <ContentTitle title="자산수정" />
-      </div>
-      <div className="flex w-full flex-col lg:flex-row gap-2">
-        <div className="flex w-full lg:w-1/2 justify-center items-center px-5 ">
-          <div
-            className="flex border w-full h-full rounded-lg p-5 "
-            style={{ minHeight: "150px" }}
+      <ConfigProvider
+        theme={{
+          // token: { colorPrimary: "#93ffb7", colorPrimaryHover: "#c0ffd4" },
+          token: {
+            fontSize: 13,
+            colorPrimary: "#f5f5f5",
+            colorPrimaryHover: "#f5f5f5",
+            colorBorder: "#f5f5f5",
+            //fontSizeIcon: 0,
+            colorBgContainer: "#f5f5f5",
+          },
+          components: {
+            Select: {
+              selectorBg: "#f5f5f5",
+            },
+            Input: {
+              activeBg: "#f5f5f5",
+              hoverBg: "#f5f5f5",
+              addonBg: "#f5f5f5",
+              activeShadow: "#f5f5f5",
+            },
+            Form: {
+              labelFontSize: 13,
+              labelColor: "#888888",
+              itemMarginBottom: 5,
+            },
+            Button: {
+              colorBorder: "#d9d9d9",
+              colorPrimary: "#000",
+              colorPrimaryHover: "#d9d9d",
+            },
+            Divider: {
+              colorSplit: "#d8d8d8",
+            },
+          },
+        }}
+      >
+        <Form
+          labelCol={{
+            span: 6,
+          }}
+          style={{
+            width: "100%",
+          }}
+          labelAlign="right"
+          ref={formRef}
+          onFinish={handleFinish}
+          autoComplete="off"
+          form={editForm}
+        >
+          <Form.Item
+            label={<span className="font-semibold">일련번호</span>}
+            name="assetCode"
           >
-            <Form
-              labelCol={{
-                span: 5,
-              }}
-              style={{
-                width: "100%",
-              }}
-              labelAlign="right"
-              ref={formRef}
-              onFinish={handleFinish}
-              autoComplete="off"
-              form={editForm}
-            >
-              <Form.Item label="자산코드" name="assetCode">
-                <Input />
-              </Form.Item>
-              <Form.Item label="분류" required>
-                <Space className="w-full">
-                  <Form.Item name="assetCategory" noStyle>
-                    {/* <AutoComplete options={[...assetCategoryOptions]}>
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label={<span className="font-semibold">분류선택</span>}
+            required
+          >
+            <Space className="w-full">
+              <Form.Item name="assetCategory" noStyle>
+                {/* <AutoComplete options={[...assetCategoryOptions]}>
                       <Input />
                     </AutoComplete> */}
-                    <Select
-                      style={{ width: 160 }}
-                      onChange={() => {
-                        editForm.setFieldValue("assetProductLine", "");
-                        formRef?.current &&
-                          filterProductLine(
-                            formRef?.current.getFieldsValue().assetCategory,
-                            memberSettings
-                          );
-                      }}
-                      //onChange={(value) => setCurrentCategory(() => value)}
-                      options={assetCategoriesList.map((category, cIdx) => ({
-                        label: category.name,
-                        value: category.name,
-                      }))}
-                    />
-                  </Form.Item>
-                  <Form.Item name="assetProductLine" noStyle>
-                    <Select
-                      style={{ width: 160 }}
-                      dropdownRender={(menu) => <>{menu}</>}
-                      onChange={(value) => {
-                        setCurrentProductLine({
-                          label: value,
-                          value: value,
-                        });
-                        if (value === "구독형") {
-                          setAssetPurchasedType("렌탈");
-                          editForm.setFieldValue("assetPurchasedType", "렌탈");
-                        }
-                        if (value === "라이선스") {
-                          setAssetPurchasedType("구매");
-                          editForm.setFieldValue("assetPurchasedType", "구매");
-                        }
-
-                        assetVendorRef?.current.focus({
-                          cursor: "all",
-                        });
-                      }}
-                      value={currentProductLine}
-                      options={productLineList.map((product, pIdx) => ({
-                        label: product.name,
-                        value: product.name,
-                      }))}
-                    />
-                  </Form.Item>
-                </Space>
-              </Form.Item>
-              <Form.Item label="취득방식">
-                <Space
-                  className="w-full"
-                  direction={
-                    media.isDesktopOrLaptop ? "horizontal" : "vertical"
-                  }
-                >
-                  <Form.Item name="assetPurchasedType" noStyle>
-                    <Select
-                      style={{ width: 120 }}
-                      defaultValue={"구매"}
-                      value={assetPurchasedType}
-                      onChange={(value) => setAssetPurchasedType(value)}
-                      options={[
-                        { key: 1, label: "구매", value: "구매" },
-                        { key: 2, label: "렌탈(구독)", value: "렌탈" },
-                      ]}
-                    />
-                  </Form.Item>
-                  {assetPurchasedType === "렌탈" && (
-                    <Form.Item name="assetRentalPeriod" noStyle>
-                      <DatePicker.RangePicker
-                        locale={locale}
-                        format="YYYY-MM-DD"
-                      />
-                    </Form.Item>
-                  )}
-                </Space>
-              </Form.Item>
-              <Form.Item
-                name="assetVendor"
-                label="제조사"
-                rules={[
-                  {
-                    required: true,
-                    message: "제조사가 없거나 미확인시 매입처를 입력해주세요.",
-                  },
-                ]}
-              >
-                <AutoComplete
-                  options={assetVendorOptions}
-                  ref={assetVendorAutoRef}
-                  onSearch={(value) =>
-                    handleSearchOptions(
-                      value,
-                      grouped.groupedVendor,
-                      setAssetVendorOptions
-                    )
-                  }
-                >
-                  <Input
-                    style={{ width: "100%" }}
-                    ref={assetVendorRef}
-                    value={assetVendor}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setAssetVendor(() => e.target.value);
-                    }}
-                    onPressEnter={() =>
-                      assetModelRef?.current.focus({
-                        cursor: "all",
-                      })
-                    }
-                    addonAfter={
-                      <DownOutlined
-                        className=" bg-transparent"
-                        style={{ fontSize: 7 }}
-                        onClick={() => assetVendorAutoRef?.current.focus()}
-                      />
-                    }
-                  />
-                </AutoComplete>
-              </Form.Item>
-              <Form.Item
-                name="assetModel"
-                label="모델명"
-                rules={[
-                  {
-                    required: true,
-                    message: "모델명이 없다면 품목으로 작성해주세요.",
-                  },
-                ]}
-              >
-                <AutoComplete
-                  options={assetModelOptions}
-                  onSearch={(value) =>
-                    handleSearchOptions(
-                      value,
-                      grouped.groupedModel,
-                      setAssetModelOptions
-                    )
-                  }
-                >
-                  <Input
-                    style={{ width: "100%" }}
-                    value={assetModel}
-                    ref={assetModelRef}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setAssetModel(() => e.target.value);
-                    }}
-                    onPressEnter={() =>
-                      assetNameRef?.current.focus({
-                        cursor: "all",
-                      })
-                    }
-                    addonAfter={
-                      <DownOutlined
-                        className=" bg-transparent"
-                        style={{ fontSize: 7 }}
-                      />
-                    }
-                  />
-                </AutoComplete>
-              </Form.Item>
-
-              <Form.Item
-                name="assetName"
-                label="자산명"
-                rules={[
-                  {
-                    required: true,
-                    message: "제조사와 모델명을 입력하면 자동 생성됩니다.",
-                  },
-                ]}
-              >
-                <Input
-                  style={{ width: "100%" }}
-                  ref={assetNameRef}
-                  onFocus={() =>
-                    handleAssetName(
-                      formRef?.current.getFieldsValue()?.assetVendor,
-                      formRef?.current.getFieldsValue()?.assetModel,
-                      formRef
-                    )
-                  }
-                  onPressEnter={() =>
-                    assetWarrantyRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
+                <Select
+                  style={{ width: 160 }}
+                  onChange={() => {
+                    editForm.setFieldValue("assetProductLine", "");
+                    formRef?.current &&
+                      filterProductLine(
+                        formRef?.current.getFieldsValue().assetCategory,
+                        memberSettings
+                      );
+                  }}
+                  //onChange={(value) => setCurrentCategory(() => value)}
+                  options={assetCategoriesList.map((category, cIdx) => ({
+                    label: category.name,
+                    value: category.name,
+                  }))}
                 />
               </Form.Item>
-              <Form.Item
-                name="assetWarranty"
-                label="보증기간"
-                help="＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요."
-              >
-                <InputNumber
-                  //onChange={(value) => setAssetWarranty(value)}
-                  style={{ width: "150px", maxWidth: "100%" }}
-                  ref={assetWarrantyRef}
-                  addonAfter={<span>개월</span>}
-                  onPressEnter={() =>
-                    assetDescritionSummayRef?.current.focus({
+              <Form.Item name="assetProductLine" noStyle>
+                <Select
+                  style={{ width: 160 }}
+                  dropdownRender={(menu) => <>{menu}</>}
+                  onChange={(value) => {
+                    setCurrentProductLine({
+                      label: value,
+                      value: value,
+                    });
+                    if (value === "구독형") {
+                      setAssetPurchasedType("렌탈");
+                      editForm.setFieldValue("assetPurchasedType", "렌탈");
+                    }
+                    if (value === "라이선스") {
+                      setAssetPurchasedType("구매");
+                      editForm.setFieldValue("assetPurchasedType", "구매");
+                    }
+
+                    assetVendorRef?.current.focus({
                       cursor: "all",
-                    })
-                  }
+                    });
+                  }}
+                  value={currentProductLine}
+                  options={productLineList.map((product, pIdx) => ({
+                    label: product.name,
+                    value: product.name,
+                  }))}
                 />
               </Form.Item>
-              {/* <Form.Item name="isAssetDetail" label="상세스펙">
+            </Space>
+          </Form.Item>
+          <Form.Item label={<span className="font-semibold">취득방식</span>}>
+            <Space
+              className="w-full"
+              direction={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
+            >
+              <Form.Item name="assetPurchasedType" noStyle>
+                <Select
+                  style={{ width: 120 }}
+                  defaultValue={"구매"}
+                  value={assetPurchasedType}
+                  onChange={(value) => setAssetPurchasedType(value)}
+                  options={[
+                    { key: 1, label: "구매", value: "구매" },
+                    { key: 2, label: "렌탈(구독)", value: "렌탈" },
+                  ]}
+                />
+              </Form.Item>
+              {assetPurchasedType === "렌탈" && (
+                <Form.Item name="assetRentalPeriod" noStyle>
+                  <DatePicker.RangePicker locale={locale} format="YYYY-MM-DD" />
+                </Form.Item>
+              )}
+            </Space>
+          </Form.Item>
+          <Form.Item
+            name="assetVendor"
+            label={<span className="font-semibold">제조사</span>}
+            rules={[
+              {
+                required: true,
+                message: "제조사가 없거나 미확인시 매입처를 입력해주세요.",
+              },
+            ]}
+          >
+            <AutoComplete
+              options={assetVendorOptions}
+              ref={assetVendorAutoRef}
+              onSearch={(value) =>
+                handleSearchOptions(
+                  value,
+                  grouped.groupedVendor,
+                  setAssetVendorOptions
+                )
+              }
+            >
+              <Input
+                style={{ width: "100%" }}
+                ref={assetVendorRef}
+                value={assetVendor}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setAssetVendor(() => e.target.value);
+                }}
+                onPressEnter={() =>
+                  assetModelRef?.current.focus({
+                    cursor: "all",
+                  })
+                }
+                addonAfter={
+                  <DownOutlined
+                    className=" bg-transparent"
+                    style={{ fontSize: 7 }}
+                    onClick={() => assetVendorAutoRef?.current.focus()}
+                  />
+                }
+              />
+            </AutoComplete>
+          </Form.Item>
+          <Form.Item
+            name="assetModel"
+            label={<span className="font-semibold">모델명</span>}
+            rules={[
+              {
+                required: true,
+                message: "모델명이 없다면 품목으로 작성해주세요.",
+              },
+            ]}
+          >
+            <AutoComplete
+              options={assetModelOptions}
+              onSearch={(value) =>
+                handleSearchOptions(
+                  value,
+                  grouped.groupedModel,
+                  setAssetModelOptions
+                )
+              }
+            >
+              <Input
+                style={{ width: "100%" }}
+                value={assetModel}
+                ref={assetModelRef}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setAssetModel(() => e.target.value);
+                }}
+                onPressEnter={() =>
+                  assetNameRef?.current.focus({
+                    cursor: "all",
+                  })
+                }
+                addonAfter={
+                  <DownOutlined
+                    className=" bg-transparent"
+                    style={{ fontSize: 7 }}
+                  />
+                }
+              />
+            </AutoComplete>
+          </Form.Item>
+
+          <Form.Item
+            name="assetName"
+            label={<span className="font-semibold">자산명</span>}
+            rules={[
+              {
+                required: true,
+                message: "제조사와 모델명을 입력하면 자동 생성됩니다.",
+              },
+            ]}
+          >
+            <Input
+              style={{ width: "100%" }}
+              ref={assetNameRef}
+              onFocus={() =>
+                handleAssetName(
+                  formRef?.current.getFieldsValue()?.assetVendor,
+                  formRef?.current.getFieldsValue()?.assetModel,
+                  formRef
+                )
+              }
+              onPressEnter={() =>
+                assetWarrantyRef?.current.focus({
+                  cursor: "all",
+                })
+              }
+            />
+          </Form.Item>
+          <Form.Item
+            name="assetWarranty"
+            label={<span className="font-semibold">보증기간</span>}
+            help="＊보증기간이 만료되었거나 알수없는 경우 0으로 입력하세요."
+          >
+            <InputNumber
+              //onChange={(value) => setAssetWarranty(value)}
+              style={{ width: "150px", maxWidth: "100%" }}
+              ref={assetWarrantyRef}
+              addonAfter={<span>개월</span>}
+              onPressEnter={() =>
+                assetDescritionSummayRef?.current.focus({
+                  cursor: "all",
+                })
+              }
+            />
+          </Form.Item>
+          {/* <Form.Item name="isAssetDetail" label="상세스펙">
                 <Switch
                   onChange={(checked) => {
                     setIsDetailDescription(checked);
                   }}
                 />
               </Form.Item> */}
-              <Form.Item name="assetDescritionSummay" label="간단스펙">
-                <TextArea ref={assetDescritionSummayRef} />
-              </Form.Item>
-              <Form.Item
-                name="assetPurchaseName"
-                label="매입처"
-                rules={[
-                  {
-                    required: true,
-                    message:
-                      "매입처를 입력해주세요. 무상매입의 경우 무상으로 입력해주세요.",
-                  },
-                ]}
-              >
-                <AutoComplete
-                  options={assetPurchaseOptions}
-                  onSearch={(value) =>
-                    handleSearchOptions(
-                      value,
-                      grouped.groupedPurchaseName,
-                      setAssetPurchaseOptions
-                    )
-                  }
-                >
-                  <Input
-                    ref={assetPurchaseNameRef}
-                    style={{ width: "100%" }}
-                    onPressEnter={() =>
-                      assetOwnerCompanyRef?.current.focus({
-                        cursor: "all",
-                      })
-                    }
-                    addonAfter={
-                      <DownOutlined
-                        className=" bg-transparent"
-                        style={{ fontSize: 7 }}
-                      />
-                    }
+          <Form.Item
+            name="assetDescritionSummay"
+            label={<span className="font-semibold">제품스펙</span>}
+          >
+            <TextArea
+              ref={assetDescritionSummayRef}
+              rows={3}
+              style={{ resize: "none" }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="assetPurchaseName"
+            label={<span className="font-semibold">구매처</span>}
+            rules={[
+              {
+                required: true,
+                message:
+                  "매입처를 입력해주세요. 무상매입의 경우 무상으로 입력해주세요.",
+              },
+            ]}
+          >
+            <AutoComplete
+              options={assetPurchaseOptions}
+              onSearch={(value) =>
+                handleSearchOptions(
+                  value,
+                  grouped.groupedPurchaseName,
+                  setAssetPurchaseOptions
+                )
+              }
+            >
+              <Input
+                ref={assetPurchaseNameRef}
+                style={{ width: "100%" }}
+                onPressEnter={() =>
+                  assetOwnerCompanyRef?.current.focus({
+                    cursor: "all",
+                  })
+                }
+                addonAfter={
+                  <DownOutlined
+                    className=" bg-transparent"
+                    style={{ fontSize: 7 }}
                   />
-                </AutoComplete>
-              </Form.Item>
+                }
+              />
+            </AutoComplete>
+          </Form.Item>
 
-              <Form.Item
-                name="assetOwnerCompany"
-                label="자산소유사"
-                rules={[
-                  {
-                    required: true,
-                    message: "자회사가 없는경우 회사명을 선택해주세요.",
-                  },
-                ]}
-              >
-                {/* <Input style={{ width: "100%" }} /> */}
+          <Form.Item
+            name="assetOwnerCompany"
+            label={<span className="font-semibold">자산소유</span>}
+            rules={[
+              {
+                required: true,
+                message: "자회사가 없는경우 회사명을 선택해주세요.",
+              },
+            ]}
+          >
+            {/* <Input style={{ width: "100%" }} /> */}
+            <Select
+              options={[...companyList]}
+              style={{ width: "100%" }}
+              defaultValue={memberSettings?.companyName}
+              ref={assetOwnerCompanyRef}
+              onPressEnter={() =>
+                assetCostRef?.current.focus({
+                  cursor: "all",
+                })
+              }
+            />
+          </Form.Item>
+          <Form.Item label={<span className="font-semibold">감가방식</span>}>
+            <Space className="w-full">
+              <Form.Item name="assetDepreciationType" noStyle>
                 <Select
-                  options={[...companyList]}
-                  style={{ width: "100%" }}
-                  defaultValue={memberSettings?.companyName}
-                  ref={assetOwnerCompanyRef}
-                  onPressEnter={() =>
-                    assetCostRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
-                />
-              </Form.Item>
-              <Form.Item label="감가방식">
-                <Space className="w-full">
-                  <Form.Item name="assetDepreciationType" noStyle>
-                    <Select
-                      options={[...initDepreciationType]}
-                      ref={assetDepreciationTypeRef}
-                      defaultValue="설정안함"
-                      onChange={() => {
-                        setAssetDepreciationType(
-                          editForm.getFieldValue("assetDepreciationType")
-                        );
-                      }}
-                    />
-                  </Form.Item>
-                  {assetDepreciationType === "정액법" && (
-                    <Form.Item name="assetDepreciationPeriod" noStyle>
-                      <Select
-                        options={[...initDepreciationPeriod]}
-                        defaultValue={0}
-                      />
-                    </Form.Item>
-                  )}
-                  {assetDepreciationType === "정률법" && (
-                    <Form.Item name="assetDepreciationPeriod" noStyle>
-                      <Select
-                        options={[...initDepreciationRate]}
-                        defaultValue={0}
-                      />
-                    </Form.Item>
-                  )}
-                  {assetDepreciationType === "설정안함" && (
-                    <Form.Item name="assetDepreciationPeriod" noStyle>
-                      <Select
-                        options={[
-                          { key: "설정안함", value: 0, label: "설정안함" },
-                        ]}
-                        defaultValue={0}
-                      />
-                    </Form.Item>
-                  )}
-                </Space>
-              </Form.Item>
-              <Form.Item
-                name="assetCost"
-                label="취득원가"
-                rules={[
-                  { required: true, message: "취득원가를 입력해주세요." },
-                ]}
-                help="＊부가세를 제외한 금액을 단가로 입력해주세요."
-              >
-                <Input
-                  addonAfter="원"
-                  style={{
-                    width: "70%",
-                    textAlign: "right",
-                    paddingRight: "20px",
-                  }}
-                  ref={assetCostRef}
-                  onFocus={() => assetCostRef.current.focus({ cursor: "all" })}
-                  onChange={(e) => {
-                    console.log(NumberWithComma(e.target.value));
-
-                    editForm.setFieldValue(
-                      "assetCost",
-                      NumberWithComma(e.target.value)
+                  options={[...initDepreciationType]}
+                  ref={assetDepreciationTypeRef}
+                  defaultValue="설정안함"
+                  onChange={() => {
+                    setAssetDepreciationType(
+                      editForm.getFieldValue("assetDepreciationType")
                     );
                   }}
-                  onPressEnter={() =>
-                    assetCountRef?.current.focus({
-                      cursor: "all",
-                    })
-                  }
                 />
               </Form.Item>
-              <Form.Item
-                name="assetPurchasedDate"
-                label="구매일자"
-                rules={[
-                  {
-                    required: true,
-                    message:
-                      "구매일자를 모르는 경우 오늘이나, 최대한 비슷한 날짜로 입력해주세요.",
-                  },
-                ]}
-              >
-                <DatePicker
-                  ref={assetPurchasedDateRef}
-                  locale={locale}
-                  format="YYYY-MM-DD" // 필요에 따라 형식 지정
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      createAtRef?.current.focus({
-                        cursor: "all",
-                      });
-                    }
-                  }}
-                />
-              </Form.Item>
+              {assetDepreciationType === "정액법" && (
+                <Form.Item name="assetDepreciationPeriod" noStyle>
+                  <Select
+                    options={[...initDepreciationPeriod]}
+                    defaultValue={0}
+                  />
+                </Form.Item>
+              )}
+              {assetDepreciationType === "정률법" && (
+                <Form.Item name="assetDepreciationPeriod" noStyle>
+                  <Select
+                    options={[...initDepreciationRate]}
+                    defaultValue={0}
+                  />
+                </Form.Item>
+              )}
+              {assetDepreciationType === "설정안함" && (
+                <Form.Item name="assetDepreciationPeriod" noStyle>
+                  <Select
+                    options={[{ key: "설정안함", value: 0, label: "설정안함" }]}
+                    defaultValue={0}
+                  />
+                </Form.Item>
+              )}
+            </Space>
+          </Form.Item>
+          <Form.Item
+            name="assetCost"
+            label={<span className="font-semibold">취득원가</span>}
+            rules={[{ required: true, message: "취득원가를 입력해주세요." }]}
+            help="＊부가세를 제외한 금액을 단가로 입력해주세요."
+          >
+            <Input
+              addonAfter="원"
+              style={{
+                width: "70%",
+                textAlign: "right",
+                paddingRight: "20px",
+              }}
+              ref={assetCostRef}
+              onFocus={() => assetCostRef.current.focus({ cursor: "all" })}
+              onChange={(e) => {
+                console.log(NumberWithComma(e.target.value));
 
-              <Form.Item name="assetMemo" label="비고">
-                <TextArea />
-              </Form.Item>
-              <div className="flex w-full justify-end items-center">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="bg-blue-500"
-                >
-                  저장
-                </Button>
-              </div>
-            </Form>
+                editForm.setFieldValue(
+                  "assetCost",
+                  NumberWithComma(e.target.value)
+                );
+              }}
+              onPressEnter={() =>
+                assetCountRef?.current.focus({
+                  cursor: "all",
+                })
+              }
+            />
+          </Form.Item>
+          <Form.Item
+            name="assetPurchasedDate"
+            label={<span className="font-semibold">구매일자</span>}
+            rules={[
+              {
+                required: true,
+                message:
+                  "구매일자를 모르는 경우 오늘이나, 최대한 비슷한 날짜로 입력해주세요.",
+              },
+            ]}
+          >
+            <DatePicker
+              ref={assetPurchasedDateRef}
+              locale={locale}
+              format="YYYY-MM-DD" // 필요에 따라 형식 지정
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  createAtRef?.current.focus({
+                    cursor: "all",
+                  });
+                }
+              }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="assetMemo"
+            label={<span className="font-semibold">비고</span>}
+          >
+            <TextArea rows={3} style={{ resize: "none" }} />
+          </Form.Item>
+          <div className="flex w-full justify-end items-center">
+            <Button type="primary" htmlType="submit" className="bg-blue-500">
+              저장
+            </Button>
           </div>
-        </div>
+        </Form>
         <div className="flex w-full lg:w-1/2 justify-center items-center px-5 ">
           <div
             className="flex border w-full h-full rounded-lg p-5 flex-col gap-y-2"
@@ -1101,9 +1133,9 @@ const EditAsset = () => {
             </Card>
           </div>
         </div>
-      </div>
-      {contextHolder}
-    </div>
+        {contextHolder}
+      </ConfigProvider>
+    </PageContainer>
   );
 };
 

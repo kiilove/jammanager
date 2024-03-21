@@ -24,6 +24,7 @@ import { formatPhoneNumber } from "../functions";
 import "dayjs/locale/ko";
 import locale from "antd/es/date-picker/locale/ko_KR";
 import dayjs from "dayjs";
+import TextArea from "antd/es/input/TextArea";
 
 const AddAssignment = ({ data, userInfo, setUserInfo }) => {
   const [userList, setUserList] = useState([]);
@@ -121,6 +122,7 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
       setUserInfo(() => ({
         ...userInfo,
         currentUser: findUser.userName,
+        location: findUser?.userDepartment || "",
         userInfo: { ...findUser },
       }));
     }
@@ -225,6 +227,7 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
           <AutoComplete
             options={[...userOptions]}
             onChange={(value) => {
+              console.log(value);
               currentUserStateUpdate(value, userList, setCurrentUser);
             }}
             value={currentUser?.userName}
@@ -239,13 +242,18 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
           </AutoComplete>
         </Form.Item>
       )}
-      {currentAssignmentType === "공용배정" && (
-        <Form.Item label="사용장소">
-          <AutoComplete options={[...grouped.groupedLocation]}>
-            <Input.Search />
-          </AutoComplete>
-        </Form.Item>
-      )}
+
+      <Form.Item label="사용장소">
+        <AutoComplete
+          value={userInfo?.location}
+          options={[...grouped.groupedLocation]}
+          onChange={(value) =>
+            setUserInfo(() => ({ ...userInfo, location: value }))
+          }
+        >
+          <Input.Search />
+        </AutoComplete>
+      </Form.Item>
       {currentUser?.userName && (
         <Card size="small" className="mb-2">
           <Form.Item label="부서명">
@@ -342,6 +350,15 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
             />
           )}
         </Space>
+      </Form.Item>
+      <Form.Item label="비고">
+        <TextArea
+          rows={3}
+          style={{ resize: "none" }}
+          onChange={(e) =>
+            setUserInfo(() => ({ ...userInfo, assignmentMemo: e.target.value }))
+          }
+        />
       </Form.Item>
     </Form>
   );

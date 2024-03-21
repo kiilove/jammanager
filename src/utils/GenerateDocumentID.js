@@ -14,7 +14,7 @@ export const GenerateDocumentID = ({
   const family = familyString === "" ? `${dateString}-` : `${familyString}-`;
   const personal = (personalNumber + 1).toString().padStart(4, "0");
 
-  const documentID = before + family + extra + personal + after;
+  const documentID = before + extra + family + personal + after;
 
   return documentID;
 };

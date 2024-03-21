@@ -19,9 +19,12 @@ import {
 } from "@ant-design/icons";
 import { AssetPrintTiny } from "./AssetPrintTiny";
 import ReactToPrint from "react-to-print";
+import PageContainer from "../layout/PageContainer";
+import { navigateMenus } from "../navigate";
 
 const AssetCodePrint = () => {
   const [assets, setAssets] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [printType, setPrintType] = useState("tiny");
   const [paperSize, setPaperSize] = useState("A4");
@@ -89,15 +92,21 @@ const AssetCodePrint = () => {
   };
 
   return (
-    <div className="flex w-full justify-center items-start">
-      <div
-        className="flex w-full h-full flex-col rounded-lg"
-        style={{ backgroundColor: "#fff", minHeight: "100%" }}
-      >
-        <div className="flex w-full">
-          <ContentTitle title="자산코드인쇄" />
+    <PageContainer
+      isLoading={isLoading}
+      pathname={location?.pathname}
+      title={navigateMenus.find((f) => f.link === location.pathname).label}
+      backKey={true}
+    >
+      <div className="flex w-full justify-center items-start">
+        <div
+          className="flex w-full h-full flex-col rounded-lg"
+          style={{ backgroundColor: "#fff", minHeight: "100%" }}
+        >
+          <div className="flex w-full">
+            <ContentTitle title="자산코드인쇄" />
 
-          {/* <div className="flex justify-center items-center flex-col">
+            {/* <div className="flex justify-center items-center flex-col">
             <span>미리보기 배율 </span>
             <Slider
               min={0.5}
@@ -108,58 +117,58 @@ const AssetCodePrint = () => {
               style={{ width: 150 }}
             />
           </div> */}
-          <Button
-            type="default"
-            onClick={toggleSettings}
-            style={{ margin: "16px" }}
-          >
-            {showSettings ? (
-              <>
-                <UpOutlined /> 설정 숨기기
-              </>
-            ) : (
-              <>
-                <DownOutlined /> 설정 표시하기
-              </>
-            )}
-          </Button>
-          <ReactToPrint
-            trigger={() => (
-              <Button type="default" style={{ margin: "16px" }}>
-                인쇄
-              </Button>
-            )}
-            content={() => printRef.current}
-          />
-        </div>
+            <Button
+              type="default"
+              onClick={toggleSettings}
+              style={{ margin: "16px" }}
+            >
+              {showSettings ? (
+                <>
+                  <UpOutlined /> 설정 숨기기
+                </>
+              ) : (
+                <>
+                  <DownOutlined /> 설정 표시하기
+                </>
+              )}
+            </Button>
+            <ReactToPrint
+              trigger={() => (
+                <Button type="default" style={{ margin: "16px" }}>
+                  인쇄
+                </Button>
+              )}
+              content={() => printRef.current}
+            />
+          </div>
 
-        <div className="flex w-full px-4 flex-col mb-5  h-full">
-          {showSettings && (
-            <>
-              <div className="flex h-full w-full bg-gray-500">
-                <div
-                  className="flex bg-gray-500 pl-4 justify-start items-center"
-                  style={{ width: "130px", height: "100%", minHeight: 55 }}
-                >
-                  <span className="font-semibold text-gray-100 text-xs">
-                    인쇄설정
-                  </span>
-                </div>
-                <div
-                  className="flex bg-gray-100 w-full justify-start items-center p-5 gap-3 flex-wrap"
-                  style={{ height: "100%", minHeight: 55 }}
-                >
-                  <Radio.Group
-                    value={printType}
-                    options={[
-                      { key: 1, label: "QR만인쇄", value: "tiny" },
-                      { key: 2, label: "간략인쇄", value: "small" },
-                      { key: 3, label: "상세인쇄", value: "middle" },
-                    ]}
-                    optionType="button"
-                    buttonStyle="solid"
-                  />
-                  {/* <Radio.Group
+          <div className="flex w-full px-4 flex-col mb-5  h-full">
+            {showSettings && (
+              <>
+                <div className="flex h-full w-full bg-gray-500">
+                  <div
+                    className="flex bg-gray-500 pl-4 justify-start items-center"
+                    style={{ width: "130px", height: "100%", minHeight: 55 }}
+                  >
+                    <span className="font-semibold text-gray-100 text-xs">
+                      인쇄설정
+                    </span>
+                  </div>
+                  <div
+                    className="flex bg-gray-100 w-full justify-start items-center p-5 gap-3 flex-wrap"
+                    style={{ height: "100%", minHeight: 55 }}
+                  >
+                    <Radio.Group
+                      value={printType}
+                      options={[
+                        { key: 1, label: "QR만인쇄", value: "tiny" },
+                        { key: 2, label: "간략인쇄", value: "small" },
+                        { key: 3, label: "상세인쇄", value: "middle" },
+                      ]}
+                      optionType="button"
+                      buttonStyle="solid"
+                    />
+                    {/* <Radio.Group
                     value={paperSize}
                     onChange={(e) => {
                       setPaperSize(e.target.value);
@@ -196,51 +205,51 @@ const AssetCodePrint = () => {
                     optionType="button"
                     buttonStyle="solid"
                   /> */}
-                  <Space className="ml-2">
-                    <span>칼선인쇄</span>
-                    <Switch checked={printBorder} onChange={setPrintBorder} />
-                  </Space>
-                  <Space className="ml-2">
-                    <span>좌우여백(㎜)</span>
-                    <InputNumber
-                      min={0}
-                      max={20}
-                      step={"0.1"}
-                      value={paperMarginX}
-                      style={{ width: 65 }}
-                      onChange={(value) => setPaperMarginX(value)}
-                    />
-                    <span>상하여백(㎜)</span>
-                    <InputNumber
-                      min={0}
-                      max={20}
-                      step={"0.1"}
-                      style={{ width: 65 }}
-                      value={paperMarginY}
-                      onChange={(value) => setPaperMarginY(value)}
-                    />
-                    <span>간격(㎜)</span>
-                    <InputNumber
-                      min={0.1}
-                      max={20}
-                      step={"0.1"}
-                      style={{ width: 65 }}
-                      value={paperGap}
-                      onChange={(value) => setPaperGap(value)}
-                    />
-                    <span>QR박스크기(㎝)</span>
-                    <InputNumber
-                      min={3}
-                      max={10}
-                      style={{ width: 65 }}
-                      step={"0.1"}
-                      value={scaleValue}
-                      onChange={(value) => setScaleValue(value)}
-                    />
-                  </Space>
+                    <Space className="ml-2">
+                      <span>칼선인쇄</span>
+                      <Switch checked={printBorder} onChange={setPrintBorder} />
+                    </Space>
+                    <Space className="ml-2">
+                      <span>좌우여백(㎜)</span>
+                      <InputNumber
+                        min={0}
+                        max={20}
+                        step={"0.1"}
+                        value={paperMarginX}
+                        style={{ width: 65 }}
+                        onChange={(value) => setPaperMarginX(value)}
+                      />
+                      <span>상하여백(㎜)</span>
+                      <InputNumber
+                        min={0}
+                        max={20}
+                        step={"0.1"}
+                        style={{ width: 65 }}
+                        value={paperMarginY}
+                        onChange={(value) => setPaperMarginY(value)}
+                      />
+                      <span>간격(㎜)</span>
+                      <InputNumber
+                        min={0.1}
+                        max={20}
+                        step={"0.1"}
+                        style={{ width: 65 }}
+                        value={paperGap}
+                        onChange={(value) => setPaperGap(value)}
+                      />
+                      <span>QR박스크기(㎝)</span>
+                      <InputNumber
+                        min={3}
+                        max={10}
+                        style={{ width: 65 }}
+                        step={"0.1"}
+                        value={scaleValue}
+                        onChange={(value) => setScaleValue(value)}
+                      />
+                    </Space>
+                  </div>
                 </div>
-              </div>
-              {/* <div className="flex h-full w-full bg-gray-500">
+                {/* <div className="flex h-full w-full bg-gray-500">
                 <div
                   className="flex bg-gray-500 pl-4 justify-start items-center"
                   style={{ width: "130px", height: "100%", minHeight: 55 }}
@@ -273,48 +282,49 @@ const AssetCodePrint = () => {
                     })}
                 </div>
               </div> */}
-            </>
-          )}
+              </>
+            )}
 
-          <div className="flex w-full flex-col h-full">
-            {/* 인쇄 설정 및 출력대상 관련 컴포넌트 */}
-            <div className="flex w-full h-full justify-start items-center flex-col bg-gray-100 p-5">
-              <div
-                className="flex justify-center items-start p-0"
-                style={{ overflow: "auto", width: "100%", height: "650px" }}
-              >
+            <div className="flex w-full flex-col h-full">
+              {/* 인쇄 설정 및 출력대상 관련 컴포넌트 */}
+              <div className="flex w-full h-full justify-start items-center flex-col bg-gray-100 p-5">
                 <div
-                  ref={printRef}
-                  style={paperStyle}
-                  className="flex flex-wrap justify-center items-start"
+                  className="flex justify-center items-start p-0"
+                  style={{ overflow: "auto", width: "100%", height: "650px" }}
                 >
                   <div
-                    className={`flex w-full flex-wrap  justify-center items-start `}
-                    style={{
-                      marginTop: `${paperMarginY}mm`,
-                      marginBottom: `${paperMarginY}mm`,
-                      marginLeft: `${paperMarginX}mm`,
-                      marginRight: `${paperMarginX}mm`,
-                      gap: paperGap * 3.77,
-                    }}
+                    ref={printRef}
+                    style={paperStyle}
+                    className="flex flex-wrap justify-center items-start"
                   >
-                    {printType === "tiny" &&
-                      tags.map((tag, tIdx) =>
-                        printBorder ? (
-                          <div
-                            className="flex"
-                            style={{ border: "1px dashed #8a8a8a" }}
-                          >
-                            <AssetPrintTiny
-                              data={tag}
-                              scale={scaleValue}
-                              printBorder={printBorder}
-                            />
-                          </div>
-                        ) : (
-                          <AssetPrintTiny data={tag} scale={scaleValue} />
-                        )
-                      )}
+                    <div
+                      className={`flex w-full flex-wrap  justify-center items-start `}
+                      style={{
+                        marginTop: `${paperMarginY}mm`,
+                        marginBottom: `${paperMarginY}mm`,
+                        marginLeft: `${paperMarginX}mm`,
+                        marginRight: `${paperMarginX}mm`,
+                        gap: paperGap * 3.77,
+                      }}
+                    >
+                      {printType === "tiny" &&
+                        tags.map((tag, tIdx) =>
+                          printBorder ? (
+                            <div
+                              className="flex"
+                              style={{ border: "1px dashed #8a8a8a" }}
+                            >
+                              <AssetPrintTiny
+                                data={tag}
+                                scale={scaleValue}
+                                printBorder={printBorder}
+                              />
+                            </div>
+                          ) : (
+                            <AssetPrintTiny data={tag} scale={scaleValue} />
+                          )
+                        )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -322,7 +332,7 @@ const AssetCodePrint = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

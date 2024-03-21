@@ -512,22 +512,23 @@ const AddAsset = () => {
             { ...codeWithValue },
 
             async (data) => {
-              await assetFeedAdd.addData("assetFeeds", {
-                refAssetID: data.id,
-                refAssetCode: codeWithValue.assetCode,
-                createdBy: "system",
-                createdAt,
-                createdAtConverted,
-                actionAt: assetPurchasedDate,
-                actionAtConverted: convertTimestampToDate(assetPurchasedDate),
-                feedType: "추가",
-                feedContext: `자산에 추가 되었습니다.`,
-                feedPics:
-                  asset?.firstPics === undefined ? [] : [...asset?.firstPics],
-              });
+              //피드를 이렇게 넣는 방법에 대해 다시 고민해보자. 24-03-21
+              // await assetFeedAdd.addData("assetFeeds", {
+              //   refAssetID: data.id,
+              //   refAssetCode: codeWithValue.assetCode,
+              //   createdBy: "system",
+              //   createdAt,
+              //   createdAtConverted,
+              //   actionAt: assetPurchasedDate,
+              //   actionAtConverted: convertTimestampToDate(assetPurchasedDate),
+              //   feedType: "추가",
+              //   feedContext: `자산에 추가 되었습니다.`,
+              //   feedPics:
+              //     asset?.firstPics === undefined ? [] : [...asset?.firstPics],
+              // });
               openNotification(
                 "success",
-                "추가 성공",
+                "추가완료",
                 `자산을 추가했습니다.`,
                 "topRight",
                 3
@@ -761,7 +762,10 @@ const AddAsset = () => {
           onFinishFailed={onFinishFailed}
           layout={media.isDesktopOrLaptop ? "horizontal" : "vertical"}
         >
-          <Row gutter={[24, 24]}>
+          <Row
+            gutter={media.isDesktopOrLaptop ? [24, 24] : [0, 0]}
+            className="w-full"
+          >
             <Col span={media.isDesktopOrLaptop ? 12 : 24}>
               <Divider orientation="left" orientationMargin="0">
                 <span className="font-semibold"> 1. 분류 및 취득방식</span>

@@ -67,6 +67,7 @@ const AssetUserAgreement = ({
   useEffect(() => {
     const docuID = GenerateDocumentID({
       beforeString: "JNC",
+      extraString: "ASSIGN",
       dateString: dayjs(userInfo?.assetAssignmentDate).format("YYYYMMDD"),
       personalNumber: IDLength,
     });

@@ -28,6 +28,13 @@ export const navigateMenus = [
     index: 2,
   },
   {
+    label: "자산내용",
+    parentKey: "sub2",
+    key: "child13",
+    link: "/8e4314e1-ec72-47b5-84e2-114a5e7a697a",
+    index: 110,
+  },
+  {
     label: "자산수정",
     parentKey: "sub2",
     key: "child11",
@@ -36,7 +43,7 @@ export const navigateMenus = [
   },
   {
     label: "자산인쇄",
-    parentKey: "sub2",
+    parentKey: "sub12",
     key: "child12",
     link: "/261c956d-a9ce-4e22-aec2-8d9398b7af9b",
     index: 101,

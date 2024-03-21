@@ -5,7 +5,6 @@ import {
   Dropdown,
   Image,
   Menu,
-  Modal,
   QRCode,
   Row,
   Space,
@@ -20,40 +19,19 @@ import {
   EllipsisOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-
-import {
-  ConvertTimestampToDateByArray,
-  FilterKeyByArray,
-  setColumnItem,
-  setMenuItem,
-  setSections,
-} from "../utils/Index";
-
+import { ContentTitle } from "../commonstyles/Title";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFirestoreGetDocument } from "../hooks/useFirestore";
 import AssetInfoDetail from "../components/AssetInfoDetail";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import AssetTimeLine from "../components/AssetTimeLine";
-import PageContainer from "../layout/PageContainer";
-import { navigateMenus } from "../navigate";
-import { MdSend } from "react-icons/md";
-import { FaRegTrashAlt, FaUserTag } from "react-icons/fa";
-import { IoReturnUpBack } from "react-icons/io5";
-import { CiEdit } from "react-icons/ci";
-import { SlPrinter } from "react-icons/sl";
-import AssetFeedAdd from "../components/AssetFeedAdd";
 
 const ViewAssetInfo = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [assetPics, setAssetPics] = useState([]);
   const [currentAssetPic, setCurrentAssetPic] = useState();
   const assetGet = useFirestoreGetDocument();
-  const navigate = useNavigate();
-  const [modalFeed, setModalFeed] = useState({ open: false, data: null });
-  const [modalReturn, setModalReturn] = useState({
-    open: false,
-    data: "",
-  });
+  const naviagate = useNavigate();
   const [api, contextHolder] = notification.useNotification();
   const openNotification = (
     apiType,
@@ -125,87 +103,25 @@ const ViewAssetInfo = () => {
     );
   };
 
-  const drawMenu = (record) => {
-    return (
-      <Menu
-        items={[
-          setMenuItem(
-            false,
-            "이력남기기",
-            <MdSend className="text-base" />,
-            3,
-            (value) => {
-              setModalFeed({ open: true, data: record });
-            },
-            record
-          ),
-          record?.userInfo?.userName === "미지정"
-            ? setMenuItem(
-                false,
-                "자산배정",
-                <FaUserTag className="text-base" />,
-                5,
-                () => {
-                  //setModalAssign({ open: true, data: record });
-                  navigate(
-                    navigateMenus.find((f) => f.label === "자산배정").link,
-                    { state: { data: record } }
-                  );
-                },
-                record
-              )
-            : setMenuItem(
-                false,
-                "자산반납",
-                <IoReturnUpBack className="text-base" />,
-                5,
-                () => {
-                  setModalReturn({ open: true, data: record });
-                },
-                record
-              ),
-          setMenuItem(
-            false,
-            "자산수정",
-            <CiEdit className="text-base" />,
-            7,
-            () => {
-              //setModalAssign({ open: true, data: record });
-              navigate(navigateMenus.find((f) => f.label === "자산수정").link, {
-                state: { data: record },
-              });
-            },
-            record
-          ),
-          setMenuItem(
-            false,
-            "자산인쇄",
-            <SlPrinter className="text-base" />,
-            9,
-            () => {
-              navigate(navigateMenus.find((f) => f.label === "자산인쇄").link, {
-                state: { data: [record] },
-              });
-            },
-            record
-          ),
-          setMenuItem(
-            false,
-            "삭제",
-            <FaRegTrashAlt className="text-base" />,
-            11,
-            (value) => {
-              console.log(value);
-            },
-            record
-          ),
-        ]}
-      />
-    );
-  };
+  const drawMenu = (
+    <Menu>
+      <Menu.Item key="1">
+        <button
+          onClick={() =>
+            naviagate("/337a93f8-ff79-4ce9-95a7-6b041bb418f6", {
+              state: { data: location.state.data },
+            })
+          }
+        >
+          수정
+        </button>
+      </Menu.Item>
+      <Menu.Item key="2">반납</Menu.Item>
+      <Menu.Item key="3">반품</Menu.Item>
+    </Menu>
+  );
 
   const assetInfo = useMemo(() => {
-    console.log(location);
     if (location?.state) {
       console.log(location.state);
       setIsLoading(false);
@@ -242,17 +158,13 @@ const ViewAssetInfo = () => {
         </div>
       )}
       {!isLoading && (
-        <PageContainer
-          isLoading={isLoading}
-          pathname={location?.pathname}
-          title={navigateMenus.find((f) => f.link === location.pathname).label}
-          gutter={[16, 16]}
-          backKey={true}
-        >
-          <Row
-            gutter={media.isDesktopOrLaptop ? [24, 24] : [0, 0]}
-            className="w-full"
-          >
+        <div className="flex w-full h-full justify-center items-center bg-white rounded-lg p-4 flex-col gap-y-2 ">
+          <Row gutter={8} className="w-full">
+            <Col span={24}>
+              <ContentTitle title="자산내용" />
+            </Col>
+          </Row>
+          <Row gutter={16} className="w-full">
             <Col span={media.isMobile ? 24 : 8}>
               <Card className="flex flex-col justify-start items-center">
                 <Image.PreviewGroup items={[...assetPics]}>
@@ -318,10 +230,7 @@ const ViewAssetInfo = () => {
                         </h1>
                       }
                       extra={
-                        <Dropdown
-                          overlay={drawMenu(location?.state?.data)}
-                          trigger={["hover"]}
-                        >
+                        <Dropdown overlay={drawMenu} trigger={["click"]}>
                           <button>
                             <MoreOutlined
                               style={{ fontSize: 20, fontWeight: 600 }}
@@ -357,28 +266,12 @@ const ViewAssetInfo = () => {
                   <Card size="small" className="w-full mt-2">
                     {assetInfo.assetDescritionSummay}
                   </Card>
-                  <Card size="small" className="w-full mt-2">
-                    <Tabs items={tabItems} className="mt-2 w-full" />
-                  </Card>
+                  <Tabs items={tabItems} className="mt-2 w-full" />
                 </Space>
               </div>
             </Col>
           </Row>
-
-          <Modal
-            mask={false}
-            maskClosable={false}
-            keyboard={false}
-            width={500}
-            title="이력 남기기"
-            footer={null}
-            open={modalFeed.open}
-            onOk={() => setModalFeed(() => ({ open: false, data: null }))}
-            onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
-          >
-            <AssetFeedAdd data={modalFeed.data} setClose={setModalFeed} />
-          </Modal>
-        </PageContainer>
+        </div>
       )}
     </>
   );
