@@ -255,7 +255,7 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
         </AutoComplete>
       </Form.Item>
       {currentUser?.userName && (
-        <Card size="small" className="mb-2">
+        <Card size="small" className="mb-2 bg-white">
           <Form.Item label="부서명">
             <Input
               value={currentUser.userDepartment}

@@ -30,7 +30,10 @@ import {
 } from "../utils/Index";
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { useFirestoreGetDocument } from "../hooks/useFirestore";
+import {
+  useFirestoreGetDocument,
+  useFirestoreQuery,
+} from "../hooks/useFirestore";
 import AssetInfoDetail from "../components/AssetInfoDetail";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import AssetTimeLine from "../components/AssetTimeLine";
@@ -41,15 +44,21 @@ import { FaRegTrashAlt, FaUserTag } from "react-icons/fa";
 import { IoReturnUpBack } from "react-icons/io5";
 import { CiEdit } from "react-icons/ci";
 import { SlPrinter } from "react-icons/sl";
+import { GrDocumentText } from "react-icons/gr";
 import AssetFeedAdd from "../components/AssetFeedAdd";
+import { where } from "firebase/firestore";
+import AssetUserAgreement from "../documents/AssetUserAgreement";
 
 const ViewAssetInfo = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [assetPics, setAssetPics] = useState([]);
   const [currentAssetPic, setCurrentAssetPic] = useState();
+  const [docuList, setDocuList] = useState([]);
+  const [lastActiveDocument, setLastActiveDocument] = useState({});
   const assetGet = useFirestoreGetDocument();
   const navigate = useNavigate();
   const [modalFeed, setModalFeed] = useState({ open: false, data: null });
+  const [modalProp, setModalProp] = useState({ open: false, data: null });
   const [modalReturn, setModalReturn] = useState({
     open: false,
     data: "",
@@ -72,6 +81,7 @@ const ViewAssetInfo = () => {
     });
   };
   const { media } = useContext(CurrentLoginContext);
+  const docuQuery = useFirestoreQuery();
 
   const location = useLocation();
   const tabItems = [
@@ -160,10 +170,23 @@ const ViewAssetInfo = () => {
                 <IoReturnUpBack className="text-base" />,
                 5,
                 () => {
-                  setModalReturn({ open: true, data: record });
+                  navigate(
+                    navigateMenus.find((f) => f.label === "자산반납").link,
+                    { state: { data: record } }
+                  );
                 },
                 record
               ),
+          setMenuItem(
+            record?.userInfo?.userName === "미지정" ? true : false,
+            "사용동의서보기",
+            <GrDocumentText className="text-base" />,
+            6,
+            () => {
+              setModalProp({ open: true, data: lastActiveDocument });
+            },
+            record
+          ),
           setMenuItem(
             false,
             "자산수정",
@@ -179,7 +202,7 @@ const ViewAssetInfo = () => {
           ),
           setMenuItem(
             false,
-            "자산인쇄",
+            "자산코드인쇄",
             <SlPrinter className="text-base" />,
             9,
             () => {
@@ -204,10 +227,28 @@ const ViewAssetInfo = () => {
     );
   };
 
+  const fetchDocuments = async (ownerID, assetUID) => {
+    const condition = [
+      where("assetOwner", "==", ownerID),
+      where("assetUID", "==", assetUID),
+    ];
+
+    try {
+      await docuQuery
+        .getDocuments(
+          "assetDocuments",
+          (data) => {
+            setDocuList(() => [...data]);
+          },
+          condition
+        )
+        .catch((error) => console.log(error));
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const assetInfo = useMemo(() => {
-    console.log(location);
     if (location?.state) {
-      console.log(location.state);
       setIsLoading(false);
       return location.state.data;
     } else {
@@ -232,7 +273,14 @@ const ViewAssetInfo = () => {
     setAssetPics(newAssetPicsURL); // 계산된 URL 배열을 상태에 저장
 
     setCurrentAssetPic(picUrls.length > 0 ? picUrls[0] : QRUrl);
+    fetchDocuments(assetInfo.assetOwner, assetInfo.assetUID);
   }, [assetInfo]); // assetInfo가 변경될 때마다 실행
+
+  useEffect(() => {
+    console.log(docuList);
+    const findLastDocument = docuList.find((f) => f.docuActive === true);
+    setLastActiveDocument(() => ({ ...findLastDocument }));
+  }, [docuList]);
 
   return (
     <>
@@ -377,6 +425,23 @@ const ViewAssetInfo = () => {
             onCancel={() => setModalFeed(() => ({ open: false, data: null }))}
           >
             <AssetFeedAdd data={modalFeed.data} setClose={setModalFeed} />
+          </Modal>
+          <Modal
+            mask={false}
+            maskClosable={false}
+            keyboard={false}
+            footer={null}
+            open={modalProp.open}
+            style={{
+              minWidth: media.isMobile ? 400 : 1000,
+              width: "100%",
+              height: "100%",
+              top: 10,
+            }}
+            onOk={() => setModalProp(() => ({ open: false, data: null }))}
+            onCancel={() => setModalProp(() => ({ open: false, data: null }))}
+          >
+            <AssetUserAgreement data={modalProp.data} />
           </Modal>
         </PageContainer>
       )}

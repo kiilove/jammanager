@@ -11,6 +11,7 @@ import {
   Divider,
   Form,
   Input,
+  Modal,
   Row,
   Space,
   Typography,
@@ -41,15 +42,19 @@ import {
 import { Timestamp, where } from "firebase/firestore";
 import { GenerateDocumentID } from "../utils/Index";
 import { convertTimestampToDate, makeFeedObject } from "../functions";
+import AddAssetPic from "../components/AddAssetPic";
 const { Title, Text } = Typography;
+
 const AssetAssignment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAssetInfo, setIsAssetInfo] = useState(false);
+  const [documentInfo, setDocumentInfo] = useState({});
   const [assetInfo, setAssetInfo] = useState({});
   const [productInfo, setProductInfo] = useState({});
   const [assignmentDate, setAssignmentDate] = useState(dayjs());
   const [userInfo, setUserInfo] = useState({});
   const [IDLength, setIDLength] = useState(0);
+  const [modalProp, setModalProp] = useState({ open: false, data: "" });
   const location = useLocation();
   const { media, memberSettings } = useContext(CurrentLoginContext);
   const printRef = useRef();
@@ -89,7 +94,7 @@ const AssetAssignment = () => {
     form.setFieldsValue({
       assetAssignmentDate: dayjs(),
       docuType: "assetUserAgreement",
-      ownerID: value.id,
+      docuActive: true,
       assetOwnerCompany: value.assetOwnerCompany,
       docuIssuerManager: "관리부 담당자",
     });
@@ -108,6 +113,7 @@ const AssetAssignment = () => {
       commonInfo.assetAssignmentDate.toDate()
     );
     delete unionInfo.id;
+    unionInfo.refAssetDocuID = assetInfo.id;
     const assetAssignmentDateConverted =
       convertTimestampToDate(assetAssignmentDate);
     unionInfo.assetAssignmentDate = assetAssignmentDate;
@@ -118,9 +124,10 @@ const AssetAssignment = () => {
       ? convertTimestampToDate(unionInfo.assetReturnDate)
       : "";
     unionInfo.assetAssignmentDateConverted = assetAssignmentDateConverted;
+    //unionInfo.docuType = "assetUserAgreement";
     console.log(unionInfo);
-
-    handleAddAssignmentAddFeedAndUpdateAsset(location.state.data, unionInfo);
+    //setDocumentInfo(()=>({...unionInfo}))
+    return unionInfo;
   };
 
   const handleAddAssignmentAddFeedAndUpdateAsset = async (
@@ -132,6 +139,7 @@ const AssetAssignment = () => {
       currentUser: reducedData?.currentUser,
       location: reducedData?.location,
       userInfo: reducedData?.userInfo,
+      assetPics: [...reducedData?.assetPics] || [],
     };
     const feedCreatedAt = Timestamp.fromDate(new Date());
     const feedCreatedAtConverted = convertTimestampToDate(feedCreatedAt);
@@ -173,9 +181,9 @@ const AssetAssignment = () => {
 
   const fetchDocumentsLength = async (ownerID, documentType, documentDate) => {
     const condidtions = [
-      where("ownerID", "==", ownerID),
+      where("assetOwner", "==", ownerID),
       where("docuType", "==", documentType),
-      where("docuDateConverted", "==", documentDate),
+      where("assetAssignmentDateConverted", "==", documentDate),
     ];
 
     try {
@@ -276,6 +284,9 @@ const AssetAssignment = () => {
             Divider: {
               colorSplit: "#d8d8d8",
             },
+            Switch: {
+              colorPrimary: "#1677ff",
+            },
           },
         }}
       >
@@ -304,6 +315,8 @@ const AssetAssignment = () => {
                 className="hidden"
                 name="assetOwnerCompany"
               ></Form.Item>
+              <Form.Item className="hidden" name="docuType"></Form.Item>
+              <Form.Item className="hidden" name="docuActive"></Form.Item>
               <Form.Item name="assetAssignmentDate" label="작성일자">
                 <DatePicker
                   allowClear={false}
@@ -365,18 +378,39 @@ const AssetAssignment = () => {
               userInfo={userInfo}
               setUserInfo={setUserInfo}
             />
+            <Divider orientation="left" orientationMargin="0">
+              <h1 className="font-semibold" style={{ fontSize: 13 }}>
+                5. 사진업데이트(3장까지 허용)
+              </h1>
+            </Divider>
+            <AddAssetPic
+              data={location.state.data}
+              assetInfo={assetInfo}
+              setAssetInfo={setAssetInfo}
+            />
             <Divider orientation="left" orientationMargin="0"></Divider>
             <div
               className="flex w-full justify-end items-center px-2 gap-x-3"
               style={{ height: 55 }}
             >
               <Button
-                onClick={() => reduceDocumentInfo()}
+                onClick={() =>
+                  handleAddAssignmentAddFeedAndUpdateAsset(
+                    location.state.data,
+                    reduceDocumentInfo()
+                  )
+                }
                 disabled={userInfo.currentUser === "미지정"}
               >
                 동의서 없이 배정완료
               </Button>
-              <Button>동의서 미리보기</Button>
+              <Button
+                onClick={() => {
+                  setModalProp({ open: true, data: reduceDocumentInfo() });
+                }}
+              >
+                동의서 미리보기
+              </Button>
               {/* <ReactToPrint
             trigger={() => (
               <Button type="default" style={{ margin: "16px" }}>
@@ -401,6 +435,23 @@ const AssetAssignment = () => {
         </Card>
       </Col> */}
         </Row>
+        <Modal
+          mask={false}
+          maskClosable={false}
+          keyboard={false}
+          footer={null}
+          open={modalProp.open}
+          style={{
+            minWidth: media.isMobile ? 400 : 1000,
+            width: "100%",
+            height: "100%",
+            top: 10,
+          }}
+          onOk={() => setModalProp(() => ({ open: false, data: null }))}
+          onCancel={() => setModalProp(() => ({ open: false, data: null }))}
+        >
+          <AssetUserAgreement data={modalProp.data} />
+        </Modal>
         {contextHolder}
       </ConfigProvider>
     </PageContainer>

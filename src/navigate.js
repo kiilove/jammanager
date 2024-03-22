@@ -56,6 +56,13 @@ export const navigateMenus = [
     index: 102,
   },
   {
+    label: "자산반납",
+    parentKey: "sub2",
+    key: "child14",
+    link: "/347b529a-8c62-4ffd-b4a1-8ccf4bbf470f",
+    index: 103,
+  },
+  {
     label: "구성원등록",
     parentKey: "title2",
     key: "sub21",

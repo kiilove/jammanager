@@ -24,6 +24,7 @@ import AssetCodePrint from "./components/AssetCodePrint";
 import AssetAssignment from "./pages/AssetAssignment";
 import { navigateMenus } from "./navigate";
 import AddAsset from "./pages/AddAsset";
+import AssetReturn from "./pages/AssetReturn";
 
 function App() {
   return (
@@ -109,6 +110,10 @@ function App() {
             <Route
               path={navigateMenus.find((f) => f.label === "자산배정").link}
               element={<Main children={<AssetAssignment />} />}
+            />{" "}
+            <Route
+              path={navigateMenus.find((f) => f.label === "자산반납").link}
+              element={<Main children={<AssetReturn />} />}
             />
             <Route
               path="/cc815a57-69fb-4e29-a6f6-e8e7cfe8de66/:assetCode"

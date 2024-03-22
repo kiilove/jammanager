@@ -1,0 +1,27 @@
+@media print {
+  .a4-size {
+    width: 210mm;
+    height: 297mm;
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+
+  .print-page-break {
+    page-break-after: always;
+  }
+
+  footer,
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+  }
+
+  .page-footer {
+    position: absolute;
+    bottom: 10mm; /* 페이지 하단 여백 안에서 표시되도록 조정 */
+    right: 10mm; /* 페이지 우측 여백 안에서 표시되도록 조정 */
+    font-size: 12px; /* 필요에 따라 폰트 크기 조정 */
+  }
+}

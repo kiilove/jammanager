@@ -488,6 +488,7 @@ const AddAsset = () => {
     newValue.location = "출고대기";
     newValue.userInfo = { userName: "미지정" };
     newValue.currentUser = "미지정";
+    newValue.assetPics = [];
 
     delete newValue.assetCount;
 
