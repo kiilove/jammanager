@@ -32,6 +32,7 @@ function App() {
       <ConfigProvider
         theme={{
           token: {
+            // /colorBgContainer: "#f5f5f5",
             fontSize: 13,
             fontFamily: `"Nanum Gothic", "Nanum Gothic Coding", "Nanum Myeongjo", "Apple SD Gothic", sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
           },
@@ -39,20 +40,45 @@ function App() {
             Form: {
               labelFontSize: 13,
               verticalLabelPadding: 2,
-
               labelColor: "#888888",
               itemMarginBottom: 5,
             },
+            Table: {
+              colorBgContainer: "#fff",
+            },
             Input: {
-              inputFontSize: 13,
+              colorBgContainer: "#f5f5f5",
+              colorBorder: "#f5f5f5",
               activeBg: "#f5f5f5",
               hoverBg: "#f5f5f5",
               addonBg: "#f5f5f5",
               activeShadow: "#f5f5f5",
+              colorPrimaryHover: "#f5f5f5",
+            },
+            InputNumber: {
+              colorBorder: "#f5f5f5",
+              activeBg: "#f5f5f5",
+              hoverBg: "#f5f5f5",
+              addonBg: "#f5f5f5",
+              activeShadow: "#f5f5f5",
+              colorPrimaryHover: "#f5f5f5",
+            },
+            DatePicker: {
+              colorBorder: "#f5f5f5",
+              activeBg: "#f5f5f5",
+              hoverBg: "#f5f5f5",
+              addonBg: "#f5f5f5",
+              activeShadow: "#f5f5f5",
+              colorPrimaryHover: "#f5f5f5",
             },
             Drawer: { paddingLG: 0 },
             Select: {
               selectorBg: "#f5f5f5",
+            },
+            Button: {
+              colorBorder: "#d9d9d9",
+              colorPrimary: "#000",
+              colorPrimaryHover: "#d9d9d",
             },
             Menu: {
               iconSize: 20,
@@ -68,6 +94,9 @@ function App() {
             },
             Table: {
               cellFontSizeSM: 12,
+            },
+            Switch: {
+              colorPrimary: "#1677ff",
             },
           },
         }}

@@ -320,7 +320,7 @@ const AddAsset = () => {
     const newList = [...list];
 
     if (action === "add") {
-      newList.push({ ...value });
+      newList.push({ ...value, status: "정상" });
     } else if (action === "remove") {
       newList.splice(index, 1);
     }

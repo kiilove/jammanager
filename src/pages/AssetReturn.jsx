@@ -1,15 +1,19 @@
 import {
+  Button,
   Card,
+  Checkbox,
   Col,
   ConfigProvider,
   Divider,
   Form,
   Input,
+  List,
   Modal,
   Radio,
   Rate,
   Row,
   Select,
+  Space,
   Switch,
   Table,
   Tabs,
@@ -26,10 +30,13 @@ import { where } from "firebase/firestore";
 import SelectItem from "../share/SelectItem";
 import AssetAgreementView from "../components/AssetAgreementView";
 import AssetAgreementPics from "../components/AssetAgreementPics";
+import TextArea from "antd/es/input/TextArea";
 
 const AssetReturn = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [assetAccessoryData, setAssetAccessoryData] = useState([]);
+  const [isAssetAccessory, setIsAssetAccessory] = useState(true);
+  const [isAssetAfterAction, setIsAssetAfterAction] = useState(false);
+  const [assetAccessoryList, setAssetAccessoryList] = useState([]);
   const [documentList, setDocumentList] = useState([]);
   const [currentAssignment, setCurrentAssignment] = useState({});
   const location = useLocation();
@@ -76,6 +83,28 @@ const AssetReturn = () => {
     }
   };
 
+  const handleReduceAssetAccessory = (index = 100000, list, value) => {
+    const newList = [...list];
+    let updatedList = [];
+    if (list?.length === 0) {
+      return;
+    }
+    if (index === 100000) {
+      updatedList = newList.map((item) => {
+        return {
+          ...item,
+          status: "정상",
+        };
+      });
+    } else {
+      const newValue = { ...list[index], status: value };
+      newList.splice(index, 1, newValue);
+      updatedList = [...newList];
+    }
+
+    return updatedList;
+  };
+
   const handleCurrentAssignment = (list, setList) => {
     const newList = [...list];
     const filterList = newList.filter(
@@ -114,80 +143,22 @@ const AssetReturn = () => {
     },
   ];
 
-  const checkList = [
-    {
-      key: 1,
-      field: "작동여부",
-      items: (
-        <Radio.Group
-          options={[
-            { key: 1, label: "정상", value: true },
-            { key: 2, label: "비정상", value: false },
-          ]}
-        ></Radio.Group>
-      ),
-    },
-    {
-      key: 2,
-      field: "제품외관",
-      items: <Rate allowHalf allowClear />,
-    },
-    {
-      key: 3,
-      field: "구성품",
-      items: (
-        <Radio.Group
-          options={[
-            { key: 1, label: "모두정상", value: true },
-            { key: 2, label: "일부비정상", value: false },
-          ]}
-        ></Radio.Group>
-      ),
-      children: assetAccessoryData,
-    },
-  ];
-
   useEffect(() => {
-    if (currentAssignment?.assetAccessory?.length > 0) {
-      const accessoryData = currentAssignment.assetAccessory.map(
-        (item, idx) => {
-          const { name, count } = item;
-
-          const newValue = {
-            key: idx + 1,
-            field: name,
-            items: count,
-            action: (
-              <div className="w-full flex-wrap box-border gap-x-4">
-                <Radio.Group
-                  options={[
-                    { key: 1, label: "정상", value: true },
-                    { key: 2, label: "비정상", value: false },
-                  ]}
-                ></Radio.Group>
-                <Select
-                  style={{ width: 100 }}
-                  options={[
-                    { key: 1, label: "분실", value: "분실" },
-                    { key: 2, label: "고장", value: "고장" },
-                    { key: 2, label: "수량부족", value: "수량부족" },
-                  ]}
-                />
-              </div>
-            ),
-          };
-          return newValue;
-        }
+    if (currentAssignment?.id) {
+      form.setFieldsValue({
+        assetExterior: currentAssignment?.assetExterior,
+        assetWorking: currentAssignment?.assetWorking,
+      });
+      const newAssetAccessory = handleReduceAssetAccessory(
+        100000,
+        currentAssignment?.assetAccessory
       );
-      setAssetAccessoryData([
-        { key: 0, field: "품목", items: "수량" },
-        ...accessoryData,
-      ]);
+      setAssetAccessoryList(() => [...newAssetAccessory]);
     }
   }, [currentAssignment]);
 
   useEffect(() => {
-    console.log(location);
+    //console.log(location);
     //assetAssignment당시 실수로 id값을 저장안해서 assetUID로 식별함
 
     if (location?.state?.data?.id) {
@@ -202,78 +173,157 @@ const AssetReturn = () => {
       title={navigateMenus.find((f) => f.link === location.pathname).label}
       backKey={true}
     >
-      <ConfigProvider
-      // theme={{
-      //   // token: { colorPrimary: "#93ffb7", colorPrimaryHover: "#c0ffd4" },
-      //   token: {
-      //     fontSize: 13,
-      //     colorPrimary: "#f5f5f5",
-      //     colorPrimaryHover: "#f5f5f5",
-      //     colorBorder: "#f5f5f5",
-      //     //fontSizeIcon: 0,
-      //     colorBgContainer: "#f5f5f5",
-      //   },
-      //   components: {
-      //     Select: {
-      //       selectorBg: "#f5f5f5",
-      //     },
-      //     Input: {
-      //       activeBg: "#f5f5f5",
-      //       hoverBg: "#f5f5f5",
-      //       addonBg: "#f5f5f5",
-      //       activeShadow: "#f5f5f5",
-      //     },
-      //     Form: {
-      //       labelFontSize: 13,
-      //       labelColor: "#888888",
-      //       itemMarginBottom: 5,
-      //     },
-      //     Button: {
-      //       colorBorder: "#d9d9d9",
-      //       colorPrimary: "#000",
-      //       colorPrimaryHover: "#d9d9d",
-      //     },
-      //     Divider: {
-      //       colorSplit: "#d8d8d8",
-      //     },
-      //     Switch: {
-      //       colorPrimary: "#1677ff",
-      //       colorPrimaryHover: "#4096ff",
-      //       handleBg: "#fff",
-      //     },
-      //     Tabs: { colorPrimary: "#1677ff" },
-      //     Table: { colorPrimary: "#fff" },
-      //   },
-      // }}
+      <Row
+        gutter={media.isDesktopOrLaptop ? [24, 24] : [0, 10]}
+        className="w-full"
       >
-        <Row
-          gutter={media.isDesktopOrLaptop ? [24, 24] : [0, 10]}
-          className="w-full"
-        >
-          <Col span={media.isDesktopOrLaptop ? 12 : 24}>
-            <Card title="자산배정" size="small" className="bg-white">
-              <Tabs className="w-full" items={tabItems} />
-            </Card>
-          </Col>
-          <Col span={media.isDesktopOrLaptop ? 12 : 24}>
-            <Form
-              form={form}
-              labelCol={{
-                span: 4,
-              }}
-              colon={false}
-              style={{
-                width: "100%",
-              }}
-              labelAlign="left"
+        <Col span={media.isDesktopOrLaptop ? 12 : 24}>
+          <Card title="자산배정" size="small" className="bg-white">
+            <Tabs className="w-full" items={tabItems} />
+          </Card>
+        </Col>
+        <Col span={media.isDesktopOrLaptop ? 12 : 24}>
+          <Form
+            form={form}
+            labelCol={{
+              span: 5,
+            }}
+            colon={false}
+            style={{
+              width: "100%",
+            }}
+            labelAlign="left"
+          >
+            <Card
+              title={
+                <div className="flex w-full justify-start items-center gap-x-4">
+                  <span className="font-semibold">반납 체크리스트</span>
+                  <div className="flex h-full justify-start items-center gap-x-2">
+                    <span className="text-xs font-normal">자산정보 동기화</span>
+                    <Switch size="small" />
+                  </div>
+                </div>
+              }
+              size="small"
+              className="bg-white"
             >
-              <Card
-                title="자산반납 체크리스트"
-                size="small"
-                className="bg-white"
-              >
-                <Table
-                  className="bg-white"
+              <ConfigProvider theme={{ token: { colorBgContainer: "#fff" } }}>
+                <Form.Item
+                  name="assetExterior"
+                  label={<span className="font-semibold">1. 외관</span>}
+                >
+                  <Rate allowClear allowHalf />
+                </Form.Item>
+                <Form.Item
+                  name="assetWorking"
+                  label={<span className="font-semibold">2. 작동여부</span>}
+                >
+                  <Radio.Group
+                    options={[
+                      { key: 1, label: "정상", value: true },
+                      { key: 2, label: "비정상", value: false },
+                    ]}
+                  ></Radio.Group>
+                </Form.Item>
+                <Form.Item
+                  label={<span className="font-semibold">3. 구성품확인</span>}
+                >
+                  <Radio.Group
+                    value={isAssetAccessory}
+                    onChange={(e) => setIsAssetAccessory(e.target.value)}
+                    options={[
+                      { key: 1, label: "정상", value: true },
+                      { key: 2, label: "비정상", value: false },
+                    ]}
+                  ></Radio.Group>
+                </Form.Item>
+                {!isAssetAccessory && (
+                  <List
+                    bordered
+                    className="mb-2"
+                    header={
+                      <div className="flex w-full justify-start gap-x-4">
+                        <span className="font-semibold">구성품</span>
+                      </div>
+                    }
+                    size="small"
+                    dataSource={assetAccessoryList}
+                    renderItem={(item, idx) => {
+                      return (
+                        <List.Item
+                          actions={[
+                            <Select
+                              value={assetAccessoryList[idx]?.status}
+                              onChange={(value) =>
+                                setAssetAccessoryList(() => [
+                                  ...handleReduceAssetAccessory(
+                                    idx,
+                                    assetAccessoryList,
+                                    value
+                                  ),
+                                ])
+                              }
+                              style={{ width: 100 }}
+                              options={[
+                                { key: 0, label: "정상", value: "정상" },
+                                { key: 1, label: "분실", value: "분실" },
+                                { key: 2, label: "고장", value: "고장" },
+                                {
+                                  key: 3,
+                                  label: "수량부족",
+                                  value: "수량부족",
+                                },
+                              ]}
+                            />,
+                          ]}
+                        >
+                          <div className="flex gap-x-2">
+                            <span>{idx + 1}.</span>
+                            <div className="flex gap-x-4">
+                              <span>품목 : {item?.name}</span>
+                              <span>수량 : {item?.count}</span>
+                            </div>
+                          </div>
+                        </List.Item>
+                      );
+                    }}
+                  />
+                )}
+
+                <Form.Item
+                  label={<span className="font-semibold">4. 후속조치</span>}
+                >
+                  <Space direction="vertical" className="w-full h-full">
+                    <Form.Item noStyle>
+                      <Radio.Group
+                        value={isAssetAfterAction}
+                        onChange={(e) => {
+                          setIsAssetAfterAction(e.target.value);
+                        }}
+                        options={[
+                          { key: 1, label: "없음", value: false },
+                          { key: 2, label: "필요", value: true },
+                        ]}
+                      ></Radio.Group>
+                    </Form.Item>
+                    {isAssetAfterAction && (
+                      <Form.Item noStyle name="assetAfterActionMemo">
+                        <TextArea rows={3} style={{ resize: "none" }} />
+                      </Form.Item>
+                    )}
+                  </Space>
+                </Form.Item>
+                <Divider />
+                <div className="flex w-full h-full gap-x-2 justify-end">
+                  <Button type="primary" size="large" className="bg-blue-500">
+                    반납완료
+                  </Button>
+                  <Button type="default" size="large">
+                    확인서보기
+                  </Button>
+                </div>
+
+                {/* <Table
                   size="small"
                   columns={[
                     { key: 1, title: "항목", dataIndex: "field" },
@@ -281,12 +331,13 @@ const AssetReturn = () => {
                     { key: 3, title: "비고", dataIndex: "action" },
                   ]}
                   dataSource={checkList}
-                />
-              </Card>
-            </Form>
-          </Col>
-        </Row>
-      </ConfigProvider>
+                /> */}
+              </ConfigProvider>
+            </Card>
+          </Form>
+        </Col>
+      </Row>
+
       <Modal
         mask={false}
         maskClosable={false}

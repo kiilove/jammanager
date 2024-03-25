@@ -1,4 +1,4 @@
-import { Button, Input } from "antd";
+import { Button, ConfigProvider, Input } from "antd";
 import React, { useState, useEffect, useContext } from "react";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 
@@ -73,67 +73,85 @@ export const FilterBar = ({
 
   return (
     <div className="flex w-full flex-col mb-5 ">
-      {sections?.length > 0 &&
-        isFilterView &&
-        sections.map((section, sIdx) => {
-          return (
-            <div className="flex w-full " key={section.title}>
-              <div
-                key={sIdx}
-                className="flex h-atuo bg-gray-500 pl-4 justify-start items-center"
-                style={{ width: "130px", minHeight: "45px" }}
-              >
-                <span className=" text-gray-100 text-xs">{section.title}</span>
+      <ConfigProvider
+        theme={{
+          components: {
+            Input: {
+              colorBgContainer: "#fff",
+              activeBg: "#fff",
+              hoverBg: "#fff",
+              addonBg: "#f5f5f5",
+              activeShadow: "#f5f5f5",
+              colorPrimaryHover: "#d9d9d9",
+              colorBorder: "#d9d9d9",
+            },
+          },
+        }}
+      >
+        {sections?.length > 0 &&
+          isFilterView &&
+          sections.map((section, sIdx) => {
+            return (
+              <div className="flex w-full " key={section.title}>
+                <div
+                  key={sIdx}
+                  className="flex h-atuo bg-gray-500 pl-4 justify-start items-center"
+                  style={{ width: "130px", minHeight: "45px" }}
+                >
+                  <span className=" text-gray-100 text-xs">
+                    {section.title}
+                  </span>
+                </div>
+                <div className="flex bg-gray-100 flex-wrap gap-2 px-4 justify-start items-center w-full">
+                  {section?.list?.length > 0 &&
+                    section.list.map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() =>
+                          handleSearchParams(section.param, item.value)
+                        }
+                        className={
+                          searchParams[section.param]?.includes(item.value)
+                            ? buttonCheckStyle
+                            : buttonUnCheckStyle
+                        }
+                      >
+                        {item.value}
+                      </button>
+                    ))}
+                </div>
               </div>
-              <div className="flex bg-gray-100 flex-wrap gap-2 px-4 justify-start items-center w-full">
-                {section?.list?.length > 0 &&
-                  section.list.map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() =>
-                        handleSearchParams(section.param, item.value)
-                      }
-                      className={
-                        searchParams[section.param]?.includes(item.value)
-                          ? buttonCheckStyle
-                          : buttonUnCheckStyle
-                      }
-                    >
-                      {item.value}
-                    </button>
-                  ))}
-              </div>
-            </div>
-          );
-        })}
-      <div className="flex w-full" key="searchKeyword">
-        <div
-          className="flex bg-gray-500 pl-4 justify-start items-center"
-          style={{ width: "130px", height: "55px" }}
-        >
-          <span className=" text-gray-100 text-xs">검색어</span>
-        </div>
-        <div
-          className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full"
-          style={{ height: "55px" }}
-        >
-          <Input.Search
-            style={{ width: media.isMobile ? 230 : 300 }}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onSearch={(value) => setSearchKeyword(value)}
-          />
-          <Button
-            type="default"
-            size={media.isMobile && "small"}
-            className="bg-white"
-            onClick={() => {
-              setIsFilterView(!isFilterView);
-            }}
+            );
+          })}
+        <div className="flex w-full" key="searchKeyword">
+          <div
+            className="flex bg-gray-500 pl-4 justify-start items-center"
+            style={{ width: "130px", height: "55px" }}
           >
-            {isFilterView ? "상세검색 감추기" : "상세검색 펼치기"}
-          </Button>
+            <span className=" text-gray-100 text-xs">검색어</span>
+          </div>
+          <div
+            className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full"
+            style={{ height: "55px" }}
+          >
+            <Input.Search
+              style={{ width: media.isMobile ? 230 : 300 }}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={(value) => setSearchKeyword(value)}
+            />
+            <Button
+              type="default"
+              size={media.isMobile && "small"}
+              className="bg-white"
+              onClick={() => {
+                setIsFilterView(!isFilterView);
+              }}
+            >
+              {isFilterView ? "상세검색 감추기" : "상세검색 펼치기"}
+            </Button>
+          </div>
         </div>
-      </div>
+      </ConfigProvider>
     </div>
   );
 };

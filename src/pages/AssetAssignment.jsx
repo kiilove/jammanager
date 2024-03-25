@@ -250,46 +250,7 @@ const AssetAssignment = () => {
       title={navigateMenus.find((f) => f.link === location.pathname).label}
       backKey={true}
     >
-      <ConfigProvider
-        theme={{
-          // token: { colorPrimary: "#93ffb7", colorPrimaryHover: "#c0ffd4" },
-          token: {
-            fontSize: 13,
-            colorPrimary: "#f5f5f5",
-            colorPrimaryHover: "#f5f5f5",
-            colorBorder: "#f5f5f5",
-            //fontSizeIcon: 0,
-            colorBgContainer: "#f5f5f5",
-          },
-          components: {
-            Select: {
-              selectorBg: "#f5f5f5",
-            },
-            Input: {
-              activeBg: "#f5f5f5",
-              hoverBg: "#f5f5f5",
-              addonBg: "#f5f5f5",
-              activeShadow: "#f5f5f5",
-            },
-            Form: {
-              labelFontSize: 13,
-              labelColor: "#888888",
-              itemMarginBottom: 5,
-            },
-            Button: {
-              colorBorder: "#d9d9d9",
-              colorPrimary: "#000",
-              colorPrimaryHover: "#d9d9d",
-            },
-            Divider: {
-              colorSplit: "#d8d8d8",
-            },
-            Switch: {
-              colorPrimary: "#1677ff",
-            },
-          },
-        }}
-      >
+      <ConfigProvider>
         <Row
           gutter={media.isDesktopOrLaptop ? [24, 24] : [0, 0]}
           className="w-full"

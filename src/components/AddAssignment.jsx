@@ -1,6 +1,7 @@
 import {
   AutoComplete,
   Card,
+  ConfigProvider,
   DatePicker,
   Form,
   Input,
@@ -356,7 +357,10 @@ const AddAssignment = ({ data, userInfo, setUserInfo }) => {
           rows={3}
           style={{ resize: "none" }}
           onChange={(e) =>
-            setUserInfo(() => ({ ...userInfo, assignmentMemo: e.target.value }))
+            setUserInfo(() => ({
+              ...userInfo,
+              assignmentMemo: e.target.value,
+            }))
           }
         />
       </Form.Item>

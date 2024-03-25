@@ -312,24 +312,19 @@ const AssetUserAgreement = ({ data }) => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex w-full h-full justify-start items-center ">
+                  <div className="flex w-full bg-gray-200 h-full justify-start items-center ">
                     <div
-                      className="flex h-full bg-gray-200 px-3 justify-start items-center"
+                      className="flex px-3 justify-start items-center"
                       style={{
-                        width: "100px",
                         minWidth: "100px",
-                        maxWidth: "100px",
                         height: "100%",
                       }}
                     >
-                      구성품
+                      <span>구성품</span>
                     </div>
-                    <div
-                      className="flex px-3 py-2 justify-center items-start"
-                      style={{ width: "100%" }}
-                    >
+                    <div className="flex h-full bg-white w-full px-3 py-2 justify-center items-start">
                       <div
-                        className="flex bg-red-200 h-auto flex-col border rounded"
+                        className="flex h-full flex-col border rounded"
                         style={{ width: "95%" }}
                       >
                         <div className="flex w-full bg-gray-100 p-1 font-semibold  border-b">
