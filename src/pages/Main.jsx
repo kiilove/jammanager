@@ -68,6 +68,7 @@ const Main = ({ children }) => {
         "memberSetting",
         (data) => {
           if (data.length > 0) {
+            //console.log(data);
             setMemberSetting({ ...data[0] });
           }
         },
@@ -144,7 +145,7 @@ const Main = ({ children }) => {
         // 로그인 정보가 없으면 로그인 페이지로 리디렉션
         navigate("/login");
       }
-    }, 2000);
+    }, 3000);
     if (currentUser) {
       //console.log(currentUser);
       const promises = [
@@ -164,7 +165,8 @@ const Main = ({ children }) => {
   }, [currentUser]);
 
   useEffect(() => {
-    if (memberSetting) {
+    if (memberSetting?.id) {
+      console.log(memberSetting);
       setMemberSettings(() => ({ ...memberSetting }));
     }
   }, [memberInfo, memberSetting]);
@@ -232,7 +234,7 @@ const Main = ({ children }) => {
             </Header>
             <Content
               style={{
-                minHeight: 280,
+                minHeight: 500,
               }}
               className="mt-1 lg:rounded-lg lg:m-1"
             >

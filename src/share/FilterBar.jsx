@@ -126,13 +126,16 @@ export const FilterBar = ({
         <div className="flex w-full" key="searchKeyword">
           <div
             className="flex bg-gray-500 pl-4 justify-start items-center"
-            style={{ width: "130px", height: "55px" }}
+            style={{
+              width: "130px",
+              minHeight: media.isMobile ? "75px" : "55px",
+            }}
           >
             <span className=" text-gray-100 text-xs">검색어</span>
           </div>
           <div
-            className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full"
-            style={{ height: "55px" }}
+            className="flex bg-gray-100 flex-wrap gap-1 px-4 justify-start items-center w-full h-auto"
+            style={{ minHeight: media.isMobile ? "75px" : "55px" }}
           >
             <Input.Search
               style={{ width: media.isMobile ? 230 : 300 }}

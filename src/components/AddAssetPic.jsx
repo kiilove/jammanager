@@ -18,7 +18,7 @@ import { useEffect } from "react";
 import { Timestamp } from "firebase/firestore";
 import dayjs from "dayjs";
 
-const AddAssetPic = ({ assetInfo, setAssetInfo }) => {
+const AddAssetPic = ({ assetInfo, setAssetInfo, picList, setPicList }) => {
   const [assetPics, setAssetPics] = useState([]);
   const assetPicUpload = useImageUpload();
   const assetPicDelete = useImageUpload();
@@ -92,6 +92,7 @@ const AddAssetPic = ({ assetInfo, setAssetInfo }) => {
   useEffect(() => {
     console.log(assetPics);
     const newList = assetPics.filter((f) => f.status === "uploaded");
+    setPicList(() => [...newList]);
     setAssetInfo(() => ({
       ...assetInfo,
       assetPics: assetInfo?.assetPics

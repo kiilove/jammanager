@@ -168,7 +168,7 @@ const AssetUserAgreement = ({ data }) => {
                         height: rowHeight,
                       }}
                     >
-                      작성일자
+                      <span className=" bg-transparent">작성일자</span>
                     </div>
                     <div className="flex w-full  px-3">
                       {data?.assetAssignmentDateConverted}

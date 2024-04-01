@@ -22,6 +22,8 @@ import {
   Row,
   message,
   notification,
+  Switch,
+  Rate,
 } from "antd";
 
 import {
@@ -214,7 +216,6 @@ const AddAsset = () => {
           <Upload
             listType="picture-card"
             onChange={(file) => {
-              console.log(file.file);
               handleUploadTarget(
                 index,
                 file.fileList,
@@ -329,7 +330,7 @@ const AddAsset = () => {
   };
 
   const handleInitAssetAccessory = (name, list, setList) => {
-    const initValue = { index: 1, name, count: 1 };
+    const initValue = { index: 1, name, count: 1, status: "정상" };
     const newList = [...list];
     newList.splice(0, 1, { ...initValue });
     setList(newList);
@@ -555,7 +556,8 @@ const AddAsset = () => {
     setAssetAccessory([]);
     setAssetList([]);
     setUploadTargetFileList([]);
-    setAssetCount(0);
+    setAssetCount(1);
+    randomAssetCode(1);
     addForm.resetFields();
 
     addForm.setFieldValue("assetPurchasedType", "구매");
@@ -565,6 +567,9 @@ const AddAsset = () => {
     addForm.setFieldValue("assetRentalPeriod", []);
     addForm.setFieldValue("assetDepreciationType", "설정안함");
     addForm.setFieldValue("assetDepreciationPeriod", 0);
+    addForm.setFieldValue("assetCount", 1);
+    addForm.setFieldValue("assetWorking", true);
+    addForm.setFieldValue("assetExterior", 5);
   };
 
   const handleAssetOptions = (childrenArray) => {
@@ -921,6 +926,24 @@ const AddAsset = () => {
                   onFocus={handleInitAssetModelName}
                   onChange={(e) => setAssetName(e.target.value)}
                 />
+              </Form.Item>
+              <Form.Item
+                label={<span className="font-semibold">제품상태/외관</span>}
+                className="bg-white p-2"
+              >
+                <Space size="large" align="center">
+                  <Form.Item noStyle name="assetWorking">
+                    <Segmented
+                      options={[
+                        { key: 1, value: true, label: "정상" },
+                        { key: 2, value: false, label: "비정상" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item noStyle name="assetExterior">
+                    <Rate allowClear allowHalf />
+                  </Form.Item>
+                </Space>
               </Form.Item>
               <Form.Item
                 name="assetWarranty"

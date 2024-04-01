@@ -51,6 +51,7 @@ const AssetAssignment = () => {
   const [documentInfo, setDocumentInfo] = useState({});
   const [assetInfo, setAssetInfo] = useState({});
   const [productInfo, setProductInfo] = useState({});
+  const [picList, setPicList] = useState([]);
   const [assignmentDate, setAssignmentDate] = useState(dayjs());
   const [userInfo, setUserInfo] = useState({});
   const [IDLength, setIDLength] = useState(0);
@@ -108,6 +109,7 @@ const AssetAssignment = () => {
       ...assetInfo,
       ...productInfo,
       ...userInfo,
+      picList,
     };
     const assetAssignmentDate = Timestamp.fromDate(
       commonInfo.assetAssignmentDate.toDate()
@@ -209,7 +211,7 @@ const AssetAssignment = () => {
       setAssetInfo(location.state.data);
       const initProductInfo = {
         assetWorking: true,
-        assetExterior: 5,
+        assetExterior: location.state.data?.assetExterior || 5,
         assetAccessory: location.state.data?.assetAccessory,
       };
       setProductInfo(initProductInfo);
@@ -348,6 +350,8 @@ const AssetAssignment = () => {
               data={location.state.data}
               assetInfo={assetInfo}
               setAssetInfo={setAssetInfo}
+              picList={picList}
+              setPicList={setPicList}
             />
             <Divider orientation="left" orientationMargin="0"></Divider>
             <div

@@ -31,6 +31,7 @@ import { TableWithFilterAndSearch } from "../widget/Index.js";
 import AssetFeedAdd from "../components/AssetFeedAdd.jsx";
 import { navigateMenus } from "../navigate.js";
 import PageContainer from "../layout/PageContainer.jsx";
+import { ListWithFilterAndSearch } from "../widget/ListWithFilterAndSearch.jsx";
 
 const ListAsset = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -180,8 +181,12 @@ const ListAsset = () => {
                           "자산반납",
                           <IoReturnUpBack className="text-base" />,
                           5,
-                          (value) => {
-                            setModalReturn({ open: true, data: record });
+                          () => {
+                            navigate(
+                              navigateMenus.find((f) => f.label === "자산반납")
+                                .link,
+                              { state: { data: record } }
+                            );
                           },
                           record
                         ),
@@ -287,6 +292,15 @@ const ListAsset = () => {
     });
   };
 
+  const assetItem = [
+    "assetName",
+    "assetPics",
+    "firstPics",
+    "assetCode",
+    "location",
+    "currentUser",
+  ];
+
   const assetColumn = [
     setColumnItem("분류", "assetCategory", searchKeyword),
     setColumnItem("품목", "assetProductLine", searchKeyword),
@@ -337,7 +351,7 @@ const ListAsset = () => {
       title={navigateMenus.find((f) => f.link === location.pathname).label}
     >
       <Col span={24}>
-        <div className="flex w-full h-full justify-start items-start flex-wrap flex-col">
+        <div className="flex w-full h-full justify-start items-start flex-wrap flex-col ">
           {filterItems?.length > 0 && (
             <FilterBar
               sections={filterItems}
@@ -347,15 +361,25 @@ const ListAsset = () => {
               setKeyword={setSearchKeyword}
             />
           )}
-          <div className="flex w-full">
-            <TableWithFilterAndSearch
-              columns={assetColumn}
-              data={filteredAssetList}
-              rowSelection={rowSelection}
-              rowKey="id"
-              size="small"
-            />
-          </div>
+          {media.isMobile ? (
+            <div className="flex w-full ">
+              <ListWithFilterAndSearch
+                data={filteredAssetList}
+                listItem={assetItem}
+              />
+            </div>
+          ) : (
+            <div className="flex w-full">
+              <TableWithFilterAndSearch
+                columns={assetColumn}
+                data={filteredAssetList}
+                rowSelection={rowSelection}
+                rowKey="id"
+                size="small"
+              />
+            </div>
+          )}
+
           <Modal
             mask={false}
             maskClosable={false}

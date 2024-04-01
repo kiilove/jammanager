@@ -25,6 +25,7 @@ import AssetAssignment from "./pages/AssetAssignment";
 import { navigateMenus } from "./navigate";
 import AddAsset from "./pages/AddAsset";
 import AssetReturn from "./pages/AssetReturn";
+import Home from "./pages/Home";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
               hoverBg: "#f5f5f5",
               addonBg: "#f5f5f5",
               activeShadow: "#f5f5f5",
+              activeBorderColor: "#f5f5f5",
               colorPrimaryHover: "#f5f5f5",
             },
             InputNumber: {
@@ -69,7 +71,9 @@ function App() {
               hoverBg: "#f5f5f5",
               addonBg: "#f5f5f5",
               activeShadow: "#f5f5f5",
+              activeBorderColor: "#f5f5f5",
               colorPrimaryHover: "#f5f5f5",
+              colorBgContainer: "#f5f5f5",
             },
             Drawer: { paddingLG: 0 },
             Select: {
@@ -104,6 +108,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Main />} />
+            <Route path="/home" element={<Main children={<Home />} />} />
             <Route
               path="/eff179b5-a575-4046-99f3-ca0dc465af3e"
               element={<Main children={<AddAsset />} />}

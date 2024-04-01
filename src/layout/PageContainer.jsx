@@ -30,12 +30,14 @@ const PageContainer = ({
   return (
     <div
       className={media.isMobile ? pageTailWindMobile : pageTailWind}
-      style={{ minHeight: "500px", backgroundColor }}
+      style={{
+        minHeight: "500px",
+      }}
     >
       {isLoading && <IsLoadingDiv />}
       {!isLoading && (
         <div className="flex flex-col w-full h-full justify-start items-center">
-          <div className="mb-2 flex flex-col w-full h-full justify-start items-center bg-white rounded ">
+          <div className="mb-2 flex flex-col w-full h-auto justify-start items-center bg-white rounded ">
             <div className="flex px-4 w-full h-full justify-start items-center">
               {pathname && <PageBreadCrumb pathname={pathname} />}
             </div>
@@ -50,8 +52,8 @@ const PageContainer = ({
           <Row gutter={gutter} className="w-full">
             <div
               className={`${
-                media.isMobile ? "p-4 " : "p-0 "
-              } flex w-full h-full  `}
+                media.isMobile ? "px-2 " : "p-0 "
+              } flex w-full h-full  justify-center items-start `}
             >
               {children}
             </div>
