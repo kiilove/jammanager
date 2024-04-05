@@ -16,7 +16,7 @@ const ComponetContainer = ({
     <div
       className={media.isMobile ? componentTailWindMobile : componentTailWind}
       style={{
-        minHeight: "300px",
+        minHeight: "100px",
       }}
     >
       <div className="flex flex-col w-full h-full justify-start items-center px-2">
@@ -28,7 +28,7 @@ const ComponetContainer = ({
           <div
             className={`${
               media.isMobile ? "px-2 " : "p-0 "
-            } flex w-full h-full  justify-center items-start `}
+            } flex w-full h-auto   justify-center items-start `}
           >
             {children}
           </div>

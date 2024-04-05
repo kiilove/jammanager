@@ -1,5 +1,5 @@
-import { Avatar, Col, Image, Row } from "antd";
-import React, { useContext, useState } from "react";
+import { Avatar, Col, Image, Row, Button } from "antd";
+import React, { useContext, useMemo, useState } from "react";
 import CurrentAddAsset from "../share/CurrentAddAsset";
 import { CurrentLoginContext } from "../context/CurrentLogin";
 import JAMLOGO from "../assets/logo/jam_blank.png";
@@ -16,10 +16,61 @@ import {
   FcAdvertising,
 } from "react-icons/fc";
 import { useEffect } from "react";
+import DodutChart from "../share/DodutChart";
+import { useFirestoreQuery } from "../hooks/useFirestore";
+import { where } from "firebase/firestore";
 
 const Home = () => {
   const [iconSize, setIconSize] = useState(60);
+  const [assetList, setAssetList] = useState([]);
   const { media, memberSettings } = useContext(CurrentLoginContext);
+  const assetQuery = useFirestoreQuery();
+
+  const groupByField = (data, fieldName) => {
+    const grouped = data.reduce((acc, item) => {
+      const key = item[fieldName];
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(grouped).map(([key, value]) => ({
+      id: key,
+      label: key,
+      value: value,
+    }));
+  };
+
+  const fetchAsset = async (userID) => {
+    const condition = [where("assetOwner", "==", userID)];
+
+    try {
+      await assetQuery.getDocuments(
+        "assets",
+        (data) => {
+          console.log(data);
+          setAssetList(() => [...data]);
+        },
+        condition
+      );
+    } catch (error) {}
+  };
+
+  const reductDonutData = useMemo(() => {
+    let data = [];
+    if (assetList?.length > 0) {
+      data = [...groupByField(assetList, "assetProductLine")];
+    }
+
+    return data;
+  }, [assetList]);
+
+  useEffect(() => {}, [assetList]);
+
+  useEffect(() => {
+    if (memberSettings?.userID) {
+      fetchAsset(memberSettings.userID);
+    }
+  }, [memberSettings]);
 
   useEffect(() => {
     if (media) {
@@ -50,21 +101,7 @@ const Home = () => {
                   height: iconSize,
                 }}
               >
-                {media?.isDesktopOrLaptop && (
-                  <div className="flex w-1/12">
-                    <Image
-                      src={
-                        memberSettings.companyLogo[0]?.url
-                          ? memberSettings.companyLogo[0].url
-                          : ""
-                      }
-                      className=" rounded-full"
-                      style={{ width: 65 }}
-                      preview={false}
-                    />
-                  </div>
-                )}
-                <div className="flex px-4 w-full">
+                <div className="flex px-10 w-full">
                   <input
                     type="text"
                     className="w-full outline-none"
@@ -161,6 +198,9 @@ const Home = () => {
         </Col>
         <Col span={media.isMobile ? 24 : media.isTablet ? 12 : 8}>
           <CurrentAddAsset />
+        </Col>
+        <Col span={media.isMobile ? 24 : media.isTablet ? 12 : 8}>
+          <DodutChart data={reductDonutData} />
         </Col>
       </Row>
     </div>

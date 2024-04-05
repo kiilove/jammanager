@@ -43,6 +43,7 @@ export function useFirestoreQuery() {
       setData(documents);
       if (callback) callback(documents);
     } catch (error) {
+      console.log(error);
       setError(error);
     } finally {
       setLoading(false);

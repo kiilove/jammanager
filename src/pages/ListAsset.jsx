@@ -364,7 +364,7 @@ const ListAsset = () => {
           {media.isMobile ? (
             <div className="flex w-full ">
               <ListWithFilterAndSearch
-                data={filteredAssetList}
+                originalData={filteredAssetList}
                 listItem={assetItem}
               />
             </div>
