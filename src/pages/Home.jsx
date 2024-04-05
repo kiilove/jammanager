@@ -19,6 +19,8 @@ import { useEffect } from "react";
 import DodutChart from "../share/DodutChart";
 import { useFirestoreQuery } from "../hooks/useFirestore";
 import { where } from "firebase/firestore";
+import SunburstChart from "../share/SunburstChart";
+import CirclePackingChart from "../share/CirclePackingChart";
 
 const Home = () => {
   const [iconSize, setIconSize] = useState(60);
@@ -40,6 +42,40 @@ const Home = () => {
     }));
   };
 
+  const groupByCategoryAndProductLine = (data) => {
+    // First group by assetCategory
+    const categoryGrouped = data.reduce((acc, item) => {
+      acc[item.assetCategory] = acc[item.assetCategory] || [];
+      acc[item.assetCategory].push(item);
+      return acc;
+    }, {});
+
+    // Then, for each category, group by assetProductLine and count
+    const result = Object.entries(categoryGrouped).map(([category, items]) => {
+      const productLineGrouped = items.reduce((acc, item) => {
+        const line = item.assetProductLine;
+        acc[line] = (acc[line] || 0) + 1;
+        return acc;
+      }, {});
+
+      const children = Object.entries(productLineGrouped).map(
+        ([key, value]) => ({
+          id: key,
+          label: key,
+          value: value,
+        })
+      );
+
+      return {
+        id: category,
+        label: category,
+        children: children,
+      };
+    });
+
+    return result;
+  };
+
   const fetchAsset = async (userID) => {
     const condition = [where("assetOwner", "==", userID)];
 
@@ -55,13 +91,16 @@ const Home = () => {
     } catch (error) {}
   };
 
-  const reductDonutData = useMemo(() => {
-    let data = [];
+  const reductChartData = useMemo(() => {
+    let donutData = [];
+    let sunburstData = [];
     if (assetList?.length > 0) {
-      data = [...groupByField(assetList, "assetProductLine")];
+      donutData = [...groupByField(assetList, "assetProductLine")];
+      sunburstData = [...groupByCategoryAndProductLine(assetList)];
+      console.log(sunburstData);
     }
 
-    return data;
+    return { donutData, sunburstData };
   }, [assetList]);
 
   useEffect(() => {}, [assetList]);
@@ -197,10 +236,13 @@ const Home = () => {
           </div>
         </Col>
         <Col span={media.isMobile ? 24 : media.isTablet ? 12 : 8}>
-          <CurrentAddAsset />
+          <DodutChart data={reductChartData?.donutData} />
         </Col>
         <Col span={media.isMobile ? 24 : media.isTablet ? 12 : 8}>
-          <DodutChart data={reductDonutData} />
+          <CirclePackingChart data={reductChartData?.sunburstData} />
+        </Col>{" "}
+        <Col span={media.isMobile ? 24 : media.isTablet ? 12 : 8}>
+          <CurrentAddAsset />
         </Col>
       </Row>
     </div>

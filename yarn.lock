@@ -2421,6 +2421,19 @@
     d3-shape "^1.3.5"
     lodash "^4.17.21"
 
+"@nivo/circle-packing@^0.85.1":
+  version "0.85.1"
+  resolved "https://registry.yarnpkg.com/@nivo/circle-packing/-/circle-packing-0.85.1.tgz#b859b9ecfb51c24a23150bf8e1b170318993175c"
+  integrity sha512-9QwXrXeDFPhSCJSRLLR0Bhu8WGiIFXd6NpuFqxDNdKd+tb6e1Po1/aPYE+L39aHGE1MVQuPfY4sOZF6YXS4nWQ==
+  dependencies:
+    "@nivo/colors" "0.85.1"
+    "@nivo/core" "0.85.1"
+    "@nivo/tooltip" "0.85.1"
+    "@react-spring/web" "9.4.5 || ^9.7.2"
+    "@types/d3-hierarchy" "^1.1.8"
+    d3-hierarchy "^1.1.8"
+    lodash "^4.17.21"
+
 "@nivo/colors@0.85.1":
   version "0.85.1"
   resolved "https://registry.yarnpkg.com/@nivo/colors/-/colors-0.85.1.tgz#8f9adfea58fec51a4821345a5a20555acfdb7c5c"
@@ -2502,6 +2515,19 @@
     d3-scale "^4.0.2"
     d3-time "^1.0.11"
     d3-time-format "^3.0.0"
+    lodash "^4.17.21"
+
+"@nivo/sunburst@^0.85.1":
+  version "0.85.1"
+  resolved "https://registry.yarnpkg.com/@nivo/sunburst/-/sunburst-0.85.1.tgz#5494912c987e5bca37f4397efa651a05c1824c11"
+  integrity sha512-wnWNM2gKB+UzONimUzaPnVSQcdgIyOmiJjU2ZfhKfT6H3rhOKkRQ6B3KgPiwitrtqsBYoGwU6gmlbpkUtieDYQ==
+  dependencies:
+    "@nivo/arcs" "0.85.1"
+    "@nivo/colors" "0.85.1"
+    "@nivo/core" "0.85.1"
+    "@nivo/tooltip" "0.85.1"
+    "@types/d3-hierarchy" "^1.1.8"
+    d3-hierarchy "^1.1.8"
     lodash "^4.17.21"
 
 "@nivo/tooltip@0.85.1":
@@ -3022,6 +3048,11 @@
   version "1.4.5"
   resolved "https://registry.yarnpkg.com/@types/d3-format/-/d3-format-1.4.5.tgz#6392303c2ca3c287c3a1a2046455cd0a0bd50bbe"
   integrity sha512-mLxrC1MSWupOSncXN/HOlWUAAIffAEBaI4+PKy2uMPsKe4FNZlk7qrbTjmzJXITQQqBHivaks4Td18azgqnotA==
+
+"@types/d3-hierarchy@^1.1.8":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@types/d3-hierarchy/-/d3-hierarchy-1.1.11.tgz#c3bd70d025621f73cb3319e97e08ae4c9051c791"
+  integrity sha512-lnQiU7jV+Gyk9oQYk0GGYccuexmQPTp08E0+4BidgFdiJivjEvf+esPSdZqCZ2C7UwTWejWpqetVaU8A+eX3FA==
 
 "@types/d3-path@^2":
   version "2.0.4"
@@ -4997,6 +5028,11 @@ d3-geo@^3.1.0:
   integrity sha512-637ln3gXKXOwhalDzinUgY83KzNWZRKbYubaG+fGVuc/dxO64RRljtCTnf5ecMyE1RIdtqpkVcq0IbtU2S8j2Q==
   dependencies:
     d3-array "2.5.0 - 3"
+
+d3-hierarchy@^1.1.8:
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/d3-hierarchy/-/d3-hierarchy-1.1.9.tgz#2f6bee24caaea43f8dc37545fa01628559647a83"
+  integrity sha512-j8tPxlqh1srJHAtxfvOUwKNYJkQuBFdM1+JAUfq6xqH5eAqf93L7oG1NVqDa4CpFZNvnNKtCYEUC8KY9yEn9lQ==
 
 d3-hierarchy@^3.1.2:
   version "3.1.2"
